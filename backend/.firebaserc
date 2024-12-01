@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "tension-path",
+    "local": "tension-path",
+    "remote": "tension-path"
+  }
+}
