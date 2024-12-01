@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:overpowered/domain/state/splash/splash_state.dart';
-import 'package:overpowered/widgets/game_container.dart';
+import 'package:overpowered/widgets/screen_container.dart';
 
 class SplashScreen extends StatelessWidget {
   final SplashState state;
@@ -11,7 +11,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GameContainer(
+    return ScreenContainer(
       child: Center(
         child: ElevatedButton(
           onPressed: state.onPlay,
