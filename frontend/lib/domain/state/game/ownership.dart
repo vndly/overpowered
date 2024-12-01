@@ -32,7 +32,7 @@ class Ownership with GameEngineRef {
     }
   }
 
-  bool get isOwned => _owner == engine.self;
+  bool get isOwned => false;
 
   bool isOwner(Player player) => _owner == player;
 

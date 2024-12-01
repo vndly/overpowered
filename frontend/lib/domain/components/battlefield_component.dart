@@ -3,12 +3,10 @@ import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/app/constants.dart';
-import 'package:overpowered/domain/components/lane_component.dart';
 import 'package:overpowered/domain/state/game/battlefield.dart';
 import 'package:overpowered/domain/state/game/lane.dart';
 import 'package:overpowered/domain/state/game/nodes/node.dart';
 import 'package:overpowered/domain/types/priority.dart';
-import 'package:overpowered/extensions/component_extension.dart';
 
 class BattlefieldComponent extends PositionComponent with HasGameRef {
   final Battlefield battlefield;
@@ -43,13 +41,6 @@ class BattlefieldComponent extends PositionComponent with HasGameRef {
 
     for (int i = 0; i < battlefield.lanes.length; i++) {
       final Lane lane = battlefield.lanes[i];
-
-      gameRef.world.add(LaneComponent(
-        lane: lane,
-        player: engine.self,
-        position: Vector2(i * battlefield.laneWidth, 0),
-        size: Vector2(battlefield.laneWidth, battlefield.mapSize.y),
-      ));
 
       for (final Node node in lane.nodes) {
         gameRef.world.add(node.component);

@@ -1,4 +1,5 @@
 import 'package:dafluta/dafluta.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/domain/state/match/match_state.dart';
 import 'package:overpowered/widgets/screen_container.dart';
@@ -28,17 +29,31 @@ class Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return MapContainer(
+      child: GameWidget(
+        game: state.gameComponent,
+      ),
+    );
+  }
+}
+
+class MapContainer extends StatelessWidget {
+  final Widget child;
+
+  const MapContainer({
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: AspectRatio(
         aspectRatio: 1,
-        child: Container(
-          color: Colors.red,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: child,
         ),
       ),
     );
-
-    //return GameWidget(
-    //  game: state.gameComponent,
-    //);
   }
 }

@@ -1,33 +1,25 @@
-import 'package:flame/components.dart';
 import 'package:overpowered/app/constants.dart';
 import 'package:overpowered/domain/components/game_component.dart';
-import 'package:overpowered/domain/components/unit_component.dart';
 import 'package:overpowered/domain/state/game/base.dart';
-import 'package:overpowered/domain/state/game/battlefield.dart';
 import 'package:overpowered/domain/state/game/lane.dart';
 import 'package:overpowered/domain/state/game/nodes/node.dart';
 import 'package:overpowered/domain/state/game/players/player.dart';
+import 'package:overpowered/domain/state/game/terrain.dart';
 import 'package:overpowered/domain/state/game/units/unit.dart';
 
 class GameEngine {
   final GameComponent gameComponent;
-  final Player self;
-  final Player enemy;
-  final Battlefield battlefield;
+  final Terrain terrain;
 
   GameEngine({
     required this.gameComponent,
-    required this.self,
-    required this.enemy,
-    required this.battlefield,
+    required this.terrain,
   }) {
     GameEngineRef.instance = this;
   }
 
   void update(double dt) {
-    self.update(dt);
-    enemy.update(dt);
-    battlefield.update(dt);
+    terrain.update(dt);
   }
 
   void onSpawnUnit({
@@ -36,32 +28,9 @@ class GameEngine {
     required Node node,
     required int power,
   }) {
-    final List<Node> nodes = lane.getNodes(
-      forward: player.isSelf,
-      from: node,
-    );
-
-    final double extraGap =
-        -player.ownershipDirection * (battlefield.maxUnitSize / 2);
-    final Vector2 startingPosition = Vector2.copy(nodes.first.position);
-    startingPosition.add(Vector2(0, extraGap));
-
-    final Unit unit = Unit(
-      hp: power,
-      speed: Constants.UNIT_SPEED,
-      owner: player,
-      lane: lane,
-      nodes: nodes.sublist(1, nodes.length),
-      startingPosition: startingPosition,
-    );
-
-    lane.addUnit(unit);
-    onUnitCreated(unit);
   }
 
   void onUnitCreated(Unit unit) {
-    final UnitComponent unitComponent = unit.component(battlefield.maxUnitSize);
-    gameComponent.onUnitCreated(unitComponent);
   }
 
   void onUnitCollidedWithBase({
