@@ -11,4 +11,6 @@ class Palette {
   static const Color TILE_PATCH_WATER = Color(0xFF7171FF);
   static const Color TILE_PATCH_METAL = Color(0xff808080);
   static const Color TILE_POWER_PLANT = Color(0xFFEFF307);
+
+  static const Color TILE_ICON = Colors.white;
 }

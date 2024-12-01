@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/app/constants.dart';
+import 'package:overpowered/domain/components/icon_component.dart';
 import 'package:overpowered/domain/state/game/tile.dart';
 import 'package:overpowered/domain/types/priority.dart';
 import 'package:overpowered/domain/types/tile_type.dart';
@@ -30,7 +31,14 @@ class TileComponent extends PositionComponent with HoverCallbacks, HasGameRef {
   @override
   FutureOr onLoad() {
     backgroundPaint.color = tile.tileType.color;
-    hoverPaint.color = const Color(0x22ffffff);
+    hoverPaint.color = const Color(0x11ffffff);
+
+    if (tile.tileType != TileType.empty) {
+      add(IconComponent(
+        icon: tile.tileType.icon,
+        parent: this,
+      ));
+    }
 
     return super.onLoad();
   }

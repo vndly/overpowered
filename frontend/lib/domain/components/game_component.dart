@@ -18,9 +18,9 @@ class GameComponent extends FlameGame
 
   @override
   FutureOr onLoad() {
-    final double width = Constants.TILE_SIZE * matchState.engine.terrain.size.x;
-    final double height =
-        Constants.TILE_SIZE * matchState.engine.terrain.size.y;
+    final Vector2 terrainSize = matchState.engine.terrain.size;
+    final double width = Constants.TILE_SIZE * terrainSize.x;
+    final double height = Constants.TILE_SIZE * terrainSize.y;
 
     camera = CameraComponent.withFixedResolution(
       width: width,
