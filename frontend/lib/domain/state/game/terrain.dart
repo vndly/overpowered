@@ -1,7 +1,15 @@
-class Terrain {
-  Terrain();
+import 'package:flame/components.dart';
 
-  factory Terrain.create() => Terrain();
+class Terrain {
+  final Vector2 size;
+
+  Terrain({
+    required this.size,
+  });
+
+  factory Terrain.create() => Terrain(size: Vector2(3, 3));
+
+  double get aspectRatio => size.x / size.y;
 
   void update(double dt) {}
 }

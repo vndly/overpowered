@@ -32,6 +32,7 @@ class Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MapContainer(
+      state: state,
       child: GameWidget(
         game: state.gameComponent,
       ),
@@ -40,9 +41,11 @@ class Content extends StatelessWidget {
 }
 
 class MapContainer extends StatelessWidget {
+  final MatchState state;
   final Widget child;
 
   const MapContainer({
+    required this.state,
     required this.child,
   });
 
@@ -53,7 +56,7 @@ class MapContainer extends StatelessWidget {
 
     return Center(
       child: AspectRatio(
-        aspectRatio: 1,
+        aspectRatio: state.engine.terrain.aspectRatio,
         child: Padding(
           padding: EdgeInsets.all(gap),
           child: child,

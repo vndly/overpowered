@@ -19,8 +19,8 @@ class GameComponent extends FlameGame
   @override
   FutureOr onLoad() {
     camera = CameraComponent.withFixedResolution(
-      height: Constants.SCREEN_HEIGHT,
-      width: Constants.SCREEN_WIDTH,
+      height: Constants.TILE_SIZE * matchState.engine.terrain.size.x,
+      width: Constants.TILE_SIZE * matchState.engine.terrain.size.y,
     );
 
     if (debugMode) {
