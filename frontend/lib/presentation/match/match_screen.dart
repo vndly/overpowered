@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dafluta/dafluta.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -46,11 +48,14 @@ class MapContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+    final double gap = min(size.width, size.height) * 0.05;
+
     return Center(
       child: AspectRatio(
         aspectRatio: 1,
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(gap),
           child: child,
         ),
       ),
