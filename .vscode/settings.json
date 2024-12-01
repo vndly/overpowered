@@ -13,5 +13,7 @@
     "files.autoSave": "afterDelay",
     "files.encoding": "utf8",
     "dart.previewFlutterUiGuides": true,
-    "cSpell.words": []
+    "cSpell.words": [],
+    "IDX.aI.enableInlineCompletion": true,
+    "IDX.aI.enableCodebaseIndexing": true
 }

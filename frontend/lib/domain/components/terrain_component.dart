@@ -4,9 +4,10 @@ import 'package:flame/extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/app/constants.dart';
 import 'package:overpowered/domain/state/game/terrain.dart';
+import 'package:overpowered/domain/state/game/tile.dart';
 import 'package:overpowered/domain/types/priority.dart';
 
-class TerrainComponent extends PositionComponent {
+class TerrainComponent extends PositionComponent with HasGameRef {
   final Terrain terrain;
   final Paint backgroundPaint = Paint();
   final Paint borderPaint = Paint();
@@ -18,8 +19,8 @@ class TerrainComponent extends PositionComponent {
             Constants.TILE_SIZE * terrain.size.x,
             Constants.TILE_SIZE * terrain.size.y,
           ),
-          anchor: Anchor.center,
-          priority: Priority.battlefield.value,
+          anchor: Anchor.topLeft,
+          priority: Priority.terrain.value,
         );
 
   @override
@@ -27,13 +28,9 @@ class TerrainComponent extends PositionComponent {
     backgroundPaint.color = const Color(0xff923B01);
     borderPaint.color = const Color(0x33ffffff);
 
-    /*for (int i = 0; i < terrain.lanes.length; i++) {
-      final Lane lane = terrain.lanes[i];
-
-      for (final Node node in lane.nodes) {
-        gameRef.world.add(node.component);
-      }
-    }*/
+    for (final Tile tile in terrain.tiles) {
+      gameRef.world.add(tile.component);
+    }
 
     return super.onLoad();
   }
