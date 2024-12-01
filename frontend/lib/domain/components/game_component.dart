@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/material.dart';
 import 'package:overpowered/app/constants.dart';
 import 'package:overpowered/domain/components/match_component.dart';
 import 'package:overpowered/domain/state/game/game_engine.dart';
@@ -19,8 +20,8 @@ class GameComponent extends FlameGame
   @override
   FutureOr onLoad() {
     camera = CameraComponent.withFixedResolution(
-      height: Constants.TILE_SIZE * matchState.engine.terrain.size.x,
-      width: Constants.TILE_SIZE * matchState.engine.terrain.size.y,
+      width: Constants.TILE_SIZE * matchState.engine.terrain.size.x,
+      height: Constants.TILE_SIZE * matchState.engine.terrain.size.y,
     );
 
     if (debugMode) {

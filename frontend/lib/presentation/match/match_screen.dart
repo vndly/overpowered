@@ -55,10 +55,10 @@ class MapContainer extends StatelessWidget {
     final double gap = min(size.width, size.height) * 0.05;
 
     return Center(
-      child: AspectRatio(
-        aspectRatio: state.engine.terrain.aspectRatio,
-        child: Padding(
-          padding: EdgeInsets.all(gap),
+      child: Padding(
+        padding: EdgeInsets.all(gap),
+        child: AspectRatio(
+          aspectRatio: state.engine.terrain.aspectRatio,
           child: child,
         ),
       ),

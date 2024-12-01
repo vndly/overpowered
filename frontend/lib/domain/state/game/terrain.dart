@@ -7,7 +7,7 @@ class Terrain {
     required this.size,
   });
 
-  factory Terrain.create() => Terrain(size: Vector2(3, 3));
+  factory Terrain.create() => Terrain(size: Vector2(7, 12));
 
   double get aspectRatio => size.x / size.y;
 

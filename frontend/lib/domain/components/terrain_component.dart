@@ -25,7 +25,7 @@ class TerrainComponent extends PositionComponent {
   @override
   FutureOr onLoad() {
     backgroundPaint.color = const Color(0xff923B01);
-    borderPaint.color = const Color(0x88ffffff);
+    borderPaint.color = const Color(0x33ffffff);
 
     /*for (int i = 0; i < terrain.lanes.length; i++) {
       final Lane lane = terrain.lanes[i];
