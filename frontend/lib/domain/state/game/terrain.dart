@@ -12,7 +12,7 @@ class Terrain {
   });
 
   factory Terrain.create() {
-    final Vector2 size = Vector2(7, 12);
+    final Vector2 size = Vector2(7, 11);
     final List<Tile> emptyTiles = [];
 
     for (int x = 0; x < size.x; x++) {
@@ -27,15 +27,19 @@ class Terrain {
     final List<Tile> newTiles = [
       Tile(
         tileType: TileType.patch_fuel,
-        position: Vector2(1, 1),
+        position: Vector2(6, 0),
       ),
       Tile(
         tileType: TileType.patch_water,
-        position: Vector2(3, 5),
+        position: Vector2(0, 0),
       ),
       Tile(
         tileType: TileType.patch_metal,
-        position: Vector2(6, 8),
+        position: Vector2(6, 10),
+      ),
+      Tile(
+        tileType: TileType.power_plant,
+        position: Vector2(3, 5),
       ),
     ];
     final List<Tile> tiles =

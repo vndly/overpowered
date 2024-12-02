@@ -56,7 +56,6 @@ class Topbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 70,
       padding: const EdgeInsets.all(15),
       color: Colors.green,
       child: const Column(
@@ -200,8 +199,44 @@ class Bottombar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100,
+      padding: const EdgeInsets.all(15),
+      color: Colors.red,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SelectedItem(state),
+          const VBox(15),
+          Inventory(state),
+        ],
+      ),
+    );
+  }
+}
+
+class SelectedItem extends StatelessWidget {
+  final MatchState state;
+
+  const SelectedItem(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
       color: Colors.yellow,
+    );
+  }
+}
+
+class Inventory extends StatelessWidget {
+  final MatchState state;
+
+  const Inventory(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      color: Colors.blue,
     );
   }
 }
