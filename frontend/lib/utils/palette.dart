@@ -13,4 +13,8 @@ class Palette {
   static const Color TILE_POWER_PLANT = Color(0xFFEFF307);
 
   static const Color TILE_ICON = Colors.white;
+
+  static const Color TOPBAR_ENERGY_FOREGROUND = Colors.yellow;
+  static const Color TOPBAR_TIME_FOREGROUND = Colors.red;
+  static const Color TOPBAR_BACKGROUND = Colors.grey;
 }

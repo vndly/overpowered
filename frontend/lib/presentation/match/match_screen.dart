@@ -4,6 +4,8 @@ import 'package:dafluta/dafluta.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/domain/state/match/match_state.dart';
+import 'package:overpowered/utils/palette.dart';
+import 'package:overpowered/widgets/label.dart';
 import 'package:overpowered/widgets/screen_container.dart';
 
 class MatchScreen extends StatelessWidget {
@@ -31,10 +33,132 @@ class Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MapContainer(
-      state: state,
-      child: GameWidget(
-        game: state.gameComponent,
+    return Column(
+      children: [
+        Topbar(state),
+        MapContainer(
+          state: state,
+          child: GameWidget(
+            game: state.gameComponent,
+          ),
+        ),
+        Bottombar(state),
+      ],
+    );
+  }
+}
+
+class Topbar extends StatelessWidget {
+  final MatchState state;
+
+  const Topbar(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.all(15),
+      color: Colors.green,
+      child: const Column(
+        children: [
+          ParameterIndicator(
+            title: 'Energy',
+            label: '40 left',
+            backgroundColor: Palette.TOPBAR_ENERGY_FOREGROUND,
+            foregroundColor: Palette.TOPBAR_BACKGROUND,
+            progress: 0.4,
+          ),
+          VBox(15),
+          ParameterIndicator(
+            title: 'Time',
+            label: '12:34 left',
+            backgroundColor: Palette.TOPBAR_TIME_FOREGROUND,
+            foregroundColor: Palette.TOPBAR_BACKGROUND,
+            progress: 0.6,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ParameterIndicator extends StatelessWidget {
+  final String title;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final double progress;
+
+  const ParameterIndicator({
+    required this.title,
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 130,
+          child: Row(
+            children: [
+              Label(
+                text: '$title:',
+                color: Colors.white,
+                size: 12,
+              ),
+              const HBox(10),
+              Label(
+                text: label,
+                color: Colors.white,
+                size: 12,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ProgressIndicator(
+            backgroundColor: backgroundColor,
+            foregroundColor: foregroundColor,
+            progress: progress,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ProgressIndicator extends StatelessWidget {
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final double progress;
+
+  const ProgressIndicator({
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: SizedBox(
+        height: 10,
+        child: FractionallySizedBox(
+          widthFactor: progress,
+          alignment: Alignment.centerRight,
+          child: Container(
+            color: foregroundColor,
+          ),
+        ),
       ),
     );
   }
@@ -54,14 +178,30 @@ class MapContainer extends StatelessWidget {
     final Size size = MediaQuery.of(context).size;
     final double gap = min(size.width, size.height) * 0.05;
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(gap),
-        child: AspectRatio(
-          aspectRatio: state.engine.terrain.aspectRatio,
-          child: child,
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(gap),
+          child: AspectRatio(
+            aspectRatio: state.engine.terrain.aspectRatio,
+            child: child,
+          ),
         ),
       ),
+    );
+  }
+}
+
+class Bottombar extends StatelessWidget {
+  final MatchState state;
+
+  const Bottombar(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      color: Colors.yellow,
     );
   }
 }
