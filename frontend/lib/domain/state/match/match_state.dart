@@ -26,7 +26,7 @@ class MatchState extends BaseState {
   }
 
   void _onUpdate() {
-    topbarState.notify();
+    Delayed.post(topbarState.notify);
   }
 }
 
