@@ -43,7 +43,7 @@ class Content extends StatelessWidget {
             game: state.gameComponent,
           ),
         ),
-        Bottombar(state),
+        Bottombar(state.bottombarState),
       ],
     );
   }
@@ -197,29 +197,32 @@ class MapContainer extends StatelessWidget {
 }
 
 class Bottombar extends StatelessWidget {
-  final MatchState state;
+  final BottombarState state;
 
   const Bottombar(this.state);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      color: Colors.red,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SelectedItem(state),
-          const VBox(15),
-          Inventory(state),
-        ],
+    return StateProvider<BottombarState>(
+      state: state,
+      builder: (context, state) => Container(
+        padding: const EdgeInsets.all(15),
+        color: Colors.red,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SelectedItem(state),
+            const VBox(15),
+            InventoryList(state),
+          ],
+        ),
       ),
     );
   }
 }
 
 class SelectedItem extends StatelessWidget {
-  final MatchState state;
+  final BottombarState state;
 
   const SelectedItem(this.state);
 
@@ -232,10 +235,10 @@ class SelectedItem extends StatelessWidget {
   }
 }
 
-class Inventory extends StatelessWidget {
-  final MatchState state;
+class InventoryList extends StatelessWidget {
+  final BottombarState state;
 
-  const Inventory(this.state);
+  const InventoryList(this.state);
 
   @override
   Widget build(BuildContext context) {
