@@ -1,19 +1,30 @@
+import 'package:flutter/widgets.dart';
 import 'package:overpowered/domain/components/game_component.dart';
 import 'package:overpowered/domain/state/game/terrain.dart';
 
 class GameEngine {
   final GameComponent gameComponent;
   final Terrain terrain;
+  final VoidCallback onUpdate;
+  final int totalTime;
+  double remainingTime = 0;
 
   GameEngine({
     required this.gameComponent,
     required this.terrain,
+    required this.onUpdate,
+    required this.totalTime,
   }) {
     GameEngineRef.instance = this;
+    remainingTime = totalTime.toDouble();
   }
+
+  double get remainingTimePercentage => remainingTime / totalTime;
 
   void update(double dt) {
     terrain.update(dt);
+    remainingTime -= dt;
+    onUpdate();
   }
 }
 

@@ -1,3 +1,5 @@
 class Constants {
   static const double TILE_SIZE = 100;
+
+  static const int TOTAL_TIME = 60 * 30; // 30 minutes
 }

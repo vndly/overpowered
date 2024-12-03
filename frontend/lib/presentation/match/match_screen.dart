@@ -4,6 +4,7 @@ import 'package:dafluta/dafluta.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:overpowered/domain/state/match/match_state.dart';
+import 'package:overpowered/utils/formatter.dart';
 import 'package:overpowered/utils/palette.dart';
 import 'package:overpowered/widgets/label.dart';
 import 'package:overpowered/widgets/screen_container.dart';
@@ -35,7 +36,7 @@ class Content extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Topbar(state),
+        Topbar(state.topbarState),
         MapContainer(
           state: state,
           child: GameWidget(
@@ -49,33 +50,36 @@ class Content extends StatelessWidget {
 }
 
 class Topbar extends StatelessWidget {
-  final MatchState state;
+  final TopbarState state;
 
   const Topbar(this.state);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      color: Colors.green,
-      child: const Column(
-        children: [
-          ParameterIndicator(
-            title: 'Energy',
-            label: '40 left',
-            backgroundColor: Palette.TOPBAR_ENERGY_FOREGROUND,
-            foregroundColor: Palette.TOPBAR_BACKGROUND,
-            progress: 0.4,
-          ),
-          VBox(15),
-          ParameterIndicator(
-            title: 'Time',
-            label: '12:34 left',
-            backgroundColor: Palette.TOPBAR_TIME_FOREGROUND,
-            foregroundColor: Palette.TOPBAR_BACKGROUND,
-            progress: 0.6,
-          ),
-        ],
+    return StateProvider<TopbarState>(
+      state: state,
+      builder: (context, state) => Container(
+        padding: const EdgeInsets.all(15),
+        color: Colors.green,
+        child: Column(
+          children: [
+            const ParameterIndicator(
+              title: 'Energy',
+              label: '40 left',
+              backgroundColor: Palette.TOPBAR_ENERGY_FOREGROUND,
+              foregroundColor: Palette.TOPBAR_BACKGROUND,
+              progress: 0.4,
+            ),
+            const VBox(15),
+            ParameterIndicator(
+              title: 'Time',
+              label: '${Formatter.time(state.engine.remainingTime)} left',
+              backgroundColor: Palette.TOPBAR_TIME_FOREGROUND,
+              foregroundColor: Palette.TOPBAR_BACKGROUND,
+              progress: state.engine.remainingTimePercentage,
+            ),
+          ],
+        ),
       ),
     );
   }
