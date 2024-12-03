@@ -8,6 +8,7 @@ import 'package:overpowered/domain/components/icon_component.dart';
 import 'package:overpowered/domain/state/game/tile.dart';
 import 'package:overpowered/domain/types/priority.dart';
 import 'package:overpowered/domain/types/tile_type.dart';
+import 'package:overpowered/utils/platform.dart';
 
 class TileComponent extends PositionComponent with HoverCallbacks, HasGameRef {
   final Tile tile;
@@ -54,7 +55,7 @@ class TileComponent extends PositionComponent with HoverCallbacks, HasGameRef {
       );
     }
 
-    if (isHovered) {
+    if (isHovered && !Platform.isMobile) {
       canvas.drawRect(
         size.toRect(),
         hoverPaint,
