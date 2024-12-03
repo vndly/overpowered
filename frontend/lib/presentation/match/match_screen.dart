@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:dafluta/dafluta.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:overpowered/domain/state/game/resources.dart';
 import 'package:overpowered/domain/state/match/match_state.dart';
 import 'package:overpowered/utils/formatter.dart';
 import 'package:overpowered/utils/palette.dart';
@@ -206,13 +207,13 @@ class Bottombar extends StatelessWidget {
     return StateProvider<BottombarState>(
       state: state,
       builder: (context, state) => Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(10),
         color: Colors.red,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SelectedItem(state),
-            const VBox(15),
+            const VBox(10),
             InventoryList(state),
           ],
         ),
@@ -229,7 +230,7 @@ class SelectedItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
+      height: 40,
       color: Colors.yellow,
     );
   }
@@ -243,8 +244,33 @@ class InventoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
+      height: 40,
       color: Colors.blue,
+      child: Padding(
+        padding: const EdgeInsets.all(5),
+        child: Row(
+          children: [
+            for (final Resources resources in state.engine.inventory.reources)
+              InventoryItem(resources),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class InventoryItem extends StatelessWidget {
+  final Resources resources;
+
+  const InventoryItem(this.resources);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 30,
+      margin: const EdgeInsets.only(right: 5),
+      color: Colors.green,
     );
   }
 }
