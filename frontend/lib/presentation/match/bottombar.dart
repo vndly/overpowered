@@ -38,6 +38,31 @@ class SelectedItem extends StatelessWidget {
     return Container(
       height: 50,
       color: Colors.yellow,
+      child: Padding(
+        padding: const EdgeInsets.all(5),
+        child: Row(
+          children: [
+            for (final Resources resources in state.engine.inventory.reources)
+              SelectedItemEntry(resources),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SelectedItemEntry extends StatelessWidget {
+  final Resources resources;
+
+  const SelectedItemEntry(this.resources);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      margin: const EdgeInsets.only(right: 5),
+      color: Colors.red,
     );
   }
 }
