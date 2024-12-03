@@ -58,11 +58,18 @@ class SelectedItemEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      margin: const EdgeInsets.only(right: 5),
-      color: Colors.red,
+    return DragTarget<Resources>(
+      builder: (context, candidateItems, rejectedItems) {
+        return Container(
+          width: 40,
+          height: 40,
+          margin: const EdgeInsets.only(right: 5),
+          color: Colors.brown,
+        );
+      },
+      onAcceptWithDetails: (details) {
+        print('Dropped: ${details.data}');
+      },
     );
   }
 }
@@ -97,11 +104,20 @@ class InventoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      margin: const EdgeInsets.only(right: 5),
-      color: Colors.green,
+    return Draggable<Resources>(
+      data: resources,
+      dragAnchorStrategy: childDragAnchorStrategy,
+      feedback: Container(
+        width: 40,
+        height: 40,
+        color: Colors.pink,
+      ),
+      child: Container(
+        width: 40,
+        height: 40,
+        margin: const EdgeInsets.only(right: 5),
+        color: Colors.green,
+      ),
     );
   }
 }
