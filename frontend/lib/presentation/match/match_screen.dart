@@ -60,7 +60,7 @@ class Topbar extends StatelessWidget {
     return StateProvider<TopbarState>(
       state: state,
       builder: (context, state) => Container(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(10),
         color: Colors.green,
         child: Column(
           children: [
@@ -71,7 +71,7 @@ class Topbar extends StatelessWidget {
               foregroundColor: Palette.TOPBAR_BACKGROUND,
               progress: state.engine.remainingEnergyPercentage,
             ),
-            const VBox(15),
+            const VBox(10),
             ParameterIndicator(
               title: 'Time',
               label: '${Formatter.time(state.engine.remainingTime)} left',
@@ -230,7 +230,7 @@ class SelectedItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
+      height: 50,
       color: Colors.yellow,
     );
   }
@@ -244,7 +244,7 @@ class InventoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
+      height: 50,
       color: Colors.blue,
       child: Padding(
         padding: const EdgeInsets.all(5),
@@ -267,8 +267,8 @@ class InventoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 30,
+      width: 40,
+      height: 40,
       margin: const EdgeInsets.only(right: 5),
       color: Colors.green,
     );
