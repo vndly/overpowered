@@ -6,6 +6,10 @@ class GameEngine {
   final GameComponent gameComponent;
   final Terrain terrain;
   final VoidCallback onUpdate;
+
+  final int totalEnergy;
+  int remainingEnergy = 0;
+
   final int totalTime;
   double remainingTime = 0;
 
@@ -13,11 +17,15 @@ class GameEngine {
     required this.gameComponent,
     required this.terrain,
     required this.onUpdate,
+    required this.totalEnergy,
     required this.totalTime,
   }) {
     GameEngineRef.instance = this;
+    remainingEnergy = totalEnergy;
     remainingTime = totalTime.toDouble();
   }
+
+  double get remainingEnergyPercentage => remainingEnergy / totalEnergy;
 
   double get remainingTimePercentage => remainingTime / totalTime;
 

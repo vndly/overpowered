@@ -63,12 +63,12 @@ class Topbar extends StatelessWidget {
         color: Colors.green,
         child: Column(
           children: [
-            const ParameterIndicator(
+            ParameterIndicator(
               title: 'Energy',
-              label: '40 left',
+              label: '${state.engine.remainingEnergy} left',
               backgroundColor: Palette.TOPBAR_ENERGY_FOREGROUND,
               foregroundColor: Palette.TOPBAR_BACKGROUND,
-              progress: 0.4,
+              progress: state.engine.remainingEnergyPercentage,
             ),
             const VBox(15),
             ParameterIndicator(
@@ -105,7 +105,7 @@ class ParameterIndicator extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 130,
+          width: 140,
           child: Row(
             children: [
               Label(
@@ -113,12 +113,13 @@ class ParameterIndicator extends StatelessWidget {
                 color: Colors.white,
                 size: 12,
               ),
-              const HBox(10),
+              const Spacer(),
               Label(
                 text: label,
                 color: Colors.white,
                 size: 12,
               ),
+              const HBox(10),
             ],
           ),
         ),

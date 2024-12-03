@@ -20,6 +20,7 @@ class MatchState extends BaseState {
       gameComponent: gameComponent,
       terrain: Terrain.create(),
       onUpdate: _onUpdate,
+      totalEnergy: Constants.TOTAL_ENERGY,
       totalTime: Constants.TOTAL_TIME,
     );
   }
