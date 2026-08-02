@@ -41,7 +41,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Current temperature
   - From 0°C (coolest) to "max temperature" (hottest)
 - Output
-  - The amount of energy produced per second (e.g. 100⚡/m)
+  - The amount of energy produced per minute (e.g. 100⚡/m)
   - It increases with each level upgrade (e.g. 100 → 140 ⚡/m)
 - Heat generation
   - How much heat the generator produces (e.g. 5°C/m)
@@ -109,10 +109,10 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Radius
   - The radius of the area it cools (e.g. 1 cell)
 - Effectiveness
-  - The amount of cooling provided per second (e.g. -10°C/m)
+  - The amount of cooling provided per minute (e.g. -10°C/m)
   - It increases with each level upgrade (e.g. -10°C/m → -15°C/m)
 - Consumption
-  - How much energy it consumes per second (e.g. 10⚡/m)
+  - How much energy it consumes per minute (e.g. 10⚡/m)
   - It increases with each level upgrade (e.g. 10⚡/m → 15⚡/m)
 
 ### Types of cooling towers
@@ -127,7 +127,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ## Relay
 
 - Connects structures between them to transmit energy
-- They can be overloaded
+- They can be overloaded, if so, they explode, damaging nearby structures
 - They need to be upgraded to support more energy going through
 
 ### Properties
@@ -138,14 +138,17 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - Can be sold at a lower cost
 - Distance
   - The maximum distance it can connect to another structure (e.g. 3 cells)
+- Capacity
+  - The maximum amount of energy it can transmit per minute (e.g. 100⚡/m)
+  - It increases with each level upgrade (e.g. 100⚡/m → 150⚡/m)
 
 ### Types of relays
 
-| Name   | Cost | Distance |
-| ------ | ---: | -------: |
-| Name 1 | 10⚡ |        3 |
-| Name 2 | 15⚡ |        4 |
-| Name 3 | 20⚡ |        5 |
+| Name   | Cost | Distance | Capacity |
+| ------ | ---: | -------: | -------: |
+| Name 1 | 10⚡ |        3 |  300⚡/m |
+| Name 2 | 15⚡ |        4 |  400⚡/m |
+| Name 3 | 20⚡ |        5 |  500⚡/m |
 
 ## Accumulator
 
