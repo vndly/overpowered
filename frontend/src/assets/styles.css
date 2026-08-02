@@ -1,0 +1,36 @@
+/* Global shared styles — reset and shared layout classes.
+   Consumed by all Vue components. */
+
+/* ============================================
+   Reset
+   ============================================ */
+
+/* Universal box-sizing reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base document styles */
+html,
+body,
+#app {
+    height: 100%;
+}
+
+/* ============================================
+   Shared Layout
+   ============================================ */
+
+/* Full-viewport layout shared by all screens */
+.screen-layout {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
