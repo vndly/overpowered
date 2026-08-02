@@ -115,15 +115,15 @@ high cost / high output / high heat = fusion
 | Wind          |    2 |      1 |        2 |    1 |     0 | high cost / high stable
 | Biomass       |    1 |      2 |        1 |    2 |     0 | low cost / low stable
 
-| Gas           |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable
+| Oil           |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable
 | Geothermal    |    3 |      2 |        3 |    2 |     0 | high cost / high stable
-| Coal          |    2 |      3 |        2 |    3 |     0 | low cost / low stable
+| Gas           |    2 |      3 |        2 |    3 |     0 | low cost / low stable
 
-| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / stable
-| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / stable
-| Nuclear       |    4 |      4 |        1 |    1 |     0 | low cost / unstable
+| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / normal stable
+| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / high stable
 
-| Fusion        |    5 |      5 |        4 |    4 |     0 |
+| Nuclear       |    5 |      4 |        2 |    3 |     0 | high cost / low stable
+| Fusion        |    6 |      5 |        2 |    4 |     0 | high cost / low stable
 
 
 ## Actions
