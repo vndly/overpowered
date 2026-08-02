@@ -144,11 +144,11 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ### Types of relays
 
-| Name   | Cost | Distance | Capacity |
-| ------ | ---: | -------: | -------: |
-| Name 1 | 10⚡ |        3 |  300⚡/m |
-| Name 2 | 15⚡ |        4 |  400⚡/m |
-| Name 3 | 20⚡ |        5 |  500⚡/m |
+| Name         | Cost | Distance | Capacity |
+| ------------ | ---: | -------: | -------: |
+| Basic        | 10⚡ |        3 |  300⚡/m |
+| Intermediate | 15⚡ |        4 |  400⚡/m |
+| Advanced     | 20⚡ |        5 |  500⚡/m |
 
 ## Accumulator
 
