@@ -7,6 +7,8 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - A finished, polished small game (not a prototype)
 - Platform: desktop web, mouse-first
 - Structure: an authored campaign of self-contained levels
+- Priority: design depth first — the sim is the fixed point
+- Campaign only: no sandbox mode, no medals or grading — the game ends when the campaign does
 
 # Summary
 
@@ -19,6 +21,9 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 
 - Win: the moment stored energy reaches the goal
 - Lose: the timer expires (the only hard loss condition)
+- Difficulty is race-tuned: each level's goal/timer demands ~80-90% of the map's practical max output sustained for most of the match, so idling at safe throttle mathematically loses
+- No fast-forward: race tuning leaves no dead time to skip
+- Match length ramps across the campaign: ~5 minutes early to ~12-15 minutes late
 - Grid collapse is emergent, not scripted: at 0⚡ stored, cooling towers starve and shut off, heat rises, generators start dying
 - Pause is look-only: the player can pause to read the board, but cannot act while paused
 - A restart button is always available
@@ -28,6 +33,8 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - Each level is self-contained: fixed starting energy, nothing carries over
 - Progression unlocks new content only (generator types, structures) — no permanent upgrades
 - What can be built in a level is gated by unlocks and by the resources on the map
+- Level variety comes from parameters, not authored drama: baseline knobs (map, resources, obstacles, goal, timer, unlocks) plus per-level environment presets (day-cycle length/amplitude, ambient heat scale, starting energy) — biome-flavored presets (desert, storm coast, arctic)
+- Every level starts from a clean board: no pre-placed structures, no scripted mid-match events
 
 # Grid
 
@@ -40,8 +47,11 @@ A fast-paced, real-time grid strategy game where the player must generate enough
     - They can never be depleted
     - A cell can contain multiple resources (e.g. coal + water)
     - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
+  - Water
+    - Only hydroelectric generators can be built on them
+    - They don't block connections
   - Obstacle
-    - Examples: rock/wall/water/etc
+    - Examples: rock/wall/etc
     - Nothing can be built on them
     - They can be taken down (costs energy)
 
@@ -79,19 +89,19 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 
 ### Tier 2
 
-| Generator  | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                                              |
-| ---------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | -------------------------------------------------- |
-| Oil        |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable | Venting costs are more expensive                   |
-| Geothermal |    3 |      2 |        3 |    2 |     0 | high cost / high stable     | Produces more output when adjacent cells are empty |
-| Gas        |    2 |      3 |        2 |    3 |     0 | low cost / low stable       | Can rapidly adjust its output                      |
+| Generator  | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                              |
+| ---------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ---------------------------------- |
+| Oil        |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable | Venting costs are more expensive   |
+| Geothermal |    3 |      2 |        3 |    2 |     0 | high cost / high stable     | Nearby obstacles reduce its output |
+| Gas        |    2 |      3 |        2 |    3 |     0 | low cost / low stable       | Can rapidly adjust its output      |
 
 ### Tier 3
 
-| Generator     | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                                      |
-| ------------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ------------------------------------------ |
-| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / normal stable |                                            |
-| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / high stable     | Output increases with adjacent water tiles |
-| Nuclear       |    5 |      4 |        2 |    3 |     0 | high cost / low stable      | Has a narrow safety margin                 |
+| Generator     | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                                               |
+| ------------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | --------------------------------------------------- |
+| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / normal stable |                                                     |
+| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / high stable     | Output increases with adjacent water resource cells |
+| Nuclear       |    5 |      4 |        2 |    3 |     0 | high cost / low stable      | Has a narrow safety margin                          |
 
 ### Legend
 
@@ -101,11 +111,12 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 4 = high
 5 = very high
 
-## Solar cycle
+## Day/night cycle
 
-- A global day/night sine wave drives solar output
+- A global sine wave drives the board's rhythm; cycle ≈ 2-3 minutes, so every match sees several
+- Solar output follows the curve
+- The wave scales heat generation for ALL generators (e.g. ×1.0 at noon, ×0.5 at night): day = income + danger, night = relief + push window
 - The upcoming curve is shown as a forecast strip in the HUD
-- Heat generation is higher during the day and lower at night (e.g. 5°C/m → 2°C/m)
 
 ## Actions
 
@@ -224,6 +235,8 @@ There are 2 ways to cool down a generator:
 ## Throttle
 
 - Stepped control: output adjustable in 20% jumps, from 0% to 100%
+- Ramped response: actual output moves toward the set throttle over several seconds — Gas alone responds near-instantly (its perk); the HUD shows target vs actual
+- Pre-emptive throttling ahead of the day peak is the intended skill — the forecast strip exists to enable it
 - Pros
   - Slows or reverses heat buildup
 - Cons
@@ -249,6 +262,13 @@ There are 2 ways to cool down a generator:
 - The player only places structures (generators, cooling towers, accumulators, relays), never cables
 - Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
 
+## Routing
+
+- One path per generator: all of a generator's output flows along a single deterministic route — fewest relay hops to its nearest accumulator, stable tie-break
+- Relay load = the sum of generator flows routed through it, plus cooling tower draw
+- Routes recompute only when topology changes (build, sell, explosion) — a parallel relay is a failover, not load-sharing
+- Failure cascades are reroute-driven: a dying relay dumps its flows onto survivors, whose fuses start burning — cascade speed equals decision speed
+
 ## Energy transmission
 
 - Each relay hop loses a percentage of the energy transmitted (e.g. -5% per hop)
@@ -261,7 +281,8 @@ There are 2 ways to cool down a generator:
   - Current stored energy
   - Goal
   - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
-  - Day/night forecast strip (drives solar output)
+  - Day/night forecast strip (drives solar output and global heat)
+  - Target vs actual output on ramping generators
 
 - When placing a structure, show:
   - Connection route
@@ -271,6 +292,7 @@ There are 2 ways to cool down a generator:
   - Cooling received
 
 - Micro must be doable under fire: 1-2 click actions, hotkeys, high-readability alarms
+- Audio: alarm/warning SFX are gameplay-critical (readability under fire); music is optional polish
 
 # Game Vision
 
@@ -314,6 +336,7 @@ A successful match should often end with the player reaching the goal while the 
 # Tech
 
 - Rendering: a canvas layer for the board (grid, cables, effects) + DOM for the HUD and menus
+- Persistence: localStorage (campaign progress, settings)
 
 # Open (tuning)
 
@@ -321,5 +344,8 @@ A successful match should often end with the player reaching the goal while the 
 - Upgrade caps and growth rates
 - Sell refund percentage
 - Obstacle demolition costs
-- Exact level count (target 10-20)
 - Generator/cooler connection reach (load-bearing: it bounds how far relay-free chains can sprawl)
+- Throttle ramp speed (and Gas's near-instant response time)
+- Ambient day/night heat multiplier curve (e.g. ×1.0 noon / ×0.5 night)
+- Race-tuning margin (goal ≈ 80-90% of measured practical max output)
+- Nuclear's stat row sums to −2 where every other generator sums to 0 — confirm intentional (apex output per cell, inefficient on paper) or rebalance
