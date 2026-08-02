@@ -53,15 +53,26 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Nuclear       | High   | Low      | High   | High   | Has a narrow safety margin                               |
 | Fusion        | XHigh  | High     | High   | XHigh  | Startup and shutdown cycles take a long time             |
 
-low cost / low output / low heat = solar
+low cost / low output / low heat = solar/geothermal
 low cost / low output / high heat = biomass
-low cost / high output / low heat = wind
-low cost / high output / high heat = 
+low cost / high output / low heat = wind/gas
+low cost / high output / high heat = oil
+high cost / low output / low heat = hydroelectric
+high cost / low output / high heat = coal
+high cost / high output / low heat = nuclear
+high cost / high output / high heat = fusion
 
-high cost / low output / low heat = 
-high cost / low output / high heat = 
-high cost / high output / low heat = 
-high cost / high output / high heat = 
+| Combination                         | Generator             |
+| ----------------------------------- | --------------------- |
+| Low cost / Low output / Low heat    | Solar                 |
+| Low cost / Low output / High heat   | Biomass               |
+| Low cost / High output / Low heat   | Wind                  |
+| Low cost / High output / High heat  | Gas                   |
+| High cost / Low output / Low heat   | Geothermal            |
+| High cost / Low output / High heat  | Oil                   |
+| High cost / High output / Low heat  | Hydroelectric         |
+| High cost / High output / High heat | Coal, Nuclear, Fusion |
+
 
 | Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
 | ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
@@ -78,6 +89,42 @@ high cost / high output / high heat =
 
 | Nuclear       |      4 |        1 |    1 |    4 |                               0 |
 | Fusion        |      5 |        4 |    4 |    5 |                               0 |
+
+
+| Generator     | Cost   | Output | Heat   |
+| ------------- | ------ | ------ | ------ |
+| *Solar         | Low    | Low    | Low    |
+| *Wind          | Medium | Medium | Low    |
+| *Biomass       | Medium | Medium | High   |
+
+| *Gas           | Low    | High   | High   |
+| *Oil           | Medium | Medium | High   |
+| *Geothermal    | High   | Medium | Medium |
+
+| Coal          | High   | High   | High   |
+| Hydroelectric | High   | High   | Low    |
+| Nuclear       | High   | High   | High   |
+
+| Fusion        | High   | High   | High   |
+
+
+
+| Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
+| ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
+| Solar         |      1 |        1 |    1 |    1 |                               0 |
+| Biomass       |      2 |        1 |    2 |    1 |                               0 |
+| Wind          |      1 |        2 |    1 |    2 |                               0 |
+
+| Oil           |      2 |        2 |    2 |    2 |                               0 |
+| Gas           |      3 |        2 |    3 |    2 |                               0 |
+| Geothermal    |      2 |        3 |    2 |    3 |                               0 |
+
+| Coal          |      3 |        3 |    3 |    3 |                               0 |
+| Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
+
+| Nuclear       |      4 |        1 |    1 |    4 |                               0 |
+| Fusion        |      5 |        4 |    4 |    5 |                               0 |
+
 
 ## Actions
 
