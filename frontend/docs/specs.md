@@ -21,7 +21,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 
 - Win: the moment stored energy reaches the goal
 - Lose: the timer expires (the only hard loss condition)
-- Difficulty is race-tuned: each level's goal/timer demands ~80-90% of the map's practical max output sustained for most of the match, so idling at safe throttle mathematically loses
+- Difficulty is race-tuned: each level's goal/timer demands ~80-90% of the map's practical max output sustained for most of the match, so idling safe mathematically loses
 - No fast-forward: race tuning leaves no dead time to skip
 - Match length ramps across the campaign: ~5 minutes early to ~12-15 minutes late
 - Grid collapse is emergent, not scripted: at 0⚡ stored, cooling towers starve and shut off, heat rises, generators start dying
@@ -124,7 +124,6 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - Upgrade
 - Turn off (takes time)
 - Turn on (takes time)
-- Throttle
 - Vent
 
 # Other structures
@@ -232,17 +231,6 @@ There are 2 ways to cool down a generator:
   - Produces no energy while offline
   - It takes time to turn off and turn on again
 
-## Throttle
-
-- Stepped control: output adjustable in 20% jumps, from 0% to 100%
-- Ramped response: actual output moves toward the set throttle over several seconds — Gas alone responds near-instantly (its perk); the HUD shows target vs actual
-- Pre-emptive throttling ahead of the day peak is the intended skill — the forecast strip exists to enable it
-- Pros
-  - Slows or reverses heat buildup
-- Cons
-  - Produces less energy while throttled
-  - Heat drops slowly
-
 ## Venting
 
 - Pros
@@ -282,7 +270,6 @@ There are 2 ways to cool down a generator:
   - Goal
   - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
   - Day/night forecast strip (drives solar output and global heat)
-  - Target vs actual output on ramping generators
 
 - When placing a structure, show:
   - Connection route
@@ -309,7 +296,7 @@ Producing more energy brings the player closer to victory, but also creates more
 ## Design Pillars
 
 - **Strategic placement:** resources, obstacles, cooling coverage, and relay range make every cell matter.
-- **Real-time heat management:** generators require frequent throttling, shutdowns, or venting.
+- **Real-time heat management:** generators require frequent shutdowns or venting.
 - **Risky reinvestment:** energy is both the victory objective and the currency used to expand.
 - **Readable systems:** pressure should come from difficult choices, not hidden information.
 - **Logistics failure, not spectacle:** failure spreads through the network, never through blast chains, and is always recoverable by rebuilding.
@@ -340,12 +327,8 @@ A successful match should often end with the player reaching the goal while the 
 
 # Open (tuning)
 
-- All numeric values in the tables
 - Upgrade caps and growth rates
 - Sell refund percentage
 - Obstacle demolition costs
-- Generator/cooler connection reach (load-bearing: it bounds how far relay-free chains can sprawl)
-- Throttle ramp speed (and Gas's near-instant response time)
 - Ambient day/night heat multiplier curve (e.g. ×1.0 noon / ×0.5 night)
 - Race-tuning margin (goal ≈ 80-90% of measured practical max output)
-- Nuclear's stat row sums to −2 where every other generator sums to 0 — confirm intentional (apex output per cell, inefficient on paper) or rebalance
