@@ -45,12 +45,15 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Solar         | Low    | Low      | Low    | Low    | Output varies over time                                  |
 | Wind          | Low    | Medium   | Low    | Medium | Nearby obstacles reduce its output                       |
 | Biomass       | Low    | Medium   | Medium | Low    |                                                          |
-| Coal          | Medium | High     | High   | Low    | Heats up quickly                                         |
+
+| Coal          | Medium | High     | High   | Medium | Heats up quickly                                         |
+| Geothermal    | Medium | High     | Medium | High   | Produces more output when adjacent cells are empty       |
 | Gas           | Medium | Medium   | Medium | Medium | Can rapidly adjust its output                            |
-| Geothermal    | Medium | High     | Medium | Medium | Produces more output when adjacent cells are empty       |
+
 | Oil           | High   | High     | High   | Medium | Venting costs are more expensive                         |
 | Hydroelectric | High   | High     | Low    | High   | Output increases with the number of adjacent water tiles |
 | Nuclear       | High   | Low      | High   | High   | Has a narrow safety margin                               |
+
 | Fusion        | XHigh  | High     | High   | High   | Startup and shutdown cycles take a long time             |
 
 ## Actions
