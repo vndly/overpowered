@@ -241,6 +241,8 @@ There are 2 ways to cool down a generator:
 # Connections
 
 - Generators and cooling towers connect automatically to accumulators/relays if in reach
+- Connectivity chains through generators: a structure in reach of a connected generator is itself connected (e.g. relay ← A ← B: B is on the network through A)
+- Chained links are free: no hop loss and no capacity limit — but the whole chain's flow still loads the relay that connects it to the network
 - Obstacles block connections
 - If two structures are connected, they can transmit energy between them (a cable is drawn between them)
 - A generator needs to be connected to an accumulator in order for its energy to count towards the global counter
@@ -320,3 +322,4 @@ A successful match should often end with the player reaching the goal while the 
 - Sell refund percentage
 - Obstacle demolition costs
 - Exact level count (target 10-20)
+- Generator/cooler connection reach (load-bearing: it bounds how far relay-free chains can sprawl)
