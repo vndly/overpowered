@@ -221,6 +221,13 @@ Two options:
   - Goal
   - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
 
+- When placing a generator, show:
+  - Connection route
+  - Delivered output
+  - Relay load after placement
+  - Nearby heat penalty
+  - Cooling received
+
 # Questions
 
 - Square or hexagonal grid?
