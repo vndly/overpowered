@@ -88,6 +88,27 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Throttle
 - Vent
 
+# Other structures
+
+## Cooling Tower
+
+- Reduces the heat in a radius
+- They consume energy constantly
+- Can be upgraded
+  - Range
+  - Effectiveness
+
+## Relay
+
+- Connects cables and generators (nodes)
+- They can be overloaded
+- They need to be upgraded to support more energy going through
+
+## Accumulator
+
+- Collects the global energy generated
+- News ones can be built but they are very expensive
+
 # Mechanics
 
 ## Heating
@@ -128,11 +149,11 @@ There are 2 ways to cool down a generator:
 
 # Connections
 
-- generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
-- generators connect automatically to the relays in reach (showing a cable)
-- they only connect to the one that offers the shortest path
-- the user only places generators and relays. Never cables
-- cables have a maximum distance, the player needs to add more relays to connect long distances
+- Generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
+- Generators connect automatically to the relays in reach (showing a cable)
+- They only connect to the one that offers the shortest path
+- The user only places generators and relays. Never cables
+- Cables have a maximum distance, the player needs to add more relays to connect long distances
 
 # Match flow
 
@@ -146,12 +167,6 @@ There are 2 ways to cool down a generator:
 - energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
 - obstacles block cables
 - if a generator is not connected to the accumulator, it cannot dissipate the energy it produces so it overheats faster
-
-- other structures:
-  - cooling structures: reduce the heat in a radius. the consume energy constantly. can be upgraded (in each attribute: range, effectiveness, etc)
-  - maintenance hub: slows degradation nearby. the consume energy constantly. can be upgraded
-  - connectors/relay: connect cables and generators (nodes). they can be overloaded. they need to be upgraded to support more energy going through
-  - accumulator: collects the energy generated (they cost a lot of money so users don't abuse)
 
 ---
 
