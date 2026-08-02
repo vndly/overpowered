@@ -1,3 +1,5 @@
+# Overpowered
+
 A real-time grid-based strategy game where you must generate enough energy before time runs out without pushing your power grid into overload.
 
 # Characteristics
@@ -50,6 +52,15 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Nuclear       | Extremely productive                  | Dangerous and expensive                   |
 | Fusion        | Massive late-game output              | Extremely expensive and difficult to cool |
 
+## Actions
+
+- Build generators
+- Upgrade level
+- Shut down (takes time)
+- Turn on (takes time)
+- Throttle
+- Vent
+
 # Mechanics
 
 ## Heat
@@ -58,25 +69,24 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - if a generator overheats, it explodes, damaging nearby structures
 - obstacles can be taken down (it costs money) to make room for structures
 
-| Action                | Benefit                        | Cost                 |
-| --------------------- | ------------------------------ | -------------------- |
-| **Shut down**         | Strong, heat drops quickly     | Produces no energy   |
-| **Throttle**          | Slows or reverses heat buildup | Produces less energy |
-| **Emergency cooling** | Instantly removes heat         | Costs stored energy  |
+## Cooling
+
+- place a cooling structure close to the generator
+- shut it down temporarily. it reduces its heat while offline
+- throttle: lowers output and heat generation
+- use money to cool it down instantly
+
+| Action        | Benefit                        | Cost                 |
+| ------------- | ------------------------------ | -------------------- |
+| **Shut down** | Strong, heat drops quickly     | Produces no energy   |
+| **Throttle**  | Slows or reverses heat buildup | Produces less energy |
+| **Vent**      | Instantly removes heat         | Costs stored energy  |
 
 ---
 
 Match flow - players start with some small amount of energy to start building - player can decide where to install the accumulator - show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
 
 ---
-
-heat:
-
-- cooling:
-  - place a cooling structure close to the generator
-  - shut it down temporarily. it reduces its heat while offline
-  - throttle: lowers output and heat generation
-  - use money to cool it down instantly
 
 - connections:
   - generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
