@@ -109,25 +109,21 @@ high cost / high output / high heat = fusion
 
 
 
-| Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
-| ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
-| Solar         |      1 |        1 |    1 |    1 |                               0 | normal cost / normal stable
-| Wind          |      1 |        2 |    1 |    2 |                               0 | high cost / high stable
-| Biomass       |      2 |        1 |    2 |    1 |                               0 | low cost / low stable
+| Generator     | Cost | Output | Max Temp | Heat | Total |
+| ------------- | ---: | -----: | -------: | ---: | ----: |
+| Solar         |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable
+| Wind          |    2 |      1 |        2 |    1 |     0 | high cost / high stable
+| Biomass       |    1 |      2 |        1 |    2 |     0 | low cost / low stable
 
-| Gas           |      2 |        2 |    2 |    2 |                               0 | normal cost / normal stable
-| Geothermal    |      2 |        3 |    2 |    3 |                               0 | high cost / high stable
-| Coal          |      3 |        2 |    3 |    2 |                               0 | low cost / low stable
+| Gas           |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable
+| Geothermal    |    3 |      2 |        3 |    2 |     0 | high cost / high stable
+| Coal          |    2 |      3 |        2 |    3 |     0 | low cost / low stable
 
-| Coal          |      3 |        3 |    3 |    3 |                               0 | normal cost / stable
-| Hydroelectric |      3 |        4 |    3 |    4 |                               0 | high cost / stable
-| Nuclear       |      4 |        1 |    1 |    4 |                               0 | low cost / unstable
+| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / stable
+| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / stable
+| Nuclear       |    4 |      4 |        1 |    1 |     0 | low cost / unstable
 
-| Coal          |      3 |        3 |    3 |    3 |                               0 |
-| Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
-| Nuclear       |      4 |        1 |    1 |    4 |                               0 |
-
-| Fusion        |      5 |        4 |    4 |    5 |                               0 |
+| Fusion        |    5 |      5 |        4 |    4 |     0 |
 
 
 ## Actions
