@@ -205,8 +205,10 @@ There are 2 ways to cool down a generator:
 
 ## Energy transmission
 
-- Add energy transmission loss or only count jumps? If energy is lost by distance, adding more relays fixes the problem
-- energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
+Two options:
+
+1. Some energy is lost for each jump between relays (e.g. 1⚡ per jump)
+2. Some energy is lost for each cell the energy travels through (e.g. 1⚡ per cell)
 
 # UI
 
