@@ -142,6 +142,7 @@ There are 2 ways to cool down a generator:
   - Slows or reverses heat buildup
 - Cons
   - Produces less energy while throttled
+  - Heat drops slowly
 
 ### Venting
 
