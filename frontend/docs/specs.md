@@ -141,5 +141,6 @@ Match flow - players start with some small amount of energy to start building - 
 
 - i want the player to feel tension. it's not a chill slow pace game. i want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
 - core emotional arc: control → growth → pressure → overload → desperate stabilization
+- Generator controls solve immediate problems; cooling buildings solve spatial, long-term problems.
 - central conflict: energy production versus system stability.
 - Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter
