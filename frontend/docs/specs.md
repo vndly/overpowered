@@ -4,16 +4,11 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 # Characteristics
 
-- The goal is to generate a certain amount of energy in a certain amount of time
 - To generate energy, the player must build generators
 - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
 - Buying and improving generators cost energy
 - Energy is the main and only currency of the game (e.g. 100⚡)
-- Generators can be sold at a lower cost
-- The player needs to balance the energy generated with the energy spent to reach the goal on time
-
 - A player starts with a small amount of energy to start building
-- A player decides where to install the accumulator
 
 # Grid
 
@@ -37,6 +32,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Type (see #types-of-generators)
 - Cost
   - How much energy it takes to build it (e.g. 50⚡)
+  - Can be sold at a lower cost
 - Level
   - From 1 (when it's built)
   - Each increase costs energy (exponential growth)
@@ -112,6 +108,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Accumulator
 
+- A free accumulator is placed at the start of the game
 - Collects the global energy generated
 - New ones can be built but they are very expensive
 
@@ -196,3 +193,4 @@ There are 2 ways to cool down a generator:
 - central conflict: energy production versus system stability.
 - Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter
 - are there similar games?
+- The player needs to balance the energy generated with the energy spent to reach the goal on time
