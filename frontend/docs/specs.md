@@ -128,7 +128,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ## Relay
 
 - Connects structures between them to transmit energy
-- They can be overloaded, if so, they explode, damaging nearby structures
+- They can be overloaded, if so, they explode
 - They need to be upgraded to support more energy going through
 
 ### Properties
@@ -139,16 +139,18 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - Can be sold at a lower cost
 - Distance
   - The maximum distance it can connect to another structure (e.g. 3 cells)
-- Capacity
+- Max capacity
   - The maximum amount of energy it can transmit per minute (e.g. 100⚡/m)
+- Current capacity
+  - The current amount of energy it is transmitting per minute (e.g. 50⚡/m)
 
 ### Types of relays
 
-| Name         | Cost | Distance | Capacity |
-| ------------ | ---: | -------: | -------: |
-| Basic        | 10⚡ |        3 |  300⚡/m |
-| Intermediate | 15⚡ |        4 |  400⚡/m |
-| Advanced     | 20⚡ |        5 |  500⚡/m |
+| Name         | Cost | Distance | Max capacity |
+| ------------ | ---: | -------: | -----------: |
+| Basic        | 10⚡ |        3 |      300⚡/m |
+| Intermediate | 15⚡ |        4 |      400⚡/m |
+| Advanced     | 20⚡ |        5 |      500⚡/m |
 
 ## Accumulator
 
@@ -163,7 +165,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - Orthogonally: +10% heat generation to all generations (up, down, left, right)
   - Diagonally: +5% heat generation to all generations (top-left, top-right, bottom-left, bottom-right)
 - If a generator is not connected to an accumulator, it cannot dissipate the energy it produces, so it overheats faster
-- If a generator overheats, it explodes, damaging nearby structures
+- If a generator overheats, it explodes
 
 # Cooling
 
