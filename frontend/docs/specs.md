@@ -46,17 +46,17 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - cost: low, high
   - max temperature: low, high
 
-| Generator     | Advantage                             | Disadvantage                              |
-| ------------- | ------------------------------------- | ----------------------------------------- |
-| Solar         | Requires no maintenance               | Output varies over time                   |
-| Wind          | Efficient and low-maintenance         | Blocked by nearby obstacles               |
-| Coal          | Cheap and reliable                    | Produces high heat                        |
-| Gas           | Starts quickly and is easy to control | Expensive to operate                      |
-| Oil           | High output from a compact footprint  | Degrades quickly and produces heavy heat  |
-| Geothermal    | Provides stable output                | Requires adjacent empty tiles             |
-| Hydroelectric | High, stable output                   | Requires water tiles or map edges         |
-| Nuclear       | Extremely productive                  | Dangerous and expensive                   |
-| Fusion        | Massive late-game output              | Extremely expensive and difficult to cool |
+| Generator     | Output | Heat | Cost | Max Temperature | Notes                                                 |
+| ------------- | ------ | ---- | ---- | --------------- | ----------------------------------------------------- |
+| Solar         | Low    | Low  | Low  | Low             | Output varies over time                               |
+| Wind          | Low    | Low  | Low  | Low             | Blocked by nearby obstacles                           |
+| Coal          | High   | High | Low  | High            |                                                       |
+| Gas           | High   | Low  | High | Low             |                                                       |
+| Oil           | High   | High | High | High            |                                                       |
+| Geothermal    | High   | High | High | High            | If adjacent cells are empty, it produdces more output |
+| Hydroelectric | High   | Low  | High | High            |                                                       |
+| Nuclear       | High   | High | High | Low             |                                                       |
+| Fusion        | High   | High | High | High            | Turn off and on cycles are very long                  |
 
 ## Actions
 
