@@ -111,6 +111,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Effectiveness
   - The amount of cooling provided per minute (e.g. -10°C/m)
   - It increases with each level upgrade (e.g. -10°C/m → -15°C/m)
+  - Its effective is shared with all generators in its radius
 - Consumption
   - How much energy it consumes per minute (e.g. 10⚡/m)
   - It increases with each level upgrade (e.g. 10⚡/m → 15⚡/m)
@@ -159,6 +160,8 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 - Each generator produces heat over time (e.g. 5°C/m)
 - Heat spreads to adjacent generators
+  - Orthogonally: +10% heat generation to all generations (up, down, left, right)
+  - Diagonally: +5% heat generation to all generations (top-left, top-right, bottom-left, bottom-right)
 - If a generator is not connected to an accumulator, it cannot dissipate the energy it produces, so it overheats faster
 - If a generator overheats, it explodes, damaging nearby structures
 
