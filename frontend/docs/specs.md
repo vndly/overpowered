@@ -11,6 +11,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - Resource
     - Only generators can be built on them
     - They can never be depleted
+    - A cell can contain multiple resources (e.g. coal + water)
   - Obstacle
     - Examples: rock/wall/water/etc
     - Nothing can be built on them
@@ -89,7 +90,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 # Mechanics
 
-## Heat
+## Heating
 
 - Each generator produces heat over time (e.g. 5°C/m)
 - Heat spreads to adjacent generators
@@ -97,7 +98,10 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Cooling
 
-- place a cooling structure close to the generator
+There are 2 ways to cool down a generator:
+
+1. Place a cooling structure close to the generator
+2. Use the generator's own controls
 
 ### Shut down
 
@@ -122,18 +126,21 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - It costs energy proportionally to the level of the generator (e.g. 10% of the energy output)
   - Becomes more expensive with repeated use
 
+# Connections
+
+- generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
+- generators connect automatically to the relays in reach (showing a cable)
+- they only connect to the one that offers the shortest path
+- the user only places generators and relays. Never cables
+- cables have a maximum distance, the player needs to add more relays to connect long distances
+
+# Match flow
+
+- A player starts with a small amount of energy to start building
+- A player decides where to install the accumulator
+- Show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
+
 ---
-
-Match flow - players start with some small amount of energy to start building - player can decide where to install the accumulator - show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
-
----
-
-- connections:
-  - generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
-  - generators connect automatically to the relays in reach (showing a cable)
-  - they only connect to the one that offers the shortest path
-  - the user only places generators and relays. Never cables
-  - cables have a maximum distance, the player needs to add more relays to connect long distances
 
 - a generator needs to be connected to the accumulator in order to its energy to count to the goal
 - energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
