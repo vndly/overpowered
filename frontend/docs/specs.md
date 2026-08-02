@@ -7,8 +7,8 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Rectangular grid based (e.g. 10x10)
 - The grid has different type of cells
   - Empty (only relays and accumulators can be built on them)
-  - Resource (only generators can be build on them)
-  - Obstacle (e.g. a rock/wall/water/etc) (nothing can be build on them)
+  - Resource (only generators can be built on them. they can never be depleted)
+  - Obstacle (e.g. a rock/wall/water/etc) (nothing can be built on them)
 - The goal is to generate certain amount of energy in certain amount of time
 - To generate energy, the player must build generators
 - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
@@ -28,7 +28,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - From 1 (when it's built)
   - Each increase costs energy (exponential growth)
 - Max temperature
-  - The maxium temperature the generator can withstand before it metlsdown (e.g. 100°C)
+  - The maximum temperature the generator can withstand before it melts down (e.g. 100°C)
 - Current temperature
   - From 0°C (coolest) to "max temperature" (hottest)
 - Output
@@ -46,8 +46,8 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Wind          | Medium | Low    | Medium | Medium          | Nearby obstacles reduce its output                       |
 | Coal          | Medium | High   | Low    | High            | Heats up quickly                                         |
 | Gas           | Medium | Medium | Medium | Medium          | Can rapidly adjust its output                            |
-| Oil           | High   | High   | Medium | High            | Vensting costs are more expensive                        |
 | Geothermal    | Medium | Medium | Medium | High            | Produces more output when adjacent cells are empty       |
+| Oil           | High   | High   | Medium | High            | Vensting costs are more expensive                        |
 | Hydroelectric | High   | Low    | High   | High            | Output increases with the number of adjacent water tiles |
 | Nuclear       | High   | High   | High   | Low             | Has a narrow safety margin                               |
 | Fusion        | High   | High   | High   | High            | Startup and shutdown cycles take a long time             |
