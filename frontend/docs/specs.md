@@ -72,15 +72,29 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ## Cooling
 
 - place a cooling structure close to the generator
-- shut it down temporarily. it reduces its heat while offline
-- throttle: lowers output and heat generation
-- use money to cool it down instantly
 
-| Action        | Benefit                        | Cost                 |
-| ------------- | ------------------------------ | -------------------- |
-| **Shut down** | Strong, heat drops quickly     | Produces no energy   |
-| **Throttle**  | Slows or reverses heat buildup | Produces less energy |
-| **Vent**      | Instantly removes heat         | Costs stored energy  |
+### Shut down
+
+- Pros
+  - Heat drops quickly
+- Cons
+  - Produces no energy while offline
+  - It takes time to turn off and turn on again
+
+### Throttle
+
+- Pros
+  - Slows or reverses heat buildup
+- Cons
+  - Produces less energy while throttled
+
+### Venting
+
+- Pros
+  - Instantly removes heat
+- Cons
+  - It costs energy proportionally to the level of the generator (e.g. 10% of the energy output)
+  - There is a cooldown time before it can be used again
 
 ---
 
