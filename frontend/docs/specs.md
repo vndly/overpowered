@@ -40,91 +40,37 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Types of generators
 
-| Generator     | Output | Max Temp | Heat   | Cost   | Notes                                                    |
-| ------------- | ------ | -------- | ------ | ------ | -------------------------------------------------------- |
-| Solar         | Low    | Low      | Low    | Low    | Output varies over time                                  |
-| Wind          | Low    | Medium   | Low    | Medium | Nearby obstacles reduce its output                       |
-| Biomass       | Low    | Medium   | Medium | Low    |                                                          |
-| Coal          | Medium | High     | High   | Medium | Heats up quickly                                         |
-| Geothermal    | Medium | High     | Medium | High   | Produces more output when adjacent cells are empty       |
-| Gas           | Medium | Medium   | Medium | Medium | Can rapidly adjust its output                            |
-| Oil           | High   | High     | High   | Medium | Venting costs are more expensive                         |
-| Hydroelectric | High   | High     | Low    | High   | Output increases with the number of adjacent water tiles |
-| Nuclear       | High   | Low      | High   | High   | Has a narrow safety margin                               |
-| Fusion        | XHigh  | High     | High   | XHigh  | Startup and shutdown cycles take a long time             |
+### Tier 1
 
-low cost / low output / low heat = solar/geothermal
-low cost / low output / high heat = biomass
-low cost / high output / low heat = wind/gas
-low cost / high output / high heat = oil
-high cost / low output / low heat = hydroelectric
-high cost / low output / high heat = coal
-high cost / high output / low heat = nuclear
-high cost / high output / high heat = fusion
+| Generator | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                              |
+| --------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ---------------------------------- |
+| Solar     |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable | Output varies over time            |
+| Wind      |    2 |      1 |        2 |    1 |     0 | high cost / high stable     | Nearby obstacles reduce its output |
+| Biomass   |    1 |      2 |        1 |    2 |     0 | low cost / low stable       |
 
-| Combination                         | Generator             |
-| ----------------------------------- | --------------------- |
-| Low cost / Low output / Low heat    | Solar                 |
-| Low cost / Low output / High heat   | Biomass               |
-| Low cost / High output / Low heat   | Wind                  |
-| Low cost / High output / High heat  | Gas                   |
-| High cost / Low output / Low heat   | Geothermal            |
-| High cost / Low output / High heat  | Oil                   |
-| High cost / High output / Low heat  | Hydroelectric         |
-| High cost / High output / High heat | Coal, Nuclear, Fusion |
+### Tier 2
 
+| Generator  | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                                              |
+| ---------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | -------------------------------------------------- |
+| Oil        |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable | Venting costs are more expensive                   |
+| Geothermal |    3 |      2 |        3 |    2 |     0 | high cost / high stable     | Produces more output when adjacent cells are empty |
+| Gas        |    2 |      3 |        2 |    3 |     0 | low cost / low stable       | Can rapidly adjust its output                      |
 
-| Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
-| ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
-| Solar         |      1 |        1 |    1 |    1 |                               0 |
-| Biomass       |      1 |        2 |    2 |    1 |                               0 |
-| Wind          |      1 |        2 |    1 |    2 |                               0 |
+### Tier 3
 
-| Coal          |      2 |        3 |    3 |    2 |                               0 |
-| Geothermal    |      2 |        3 |    2 |    3 |                               0 |
-| Gas           |      2 |        2 |    2 |    2 |                               0 |
+| Generator     | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                                      |
+| ------------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ------------------------------------------ |
+| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / normal stable |                                            |
+| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / high stable     | Output increases with adjacent water tiles |
+| Nuclear       |    5 |      4 |        2 |    3 |     0 | high cost / low stable      | Has a narrow safety margin                 |
 
-| Oil           |      3 |        3 |    3 |    3 |                               0 |
-| Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
+### Legend
 
-| Nuclear       |      4 |        1 |    1 |    4 |                               0 |
-| Fusion        |      5 |        4 |    4 |    5 |                               0 |
-
-
-| Generator     | Cost   | Output | Heat   |
-| ------------- | ------ | ------ | ------ |
-| *Solar         | Low    | Low    | Low    |
-| *Wind          | Medium | Medium | Low    |
-| *Biomass       | Medium | Medium | High   |
-
-| *Gas           | Low    | High   | High   |
-| *Oil           | Medium | Medium | High   |
-| *Geothermal    | High   | Medium | Medium |
-
-| Coal          | High   | High   | High   |
-| Hydroelectric | High   | High   | Low    |
-| Nuclear       | High   | High   | High   |
-
-| Fusion        | High   | High   | High   |
-
-
-
-| Generator     | Cost | Output | Max Temp | Heat | Total |
-| ------------- | ---: | -----: | -------: | ---: | ----: |
-| Solar         |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable
-| Wind          |    2 |      1 |        2 |    1 |     0 | high cost / high stable
-| Biomass       |    1 |      2 |        1 |    2 |     0 | low cost / low stable
-
-| Oil           |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable
-| Geothermal    |    3 |      2 |        3 |    2 |     0 | high cost / high stable
-| Gas           |    2 |      3 |        2 |    3 |     0 | low cost / low stable
-
-| Coal          |    3 |      3 |        3 |    3 |     0 | normal cost / normal stable
-| Hydroelectric |    4 |      3 |        4 |    3 |     0 | high cost / high stable
-
-| Nuclear       |    5 |      4 |        2 |    3 |     0 | high cost / low stable
-| Fusion        |    6 |      5 |        2 |    4 |     0 | high cost / low stable
-
+1 = very low
+2 = low
+3 = medium
+4 = high
+5 = very high
 
 ## Actions
 
@@ -204,6 +150,7 @@ Match flow - players start with some small amount of energy to start building - 
   - can relays overheat or get damaged?
   - add energy transmition loss or only count jumps? if energy lost by distance, adding more relays fixes the problem
   - add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
+  - should the player buy new generator tiers?
 
 - future
   - add overclocing to generators (e.g. a generator can be upgraded to produce more energy but it will overheat faster)
