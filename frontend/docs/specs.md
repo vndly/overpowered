@@ -183,7 +183,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
   - How much energy it takes to build it (e.g. 10⚡)
   - Can be sold at a lower cost
 - Distance
-  - The maximum distance it can connect to another structure (e.g. 3 cells)
+  - The maximum distance it can connect to another structure (e.g. 3 cells), counted along its row and its column only (see #connections)
 - Max capacity
   - The maximum amount of energy it can transmit per minute (e.g. 100⚡/m)
 - Current capacity
@@ -212,6 +212,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
   - Orthogonally: +10% heat generation to all generators (up, down, left, right)
   - Diagonally: +5% heat generation to all generators (top-left, top-right, bottom-left, bottom-right)
   - Tuning note: these percentages must be strong enough to make compact building genuinely risky
+  - Diagonal neighbours are never connected (see #connections), so diagonal packing costs heat and buys nothing — the only packing that earns its heat is an orthogonal chain
 - If a generator is not connected to an accumulator, it cannot dissipate the energy it produces, so it overheats faster
 - If a generator overheats, it explodes
   - An explosion destroys only the generator; the cell (and its resources) remains buildable
@@ -243,15 +244,17 @@ There are 2 ways to cool down a generator:
 # Connections
 
 - Generators and cooling towers connect automatically to accumulators/relays if in reach
-- Reach is 1 cell for generators, cooling towers and accumulators — the 8 surrounding cells. Only relays reach further (see #types-of-relays)
+- Connections are orthogonal only: reach is counted along the row and the column, never diagonally. A diagonal neighbour is never connected, at any distance, and no cable ever runs diagonally
+- Reach is 1 cell for generators, cooling towers and accumulators — the 4 orthogonal neighbours. Only relays reach further (see #types-of-relays)
+- A relay's reach is therefore a cross, not a square: turning a corner costs another relay, so a long haul is expensive in relays and in hops, not just in distance
 - Connectivity chains through generators: a structure in reach of a connected generator is itself connected (e.g. relay ← A ← B: B is on the network through A)
 - Chained links are free: no hop loss and no capacity limit — but the whole chain's flow still loads the relay that connects it to the network
-- Because reach is 1, a chain is a line of mutually adjacent generators, so every link is subject to the adjacency heat spread (see #heating). Chains still transmit at no energy loss — they simply run hot. Relays run cool but cost energy and lose a percentage per hop. That heat-versus-loss trade is what keeps relays worth paying for
+- Because reach is 1 and orthogonal, a chain is a line of orthogonally adjacent generators, so every link pays the full +10% adjacency heat spread (see #heating) — the diagonal +5% rate is never available to a chain. Chains still transmit at no energy loss — they simply run hot. Relays run cool but cost energy and lose a percentage per hop. That heat-versus-loss trade is what keeps relays worth paying for
 - Obstacles block connections
 - If two structures are connected, they can transmit energy between them (a cable is drawn between them)
 - A generator needs to be connected to an accumulator in order for its energy to count towards the global counter
 - The player only places structures (generators, cooling towers, accumulators, relays), never cables
-- Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
+- Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances, and one more at every corner)
 
 ## Routing
 

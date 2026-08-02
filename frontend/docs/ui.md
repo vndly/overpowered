@@ -205,8 +205,10 @@ stack into a second row. No numerals appear on a cell at any size.
 
 ## Cables
 
-- Drawn centre to centre as straight hairlines, diagonals included. The line
-  drawn is the logical link — there is no routing or detouring.
+- Drawn centre to centre as straight hairlines. Connections are orthogonal only,
+  so every cable is a horizontal or vertical run and a diagonal never appears on
+  the board. The line drawn is the logical link — there is no routing or
+  detouring.
 - **Idle or unrouted:** `ink-dim` at low opacity. **Carrying flow:** `energy`.
 - **Stroke weight scales with the energy on that segment**, 1.0px to 4.0px
   device-independent, mapped against the segment's capacity. Relay load becomes
@@ -277,7 +279,7 @@ tooltips or popovers anywhere in the game.
 nothing may overlap the board:
 
 **Drawn on the board** (ghost layer): the ghost glyph in its legal or illegal
-state, the connection route to the accumulator, the relay reach ring, the
+state, the connection route to the accumulator, the relay reach cross, the
 cooling radius, and an outline on every neighbour that will gain heat.
 
 **Rendered in the rail** (numeric): cost and resulting balance, delivered output
@@ -375,7 +377,7 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 |     5 | off / transitioning states, vent action and its cost readout                                                     |
 |     6 | forecast strip, Solar and Wind glyphs                                                                            |
 |     7 | main menu, level select, locked rows                                                                             |
-|     8 | relay glyphs, reach ring, route ghost, load ring, cable weight, load-after-placement line                        |
+|     8 | relay glyphs, reach cross, route ghost, load ring, cable weight, load-after-placement line                       |
 |     9 | tower glyphs, radius ring, cooling-received line, starvation ring                                                |
 | 10-11 | six remaining generator glyphs                                                                                   |
 |    12 | nothing new                                                                                                      |
@@ -395,6 +397,6 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 7. One bundled variable font with tabular figures, rather than a system stack
    that would look accidental on two platforms out of three.
 8. Achromatic terrain, so the strategic map costs nothing from the state palette.
-9. Straight chords with weight encoding flow, so cascades are visible.
+9. Straight orthogonal runs with weight encoding flow, so cascades are visible.
 10. Simulation values tween from stage 1; only decoration waits for stage 13.
 11. One danger ladder shared by heat, relay load and starvation.

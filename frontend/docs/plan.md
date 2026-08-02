@@ -136,9 +136,9 @@ throwaway — the shell carries all thirteen stages.
 ## Stage 2 — Build, sell, connect
 
 Biomass only. Resource cells accept only their matching generator. The free
-accumulator is placed at start; generators auto-connect within 1 cell (the 8
-neighbours), chain through other connected generators, and obstacles block
-connections. Cables are drawn.
+accumulator is placed at start; generators auto-connect within 1 cell (the 4
+orthogonal neighbours), chain through other connected generators, and obstacles
+block connections. Cables are drawn.
 **A disconnected generator contributes nothing.** Income accrues to stored energy.
 Sell refunds at a lower rate.
 
@@ -272,16 +272,19 @@ final readability pass.
 
 Written into `docs/specs.md`, which stays the source of truth:
 
-- **Reach is 1 cell** for generators, cooling towers and accumulators — the 8
-  surrounding cells. Only relays reach further. The spec had given relays a
+- **Connections are orthogonal only.** Reach is counted along the row and the
+  column, never diagonally, so no cable ever runs diagonally and a relay's reach
+  is a cross rather than a square. Turning a corner costs another relay.
+- **Reach is 1 cell** for generators, cooling towers and accumulators — the 4
+  orthogonal neighbours. Only relays reach further. The spec had given relays a
   distance but never defined anyone else's, which stage 2 could not have been
   built without.
 - **Free chaining no longer dominates relays.** Chained links have no hop loss and
   no capacity limit, and routing counts only relay hops, so a chain reaching the
   accumulator directly used to cost nothing. Reach 1 closes it with a mechanic
-  that already exists: a chain is a line of mutually adjacent generators, so every
-  link is subject to the adjacency heat spread. Chains still transmit at no energy
-  loss — they run hot instead. Hop loss remains relay-only.
+  that already exists: a chain is a line of orthogonally adjacent generators, so
+  every link pays the full +10% adjacency heat spread. Chains still transmit at no
+  energy loss — they run hot instead. Hop loss remains relay-only.
 - **Solar and Wind build on empty cells.** Resource cells stay reserved for their
   matching generator.
 - **Gas keeps no special rule.** Its orphaned "rapidly adjust output" note is
