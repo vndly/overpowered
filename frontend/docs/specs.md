@@ -2,10 +2,9 @@
 
 A real-time grid-based strategy game where you must generate enough energy before time runs out without pushing your power grid into overload.
 
-# Characteristics
+# Summary
 
 - To generate energy, the player must build generators
-- Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
 - Buying and improving generators cost energy
 - Energy is the main and only currency of the game (e.g. 100⚡)
 - A player starts with a small amount of energy to start building
@@ -20,6 +19,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
     - Only generators can be built on them
     - They can never be depleted
     - A cell can contain multiple resources (e.g. coal + water)
+    - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
   - Obstacle
     - Examples: rock/wall/water/etc
     - Nothing can be built on them
