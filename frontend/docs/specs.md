@@ -152,9 +152,9 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Accumulator
 
-- A free accumulator is placed at the start of the game
 - Collects the global energy generated
 - New ones can be built but they are very expensive
+- A free accumulator is placed at the start of the game
 
 # Heating
 
@@ -168,7 +168,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 There are 2 ways to cool down a generator:
 
 1. Place a cooling structure close to the generator
-2. Use the generator's own controls
+2. Use the generator's own controls:
 
 ## Shut down
 
@@ -219,7 +219,6 @@ There are 2 ways to cool down a generator:
 # Questions
 
 - Square or hexagonal grid?
-- Add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
 - Should the player buy new generator tiers?
 
 # Future
@@ -230,7 +229,7 @@ There are 2 ways to cool down a generator:
 
 ---
 
-- i want the player to feel tension. it's not a chill slow pace game. i want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
+- I want the player to feel tension. It's not a chill slow pace game. I want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
 - core emotional arc: control → growth → pressure → overload → desperate stabilization
 - Generator controls solve immediate problems; cooling buildings solve spatial, long-term problems.
 - central conflict: energy production versus system stability.
