@@ -45,16 +45,29 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Solar         | Low    | Low      | Low    | Low    | Output varies over time                                  |
 | Wind          | Low    | Medium   | Low    | Medium | Nearby obstacles reduce its output                       |
 | Biomass       | Low    | Medium   | Medium | Low    |                                                          |
-
 | Coal          | Medium | High     | High   | Medium | Heats up quickly                                         |
 | Geothermal    | Medium | High     | Medium | High   | Produces more output when adjacent cells are empty       |
 | Gas           | Medium | Medium   | Medium | Medium | Can rapidly adjust its output                            |
-
 | Oil           | High   | High     | High   | Medium | Venting costs are more expensive                         |
 | Hydroelectric | High   | High     | Low    | High   | Output increases with the number of adjacent water tiles |
 | Nuclear       | High   | Low      | High   | High   | Has a narrow safety margin                               |
+| Fusion        | XHigh  | High     | High   | XHigh  | Startup and shutdown cycles take a long time             |
 
-| Fusion        | XHigh  | High     | High   | High   | Startup and shutdown cycles take a long time             |
+| Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
+| ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
+| Solar         |      1 |        1 |    1 |    1 |                               0 |
+| Wind          |      1 |        2 |    1 |    2 |                               0 |
+| Biomass       |      1 |        2 |    2 |    1 |                               0 |
+
+| Coal          |      2 |        3 |    3 |    2 |                               0 |
+| Geothermal    |      2 |        3 |    2 |    3 |                               0 |
+| Gas           |      2 |        2 |    2 |    2 |                               0 |
+
+| Oil           |      3 |        2 |    3 |    2 |                               0 |
+| Hydroelectric |      3 |        3 |    1 |    3 |                               2 |
+| Nuclear       |      3 |        1 |    1 |    3 |                               0 |
+
+| Fusion        |      4 |        4 |    4 |    4 |                               0 |
 
 ## Actions
 
