@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorTheme": "Dark+",
     "workbench.editor.enablePreview": false,
     "editor.minimap.enabled": false,
     "editor.insertSpaces": true,
@@ -9,8 +9,6 @@
     "editor.formatOnSave": true,
     "editor.fontFamily": "'Source Code Pro'",
     "files.autoSave": "afterDelay",
-    "typescript.updateImportsOnFileMove.enabled": "always",
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
     "eslint.enable": true,
     "eslint.validate": [
         "javascript",

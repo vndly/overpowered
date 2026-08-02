@@ -2,4 +2,4 @@
 
 set -e
 
-firebase deploy
+firebase deploy --only hosting
