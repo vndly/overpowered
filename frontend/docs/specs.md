@@ -4,6 +4,19 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 # Characteristics
 
+- The goal is to generate a certain amount of energy in a certain amount of time
+- To generate energy, the player must build generators
+- Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
+- Buying and improving generators cost energy
+- Energy is the main and only currency of the game (e.g. 100⚡)
+- Generators can be sold at a lower cost
+- The player needs to balance the energy generated with the energy spent to reach the goal on time
+
+- A player starts with a small amount of energy to start building
+- A player decides where to install the accumulator
+
+# Grid
+
 - Rectangular grid based (e.g. 10x10)
 - The grid has different type of cells
   - Empty
@@ -16,13 +29,6 @@ A real-time grid-based strategy game where you must generate enough energy befor
     - Examples: rock/wall/water/etc
     - Nothing can be built on them
     - They can be taken down (costs energy)
-- The goal is to generate certain amount of energy in certain amount of time
-- To generate energy, the player must build generators
-- Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
-- Buying and improving generators cost energy
-- Energy is the main and only currency of the game (e.g. 100⚡)
-- Generators can be sold at a lower cost
-- The player needs to balance the energy generated with the energy spent to reach the goal on time
 
 # Generators
 
@@ -107,7 +113,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ## Accumulator
 
 - Collects the global energy generated
-- News ones can be built but they are very expensive
+- New ones can be built but they are very expensive
 
 # Mechanics
 
@@ -159,25 +165,20 @@ There are 2 ways to cool down a generator:
 - The user only places generators and relays, never cables
 - Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
 
-# Match flow
-
-- A player starts with a small amount of energy to start building
-- A player decides where to install the accumulator
-- Show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
-
 ---
 
+- Can cables or relays be upgraded in order to extend the length of possible connections?
+- Can relays overheat or get damaged?
+- Add energy transmission loss or only count jumps? If energy is lost by distance, adding more relays fixes the problem
 - energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
 
----
+# UI
+
+- Show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
 
 # Questions
 
 - Square or hexagonal grid?
-- Connections
-  - Can cables or relays be upgraded in order to extend the length of possible connections?
-  - Can relays overheat or get damaged?
-    - Add energy transmission loss or only count jumps? If energy is lost by distance, adding more relays fixes the problem
 - Add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
 - Should the player buy new generator tiers?
 
