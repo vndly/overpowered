@@ -97,7 +97,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Reduces the heat of all generators in its radius (e.g. -10°C/m)
 - Consumes energy constantly (e.g. 10⚡/m)
 
-## Properties
+### Properties
 
 - Type (see #types-of-cooling-towers)
 - Cost
