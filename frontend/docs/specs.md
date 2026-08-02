@@ -100,29 +100,29 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ### Properties
 
 - Type (see #types-of-cooling-towers)
-- Cost
-  - How much energy it takes to build it (e.g. 50⚡)
-  - Can be sold at a lower cost
 - Level
   - From 1 (when it's built)
   - Each increase costs energy (exponential growth)
+- Cost
+  - How much energy it takes to build it (e.g. 50⚡)
+  - Can be sold at a lower cost
 - Radius
   - The radius of the area it cools (e.g. 1 cell)
-- Consumption
-  - How much energy it consumes per second (e.g. 10⚡/m)
-  - It increases with each level upgrade (e.g. 10⚡/m → 15⚡/m)
 - Effectiveness
   - The amount of cooling provided per second (e.g. -10°C/m)
   - It increases with each level upgrade (e.g. -10°C/m → -15°C/m)
+- Consumption
+  - How much energy it consumes per second (e.g. 10⚡/m)
+  - It increases with each level upgrade (e.g. 10⚡/m → 15⚡/m)
 
 ### Types of cooling towers
 
-| Name             | Radius | Effectiveness | Consumption |
-| ---------------- | ------ | ------------: | ----------: |
-| Ventilation Fan  | 1      |        -5°C/m |      10⚡/m |
-| Heat Sink        | 1      |       -10°C/m |      15⚡/m |
-| Radiator Array   | 2      |       -10°C/m |      20⚡/m |
-| Cryogenic Cooler | 2      |       -15°C/m |      25⚡/m |
+| Name             |  Cost | Radius | Effectiveness | Consumption |
+| ---------------- | ----: | ------ | ------------: | ----------: |
+| Ventilation Fan  |  20⚡ | 1      |        -5°C/m |      10⚡/m |
+| Heat Sink        |  30⚡ | 1      |       -10°C/m |      15⚡/m |
+| Radiator Array   |  50⚡ | 2      |       -10°C/m |      20⚡/m |
+| Cryogenic Cooler | 100⚡ | 2      |       -15°C/m |      25⚡/m |
 
 ## Relay
 
