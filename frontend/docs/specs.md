@@ -126,9 +126,17 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Relay
 
-- Connects cables and generators (nodes)
+- Connects structures between them to transmit energy
 - They can be overloaded
 - They need to be upgraded to support more energy going through
+
+### Types of relays
+
+| Name   | Distance | Cost |
+| ------ | -------: | ---: |
+| Name 1 |        3 | 10⚡ |
+| Name 2 |        4 | 15⚡ |
+| Name 3 |        5 | 20⚡ |
 
 ## Accumulator
 
@@ -136,23 +144,21 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - Collects the global energy generated
 - New ones can be built but they are very expensive
 
-# Mechanics
-
-## Heating
+# Heating
 
 - Each generator produces heat over time (e.g. 5°C/m)
 - Heat spreads to adjacent generators
 - If a generator is not connected to the accumulator, it cannot dissipate the energy it produces, so it overheats faster
 - If a generator overheats, it explodes, damaging nearby structures
 
-## Cooling
+# Cooling
 
 There are 2 ways to cool down a generator:
 
 1. Place a cooling structure close to the generator
 2. Use the generator's own controls
 
-### Shut down
+## Shut down
 
 - Pros
   - Heat drops quickly
@@ -160,7 +166,7 @@ There are 2 ways to cool down a generator:
   - Produces no energy while offline
   - It takes time to turn off and turn on again
 
-### Throttle
+## Throttle
 
 - Pros
   - Slows or reverses heat buildup
@@ -168,7 +174,7 @@ There are 2 ways to cool down a generator:
   - Produces less energy while throttled
   - Heat drops slowly
 
-### Venting
+## Venting
 
 - Pros
   - Instantly removes heat
