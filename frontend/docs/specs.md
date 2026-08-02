@@ -2,12 +2,32 @@
 
 A fast-paced, real-time grid strategy game where the player must generate enough energy before time runs out without letting the power grid collapse.
 
+# Scope
+
+- A finished, polished small game (not a prototype)
+- Platform: desktop web, mouse-first
+- Structure: an authored campaign of self-contained levels
+
 # Summary
 
 - To generate energy, the player must build generators
 - Buying and improving generators cost energy
 - Energy is the main and only currency of the game (e.g. 100⚡)
 - A player starts with a small amount of energy to start building
+
+# Match rules
+
+- Win: the moment stored energy reaches the goal
+- Lose: the timer expires (the only hard loss condition)
+- Grid collapse is emergent, not scripted: at 0⚡ stored, cooling towers starve and shut off, heat rises, generators start dying
+- Pause is look-only: the player can pause to read the board, but cannot act while paused
+- A restart button is always available
+
+# Campaign
+
+- Each level is self-contained: fixed starting energy, nothing carries over
+- Progression unlocks new content only (generator types, structures) — no permanent upgrades
+- What can be built in a level is gated by unlocks and by the resources on the map
 
 # Grid
 
@@ -81,6 +101,12 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 4 = high
 5 = very high
 
+## Solar cycle
+
+- A global day/night sine wave drives solar output
+- The upcoming curve is shown as a forecast strip in the HUD
+- Heat generation is higher during the day and lower at night (e.g. 5°C/m → 2°C/m)
+
 ## Actions
 
 - Build
@@ -96,6 +122,11 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 
 - Reduces the heat of all generators in its radius (e.g. -10°C/m)
 - Consumes energy constantly (e.g. 10⚡/m)
+- Full network consumer:
+  - Must be connected to an accumulator (directly or via relays) to operate
+  - Its draw loads the relays on its path
+  - If disconnected, it idles: no cooling, no consumption
+  - If stored energy hits 0⚡, it starves and shuts off
 
 ### Properties
 
@@ -128,7 +159,10 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 ## Relay
 
 - Connects structures between them to transmit energy
-- They can be overloaded, if so, they explode
+- Load = generated energy flowing through + cooling tower draw
+- Alarm: fires when load crosses a warning threshold (e.g. 80% of max capacity)
+- Overload: the moment load reaches max capacity, the relay explodes
+- An explosion destroys only the relay; the cell remains buildable
 - They need to be upgraded to support more energy going through
 
 ### Properties
@@ -155,17 +189,22 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 ## Accumulator
 
 - Collects the global energy generated
+- No storage cap
 - New ones can be built but they are very expensive
+- Extra accumulators act as new network roots: they shorten relay chains and reduce hop losses
 - A free accumulator is placed at the start of the game
 
 # Heating
 
 - Each generator produces heat over time (e.g. 5°C/m)
 - Heat spreads to adjacent generators
-  - Orthogonally: +10% heat generation to all generations (up, down, left, right)
-  - Diagonally: +5% heat generation to all generations (top-left, top-right, bottom-left, bottom-right)
+  - Orthogonally: +10% heat generation to all generators (up, down, left, right)
+  - Diagonally: +5% heat generation to all generators (top-left, top-right, bottom-left, bottom-right)
+  - Tuning note: these percentages must be strong enough to make compact building genuinely risky
 - If a generator is not connected to an accumulator, it cannot dissipate the energy it produces, so it overheats faster
 - If a generator overheats, it explodes
+  - An explosion destroys only the generator; the cell (and its resources) remains buildable
+  - There is no blast damage: failure never chains spatially, only through the network (a dead relay kills income and cooling together)
 
 # Cooling
 
@@ -184,6 +223,7 @@ There are 2 ways to cool down a generator:
 
 ## Throttle
 
+- Stepped control: output adjustable in 20% jumps, from 0% to 100%
 - Pros
   - Slows or reverses heat buildup
 - Cons
@@ -200,19 +240,18 @@ There are 2 ways to cool down a generator:
 
 # Connections
 
-- Generators connect automatically to accumulators/relays if in reach
+- Generators and cooling towers connect automatically to accumulators/relays if in reach
 - Obstacles block connections
 - If two structures are connected, they can transmit energy between them (a cable is drawn between them)
 - A generator needs to be connected to an accumulator in order for its energy to count towards the global counter
-- The user only places generators, accumulators and relays, never cables
+- The user only places structures (generators, cooling towers, accumulators, relays), never cables
 - Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
 
 ## Energy transmission
 
-Two options:
-
-1. Some energy is lost for each jump between relays (e.g. 1⚡ per jump)
-2. Some energy is lost for each cell the energy travels through (e.g. 1⚡ per cell)
+- Each relay hop loses a percentage of the energy transmitted (e.g. -5% per hop)
+- A percentage (not a flat amount) stays relevant as outputs grow, and longer-reach relays reduce loss by cutting hops
+- The loss applies to generated energy only; cooling tower draw loads relays but suffers no hop loss
 
 # UI
 
@@ -220,13 +259,16 @@ Two options:
   - Current stored energy
   - Goal
   - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
+  - Day/night forecast strip (drives solar output)
 
-- When placing a generator, show:
+- When placing a structure, show:
   - Connection route
   - Delivered output
-  - Relay load after placement
+  - Relay load after placement (combined: generated energy + cooler draw — a correctness requirement, since auto-connect can overload a relay)
   - Nearby heat penalty
   - Cooling received
+
+- Micro must be doable under fire: 1-2 click actions, hotkeys, high-readability alarms
 
 # Game Vision
 
@@ -246,6 +288,7 @@ Producing more energy brings the player closer to victory, but also creates more
 - **Real-time heat management:** generators require frequent throttling, shutdowns, or venting.
 - **Risky reinvestment:** energy is both the victory objective and the currency used to expand.
 - **Readable systems:** pressure should come from difficult choices, not hidden information.
+- **Logistics failure, not spectacle:** failure spreads through the network, never through blast chains, and is always recoverable by rebuilding.
 
 ## Core Gameplay Loop
 
@@ -265,3 +308,15 @@ A successful match should often end with the player reaching the goal while the 
 - Expand production or stabilize existing generators
 - Build compactly for efficiency or spread out for safety
 - Operate safely or risk higher output before the deadline
+
+# Tech
+
+- Rendering: a canvas layer for the board (grid, cables, effects) + DOM for the HUD and menus
+
+# Open (tuning)
+
+- All numeric values in the tables
+- Upgrade caps and growth rates
+- Sell refund percentage
+- Obstacle demolition costs
+- Exact level count (target 10-20)
