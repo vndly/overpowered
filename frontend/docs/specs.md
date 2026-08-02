@@ -228,9 +228,13 @@ Two options:
 ---
 
 - I want the player to feel tension. It's not a chill slow pace game. I want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
-- core emotional arc: control → growth → pressure → overload → desperate stabilization
+- Core emotional arc: control → growth → pressure → overload → desperate stabilization
 - Generator controls solve immediate problems; cooling buildings solve spatial, long-term problems.
-- central conflict: energy production versus system stability.
-- Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter
-- are there similar games?
+- Central conflict: energy production versus system stability.
+- Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter.
 - The player needs to balance the energy generated with the energy spent to reach the goal on time
+
+---
+
+- what do you think? does it have flaws/weak points? are the mechanics solid or we should improve something? is there an important element missing in the game?
+- are there similar games?
