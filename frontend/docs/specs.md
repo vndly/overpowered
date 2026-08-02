@@ -40,23 +40,17 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Types of generators
 
-- mix all these variables
-  - output: low, high
-  - heat: low, high
-  - cost: low, high
-  - max temperature: low, high
-
-| Generator     | Output | Heat | Cost | Max Temperature | Notes                                                 |
-| ------------- | ------ | ---- | ---- | --------------- | ----------------------------------------------------- |
-| Solar         | Low    | Low  | Low  | Low             | Output varies over time                               |
-| Wind          | Low    | Low  | Low  | Low             | Blocked by nearby obstacles                           |
-| Coal          | High   | High | Low  | High            |                                                       |
-| Gas           | High   | Low  | High | Low             |                                                       |
-| Oil           | High   | High | High | High            |                                                       |
-| Geothermal    | High   | High | High | High            | If adjacent cells are empty, it produdces more output |
-| Hydroelectric | High   | Low  | High | High            |                                                       |
-| Nuclear       | High   | High | High | Low             |                                                       |
-| Fusion        | High   | High | High | High            | Turn off and on cycles are very long                  |
+| Generator     | Output | Heat   | Cost   | Max Temperature | Notes                                                    |
+| ------------- | ------ | ------ | ------ | --------------- | -------------------------------------------------------- |
+| Solar         | Low    | Low    | Low    | Low             | Output varies over time                                  |
+| Wind          | Medium | Low    | Medium | Medium          | Nearby obstacles reduce its output                       |
+| Coal          | Medium | High   | Low    | High            | Heats up quickly                                         |
+| Gas           | Medium | Medium | Medium | Medium          | Can rapidly adjust its output                            |
+| Oil           | High   | High   | Medium | High            | Vensting costs are more expensive                        |
+| Geothermal    | Medium | Medium | Medium | High            | Produces more output when adjacent cells are empty       |
+| Hydroelectric | High   | Low    | High   | High            | Output increases with the number of adjacent water tiles |
+| Nuclear       | High   | High   | High   | Low             | Has a narrow safety margin                               |
+| Fusion        | High   | High   | High   | High            | Startup and shutdown cycles take a long time             |
 
 ## Actions
 
