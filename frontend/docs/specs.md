@@ -216,7 +216,10 @@ Two options:
 
 # UI
 
-- Show energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
+- Show
+  - Current stored energy
+  - Goal
+  - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
 
 # Questions
 
