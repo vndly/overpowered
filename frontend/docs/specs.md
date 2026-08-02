@@ -6,9 +6,15 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 - Rectangular grid based (e.g. 10x10)
 - The grid has different type of cells
-  - Empty (only relays and accumulators can be built on them)
-  - Resource (only generators can be built on them. they can never be depleted)
-  - Obstacle (e.g. a rock/wall/water/etc) (nothing can be built on them)
+  - Empty
+    - Only relays and accumulators can be built on them
+  - Resource
+    - Only generators can be built on them
+    - They can never be depleted
+  - Obstacle
+    - Examples: rock/wall/water/etc
+    - Nothing can be built on them
+    - They can be taken down (costs energy)
 - The goal is to generate certain amount of energy in certain amount of time
 - To generate energy, the player must build generators
 - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
@@ -74,7 +80,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Actions
 
-- Build generators
+- Build
 - Upgrade level
 - Shut down (takes time)
 - Turn on (takes time)
@@ -85,9 +91,9 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Heat
 
-- heat spreads to adjacent generators
-- if a generator overheats, it explodes, damaging nearby structures
-- obstacles can be taken down (it costs money) to make room for structures
+- Each generator produces heat over time (e.g. 5°C/m)
+- Heat spreads to adjacent generators
+- If a generator overheats, it explodes, damaging nearby structures
 
 ## Cooling
 
