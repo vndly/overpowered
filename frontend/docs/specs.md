@@ -55,7 +55,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | --------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ---------------------------------- |
 | Solar     |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable | Output varies over time            |
 | Wind      |    2 |      1 |        2 |    1 |     0 | high cost / high stable     | Nearby obstacles reduce its output |
-| Biomass   |    1 |      2 |        1 |    2 |     0 | low cost / low stable       |
+| Biomass   |    1 |      2 |        1 |    2 |     0 | low cost / low stable       |                                    |
 
 ### Tier 2
 
@@ -84,8 +84,8 @@ A real-time grid-based strategy game where you must generate enough energy befor
 ## Actions
 
 - Build
-- Upgrade level
-- Shut down (takes time)
+- Upgrade
+- Turn off (takes time)
 - Turn on (takes time)
 - Throttle
 - Vent
