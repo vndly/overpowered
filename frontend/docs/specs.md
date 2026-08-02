@@ -121,8 +121,8 @@ high cost / high output / high heat = fusion
 
 | Coal          |      3 |        3 |    3 |    3 |                               0 |
 | Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
-
 | Nuclear       |      4 |        1 |    1 |    4 |                               0 |
+
 | Fusion        |      5 |        4 |    4 |    5 |                               0 |
 
 
