@@ -115,6 +115,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 - Each generator produces heat over time (e.g. 5°C/m)
 - Heat spreads to adjacent generators
+- If a generator is not connected to the accumulator, it cannot dissipate the energy it produces, so it overheats faster
 - If a generator overheats, it explodes, damaging nearby structures
 
 ## Cooling
@@ -149,11 +150,14 @@ There are 2 ways to cool down a generator:
 
 # Connections
 
-- Generators connect automatically to the accumulator if in reach (i.e. no obstacle in between)
-- Generators connect automatically to the relays in reach (showing a cable)
+- Generators connect automatically to the accumulator if in reach
+- Generators connect automatically to the relays in reach
+- Obstacles block connections
+- If two structures are connected, they can transmit energy between them (a cable is drawn between them)
+- A generator needs to be connected to the accumulator in order for its energy to count towards the global counter
 - They only connect to the one that offers the shortest path
-- The user only places generators and relays. Never cables
-- Cables have a maximum distance, the player needs to add more relays to connect long distances
+- The user only places generators and relays, never cables
+- Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
 
 # Match flow
 
@@ -163,10 +167,7 @@ There are 2 ways to cool down a generator:
 
 ---
 
-- a generator needs to be connected to the accumulator in order to its energy to count to the goal
 - energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
-- obstacles block cables
-- if a generator is not connected to the accumulator, it cannot dissipate the energy it produces so it overheats faster
 
 ---
 
