@@ -111,13 +111,17 @@ high cost / high output / high heat = fusion
 
 | Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
 | ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
-| Solar         |      1 |        1 |    1 |    1 |                               0 |
-| Biomass       |      2 |        1 |    2 |    1 |                               0 |
-| Wind          |      1 |        2 |    1 |    2 |                               0 |
+| Solar         |      1 |        1 |    1 |    1 |                               0 | normal cost / normal stable
+| Wind          |      1 |        2 |    1 |    2 |                               0 | high cost / high stable
+| Biomass       |      2 |        1 |    2 |    1 |                               0 | low cost / low stable
 
-| Oil           |      2 |        2 |    2 |    2 |                               0 |
-| Gas           |      3 |        2 |    3 |    2 |                               0 |
-| Geothermal    |      2 |        3 |    2 |    3 |                               0 |
+| Gas           |      2 |        2 |    2 |    2 |                               0 | normal cost / normal stable
+| Geothermal    |      2 |        3 |    2 |    3 |                               0 | high cost / high stable
+| Coal          |      3 |        2 |    3 |    2 |                               0 | low cost / low stable
+
+| Coal          |      3 |        3 |    3 |    3 |                               0 | normal cost / stable
+| Hydroelectric |      3 |        4 |    3 |    4 |                               0 | high cost / stable
+| Nuclear       |      4 |        1 |    1 |    4 |                               0 | low cost / unstable
 
 | Coal          |      3 |        3 |    3 |    3 |                               0 |
 | Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
