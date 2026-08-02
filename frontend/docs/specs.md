@@ -200,14 +200,11 @@ There are 2 ways to cool down a generator:
 - Obstacles block connections
 - If two structures are connected, they can transmit energy between them (a cable is drawn between them)
 - A generator needs to be connected to an accumulator in order for its energy to count towards the global counter
-- They only connect to the one that offers the shortest path
-- The user only places generators and relays, never cables
+- The user only places generators, accumulators and relays, never cables
 - Relays have a maximum distance to connect with another structure (the player needs to add more relays to connect long distances)
 
----
+## Energy transmission
 
-- Can cables or relays be upgraded in order to extend the length of possible connections?
-- Can relays overheat or get damaged?
 - Add energy transmission loss or only count jumps? If energy is lost by distance, adding more relays fixes the problem
 - energy distribution: the more jumps the energy has to make (i.e. the more connectors it passes through) the less energy reaches the accumulator
 
