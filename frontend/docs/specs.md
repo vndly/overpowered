@@ -140,7 +140,6 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - The maximum distance it can connect to another structure (e.g. 3 cells)
 - Capacity
   - The maximum amount of energy it can transmit per minute (e.g. 100⚡/m)
-  - It increases with each level upgrade (e.g. 100⚡/m → 150⚡/m)
 
 ### Types of relays
 
@@ -233,6 +232,7 @@ Two options:
 - Central conflict: energy production versus system stability.
 - Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter.
 - The player needs to balance the energy generated with the energy spent to reach the goal on time
+- Build generators → connect them → earn energy → reinvest → manage heat → reach the target before time expires.
 
 ---
 
