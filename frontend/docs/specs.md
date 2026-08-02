@@ -171,19 +171,21 @@ There are 2 ways to cool down a generator:
 
 ---
 
-- questions
-  - make patches appear and disappear randomly?
-  - are there similar games?
-  - square or hexagonal grid?
-  - can cables or relays be upgraded in order to extend the leght of possible connections?
-  - can relays overheat or get damaged?
-  - add energy transmition loss or only count jumps? if energy lost by distance, adding more relays fixes the problem
-  - add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
-  - should the player buy new generator tiers?
+# Questions
 
-- future
-  - add overclocing to generators (e.g. a generator can be upgraded to produce more energy but it will overheat faster)
-  - add generator degradation/wear
+- Square or hexagonal grid?
+- Connections
+  - Can cables or relays be upgraded in order to extend the length of possible connections?
+  - Can relays overheat or get damaged?
+    - Add energy transmission loss or only count jumps? If energy is lost by distance, adding more relays fixes the problem
+- Add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
+- Should the player buy new generator tiers?
+
+# Future
+
+- Add overclocking to generators (e.g. a generator can be upgraded to produce more energy but it will overheat faster)
+- Add generator degradation/wear
+- Make resource patches appear and disappear randomly
 
 ---
 
@@ -192,3 +194,4 @@ There are 2 ways to cool down a generator:
 - Generator controls solve immediate problems; cooling buildings solve spatial, long-term problems.
 - central conflict: energy production versus system stability.
 - Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter
+- are there similar games?
