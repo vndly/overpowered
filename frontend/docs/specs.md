@@ -130,13 +130,22 @@ A real-time grid-based strategy game where you must generate enough energy befor
 - They can be overloaded
 - They need to be upgraded to support more energy going through
 
+### Properties
+
+- Type (see #types-of-relays)
+- Cost
+  - How much energy it takes to build it (e.g. 10⚡)
+  - Can be sold at a lower cost
+- Distance
+  - The maximum distance it can connect to another structure (e.g. 3 cells)
+
 ### Types of relays
 
-| Name   | Distance | Cost |
-| ------ | -------: | ---: |
-| Name 1 |        3 | 10⚡ |
-| Name 2 |        4 | 15⚡ |
-| Name 3 |        5 | 20⚡ |
+| Name   | Cost | Distance |
+| ------ | ---: | -------: |
+| Name 1 | 10⚡ |        3 |
+| Name 2 | 15⚡ |        4 |
+| Name 3 | 20⚡ |        5 |
 
 ## Accumulator
 
