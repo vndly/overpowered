@@ -40,6 +40,12 @@ A real-time grid-based strategy game where you must generate enough energy befor
 
 ## Types of generators
 
+- mix all these variables
+  - output: low, high
+  - heat: low, high
+  - cost: low, high
+  - max temperature: low, high
+
 | Generator     | Advantage                             | Disadvantage                              |
 | ------------- | ------------------------------------- | ----------------------------------------- |
 | Solar         | Requires no maintenance               | Output varies over time                   |
@@ -94,7 +100,7 @@ A real-time grid-based strategy game where you must generate enough energy befor
   - Instantly removes heat
 - Cons
   - It costs energy proportionally to the level of the generator (e.g. 10% of the energy output)
-  - There is a cooldown time before it can be used again
+  - Becomes more expensive with repeated use
 
 ---
 
@@ -129,6 +135,7 @@ Match flow - players start with some small amount of energy to start building - 
   - can cables or relays be upgraded in order to extend the leght of possible connections?
   - can relays overheat or get damaged?
   - add energy transmition loss or only count jumps? if energy lost by distance, adding more relays fixes the problem
+  - add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
 
 ---
 
