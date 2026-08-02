@@ -136,8 +136,9 @@ throwaway — the shell carries all thirteen stages.
 ## Stage 2 — Build, sell, connect
 
 Biomass only. Resource cells accept only their matching generator. The free
-accumulator is placed at start; generators auto-connect if in reach, chain through
-other connected generators, and obstacles block connections. Cables are drawn.
+accumulator is placed at start; generators auto-connect within 1 cell (the 8
+neighbours), chain through other connected generators, and obstacles block
+connections. Cables are drawn.
 **A disconnected generator contributes nothing.** Income accrues to stored energy.
 Sell refunds at a lower rate.
 
@@ -178,6 +179,11 @@ proportional to level, escalating with repeated use. Hotkeys and alarm states.
 The global sine wave scaling heat generation for every generator, Solar output
 following the curve, Wind losing output near obstacles, and the forecast strip in
 the HUD. Tier 1 is complete.
+
+Solar and Wind build on empty cells, so this stage also hands the player a second
+way to extend the network: a hot, cheap chain of ambient generators competing with
+the cool, lossy, expensive relays that arrive at stage 8. Expect the economy to
+need a pass here.
 
 **The match:** it acquires a rhythm — day is income and danger, night is relief
 and your push window. Both remaining tier 1 generators arrive at the exact moment
@@ -262,21 +268,44 @@ final readability pass.
 12. Alarms with their danger; the rest of the audio in polish.
 13. The first build stage splits in two rather than becoming the largest stage.
 
+# Resolved
+
+Written into `docs/specs.md`, which stays the source of truth:
+
+- **Reach is 1 cell** for generators, cooling towers and accumulators — the 8
+  surrounding cells. Only relays reach further. The spec had given relays a
+  distance but never defined anyone else's, which stage 2 could not have been
+  built without.
+- **Free chaining no longer dominates relays.** Chained links have no hop loss and
+  no capacity limit, and routing counts only relay hops, so a chain reaching the
+  accumulator directly used to cost nothing. Reach 1 closes it with a mechanic
+  that already exists: a chain is a line of mutually adjacent generators, so every
+  link is subject to the adjacency heat spread. Chains still transmit at no energy
+  loss — they run hot instead. Hop loss remains relay-only.
+- **Solar and Wind build on empty cells.** Resource cells stay reserved for their
+  matching generator.
+- **Gas keeps no special rule.** Its orphaned "rapidly adjust output" note is
+  gone. Cost 2 / output 3 / max temp 2 / heat 3 is already the sharpest risk-reward
+  profile in tier 2, and Biomass and Coal carry no note either.
+
+# Accepted costs
+
+Consequences of decisions already taken, not open problems:
+
+- **Stage 12 tuning is slow without dev tooling** — but far less slow than it
+  looks. A level's practical max output is computable from its resource cells and
+  generator stats, so goals get set analytically and played once to confirm, not
+  discovered by trial.
+- **Stage 13 is deliberately unscoped.** Polish is scoped at the end of stage 12,
+  when the game exists and it is clear what needs juice.
+
 # Known risks
 
-- **Stage 8 is the algorithmic risk** — routing, load accounting and cascades —
-  and it sits eight stages in. A design flaw there surfaces late. This is a
-  deliberate consequence of putting heat first.
-- **Stage 12 is expensive without dev tooling.** Each tuning pass on a 12-15
-  minute level costs 12-15 minutes of play, times several passes, times a dozen
-  levels.
-- **Gas has no mechanic.** Throttle was cut, so its "can rapidly adjust its
-  output" note has nothing behind it. Stage 10 ships it as a stat-block unless it
-  gets a rule first. (Note: the memo says this was parked at the end of
-  `README.md`, which currently contains only a heading — the note is gone.)
-- **Solar and Wind have nothing to stand on.** The spec says generators may only
-  be built on resource cells, and empty cells take only relays and accumulators —
-  so either sun and wind are resource kinds like coal, or the placement rule needs
-  an exception. Stages 1-3 are unaffected (Biomass only), but stage 6 cannot start
-  until this is settled.
-- **Stage 13 is the least-defined stage** and will want scoping before it starts.
+- **Stage 8 carries the algorithmic risk** — deterministic routing, load
+  accounting and reroute cascades — eight stages in, so a flaw in the routing
+  model surfaces late. Partly mitigated: the connection graph itself (reach,
+  chaining, obstacle blocking) lands at stage 2, so only routing *over* an
+  already-proven graph is new at stage 8.
+- **Stage 6 may destabilise the economy.** Solar and Wind on empty cells give the
+  player a cheap, hot alternative to relays for extending the network, arriving
+  two stages before relays do. Budget an economy pass in that stage.

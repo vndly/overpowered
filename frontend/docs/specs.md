@@ -41,12 +41,13 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - Rectangular grid based (e.g. 10x10)
 - The grid has different type of cells
   - Empty
-    - Only relays and accumulators can be built on them
+    - Relays, accumulators and ambient generators (solar, wind) can be built on them
   - Resource
-    - Only generators can be built on them
+    - Only resource generators can be built on them
     - They can never be depleted
     - A cell can contain multiple resources (e.g. coal + water)
     - Each type of generator can be placed only on top of its corresponding resource (e.g. coal based generator only on a coal cell)
+    - Ambient generators cannot be placed on them: resource cells stay reserved for their matching generator
   - Water
     - Only hydroelectric generators can be built on them
     - They don't block connections
@@ -93,7 +94,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 | ---------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ---------------------------------- |
 | Oil        |    2 |      2 |        2 |    2 |     0 | normal cost / normal stable | Venting costs are more expensive   |
 | Geothermal |    3 |      2 |        3 |    2 |     0 | high cost / high stable     | Nearby obstacles reduce its output |
-| Gas        |    2 |      3 |        2 |    3 |     0 | low cost / low stable       | Can rapidly adjust its output      |
+| Gas        |    2 |      3 |        2 |    3 |     0 | low cost / low stable       |                                    |
 
 ### Tier 3
 
@@ -242,8 +243,10 @@ There are 2 ways to cool down a generator:
 # Connections
 
 - Generators and cooling towers connect automatically to accumulators/relays if in reach
+- Reach is 1 cell for generators, cooling towers and accumulators — the 8 surrounding cells. Only relays reach further (see #types-of-relays)
 - Connectivity chains through generators: a structure in reach of a connected generator is itself connected (e.g. relay ← A ← B: B is on the network through A)
 - Chained links are free: no hop loss and no capacity limit — but the whole chain's flow still loads the relay that connects it to the network
+- Because reach is 1, a chain is a line of mutually adjacent generators, so every link is subject to the adjacency heat spread (see #heating). Chains still transmit at no energy loss — they simply run hot. Relays run cool but cost energy and lose a percentage per hop. That heat-versus-loss trade is what keeps relays worth paying for
 - Obstacles block connections
 - If two structures are connected, they can transmit energy between them (a cable is drawn between them)
 - A generator needs to be connected to an accumulator in order for its energy to count towards the global counter
