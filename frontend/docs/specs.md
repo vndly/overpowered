@@ -53,21 +53,31 @@ A real-time grid-based strategy game where you must generate enough energy befor
 | Nuclear       | High   | Low      | High   | High   | Has a narrow safety margin                               |
 | Fusion        | XHigh  | High     | High   | XHigh  | Startup and shutdown cycles take a long time             |
 
+low cost / low output / low heat = solar
+low cost / low output / high heat = biomass
+low cost / high output / low heat = wind
+low cost / high output / high heat = 
+
+high cost / low output / low heat = 
+high cost / low output / high heat = 
+high cost / high output / low heat = 
+high cost / high output / high heat = 
+
 | Generator     | Output | Max Temp | Heat | Cost | Output + Max Temp − Heat − Cost |
 | ------------- | -----: | -------: | ---: | ---: | ------------------------------: |
 | Solar         |      1 |        1 |    1 |    1 |                               0 |
-| Wind          |      1 |        2 |    1 |    2 |                               0 |
 | Biomass       |      1 |        2 |    2 |    1 |                               0 |
+| Wind          |      1 |        2 |    1 |    2 |                               0 |
 
 | Coal          |      2 |        3 |    3 |    2 |                               0 |
 | Geothermal    |      2 |        3 |    2 |    3 |                               0 |
 | Gas           |      2 |        2 |    2 |    2 |                               0 |
 
-| Oil           |      3 |        2 |    3 |    2 |                               0 |
-| Hydroelectric |      3 |        3 |    1 |    3 |                               2 |
-| Nuclear       |      3 |        1 |    1 |    3 |                               0 |
+| Oil           |      3 |        3 |    3 |    3 |                               0 |
+| Hydroelectric |      3 |        3 |    2 |    3 |                               0 |
 
-| Fusion        |      4 |        4 |    4 |    4 |                               0 |
+| Nuclear       |      4 |        1 |    1 |    4 |                               0 |
+| Fusion        |      5 |        4 |    4 |    5 |                               0 |
 
 ## Actions
 
