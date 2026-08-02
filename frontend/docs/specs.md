@@ -1,6 +1,6 @@
 # Overpowered
 
-A real-time grid-based strategy game where you must generate enough energy before time runs out without pushing your power grid into overload.
+A fast-paced, real-time grid strategy game where the player must generate enough energy before time runs out without letting the power grid collapse.
 
 # Summary
 
@@ -228,6 +228,44 @@ Two options:
   - Nearby heat penalty
   - Cooling received
 
+# Game Vision
+
+## Target Experience
+
+The player should feel under constant pressure while remaining able to plan and recover. They must expand the grid while simultaneously managing overheating generators, limited cooling, relay capacity, and energy costs.
+
+## Core Conflict
+
+> **Energy production versus system stability**
+
+Producing more energy brings the player closer to victory, but also creates more heat, higher infrastructure load, and greater risk.
+
+## Design Pillars
+
+- **Strategic placement:** resources, obstacles, cooling coverage, and relay range make every cell matter.
+- **Real-time heat management:** generators require frequent throttling, shutdowns, or venting.
+- **Risky reinvestment:** energy is both the victory objective and the currency used to expand.
+- **Readable systems:** pressure should come from difficult choices, not hidden information.
+
+## Core Gameplay Loop
+
+> **Build → Connect → Generate → Reinvest → Stabilize → Reach the target**
+
+Generator controls solve immediate problems, while cooling structures and relays shape the long-term layout.
+
+## Match Arc
+
+> **Control → Growth → Pressure → Overload → Desperate stabilization**
+
+A successful match should often end with the player reaching the goal while the grid is close to failure.
+
+## Central Trade-offs
+
+- Save energy or reinvest it
+- Expand production or stabilize existing generators
+- Build compactly for efficiency or spread out for safety
+- Operate safely or risk higher output before the deadline
+
 # Questions
 
 - Square or hexagonal grid?
@@ -241,15 +279,5 @@ Two options:
 
 ---
 
-- I want the player to feel tension. It's not a chill slow pace game. I want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
-- Core emotional arc: control → growth → pressure → overload → desperate stabilization
-- Generator controls solve immediate problems; cooling buildings solve spatial, long-term problems.
-- Central conflict: energy production versus system stability.
-- Generators create the strategy. Heat creates the urgency. Cooling units and relays make the grid matter.
-- The player needs to balance the energy generated with the energy spent to reach the goal on time
-- Build generators → connect them → earn energy → reinvest → manage heat → reach the target before time expires.
-
----
-
-- what do you think? does it have flaws/weak points? are the mechanics solid or we should improve something? is there an important element missing in the game?
-- are there similar games?
+- What do you think? does it have flaws/weak points? are the mechanics solid or we should improve something? is there an important element missing in the game?
+- Are there similar games?
