@@ -137,6 +137,10 @@ Match flow - players start with some small amount of energy to start building - 
   - add energy transmition loss or only count jumps? if energy lost by distance, adding more relays fixes the problem
   - add max temperature limit increase for generators? (e.g. a generator can be upgraded to withstand more heat)
 
+- future
+  - add overclocing to generators (e.g. a generator can be upgraded to produce more energy but it will overheat faster)
+  - add generator degradation/wear
+
 ---
 
 - i want the player to feel tension. it's not a chill slow pace game. i want the user to have to worry about generators overheating while thinking strategically about where to place the next generator
