@@ -32,8 +32,9 @@
           :match="match"
           :snapshot="snapshot"
           :interaction="interaction"
+          :confirming-sell="isConfirmingSell"
           @sell="onSell"
-          @upgrade="upgrade"
+          @upgrade="onUpgrade"
         />
       </div>
     </div>
@@ -68,6 +69,11 @@ const viewportWidth = ref(window.innerWidth)
 const viewportHeight = ref(window.innerHeight)
 const isConfirmingRestart = ref(false)
 const wasPausedBeforeConfirm = ref(false)
+
+// A sell asks first, because a generator's levels are sunk and a misclick can
+// throw away an entire match's reinvestment. It is armed rather than modal: the
+// clock does not stop for it, so selling under fire stays a two-press action.
+const isConfirmingSell = ref(false)
 
 // Replaced rather than mutated, so the rails see a reactive change while the
 // renderer still reads a plain object with no proxy in its path
@@ -120,6 +126,7 @@ function setInteraction(change: Partial<Interaction>): void {
 
 /** Arming keeps the tool in hand after a placement, so a run of cells is click-click-click. */
 function arm(kind: GeneratorKind): void {
+  isConfirmingSell.value = false
   setInteraction({
     armed: kind,
     selected: null,
@@ -151,22 +158,45 @@ function onActivate(position: Position): void {
     return
   }
 
+  isConfirmingSell.value = false
   setInteraction({
     selected: match.value.structureAt(position) === undefined ? null : position,
   })
 }
 
 /**
- * Sells a generator. The selection goes with it, because what it described is
- * no longer on the board.
+ * Sells a generator, having asked first. The first press arms the sell and the
+ * second one fires it; anything else the player does in between backs out, so
+ * the armed state can never be sitting there forgotten.
+ * The selection goes with the sale, because what it described is no longer on
+ * the board.
  * @param position - The cell the generator stands on
  */
 function onSell(position: Position): void {
+  if (!isConfirmingSell.value) {
+    isConfirmingSell.value = true
+
+    return
+  }
+
+  isConfirmingSell.value = false
+
   if (sell(position)) {
     setInteraction({
       selected: null,
     })
   }
+}
+
+/**
+ * Upgrades a generator. It backs out of an armed sell rather than ignoring it:
+ * the player asking for a level is the clearest possible statement that they do
+ * not want this generator gone.
+ * @param position - The cell the generator stands on
+ */
+function onUpgrade(position: Position): void {
+  isConfirmingSell.value = false
+  upgrade(position)
 }
 
 /** Restarting a live match asks first; restarting a finished one has nothing to lose. */
@@ -184,6 +214,7 @@ function requestRestart(): void {
 
 function confirmRestart(): void {
   isConfirmingRestart.value = false
+  isConfirmingSell.value = false
   interaction.value = idleInteraction()
   restart()
 }
@@ -209,12 +240,15 @@ function onResize(): void {
 
 /**
  * Escape backs out of whatever is in front of the player, in order: the question
- * being asked, then the armed tool, then the selection, and only then the match
+ * being asked — the restart dialog first, since it is modal and the armed sell is
+ * behind it — then the armed tool, then the selection, and only then the match
  * itself. One key, one idea, and pause simply sits at the end of the chain.
  */
 function onEscape(): void {
   if (isConfirmingRestart.value) {
     cancelRestart()
+  } else if (isConfirmingSell.value) {
+    isConfirmingSell.value = false
   } else if (interaction.value.armed !== null) {
     disarm()
   } else if (interaction.value.selected !== null) {
@@ -274,7 +308,7 @@ function onKeyDown(event: KeyboardEvent): void {
     const selected = interaction.value.selected
 
     if (selected !== null) {
-      upgrade(selected)
+      onUpgrade(selected)
     }
 
     return

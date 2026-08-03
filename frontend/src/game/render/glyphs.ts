@@ -23,7 +23,8 @@ export interface GlyphStyle {
  */
 
 /**
- * A generator: flat-top hexagon with its type mark inside.
+ * A generator: flat-top hexagon with its type mark inside, and its level under
+ * the mark once it is standing on the board.
  * docs/ui.md § Structures gives the hexagon's corners the spec's stability
  * category. Biomass is low stable, so its corners are sharp; the chamfered and
  * rounded treatments arrive with the generators that carry them at stage 6.
@@ -33,6 +34,7 @@ export interface GlyphStyle {
  * @param centerY - Glyph centre
  * @param cellSize - The cell edge the glyph is scaled against
  * @param style - How to ink it
+ * @param level - The generator's level, or undefined for a rail swatch or a ghost, neither of which has one
  */
 export function drawGeneratorGlyph(
   ctx: CanvasRenderingContext2D,
@@ -41,8 +43,10 @@ export function drawGeneratorGlyph(
   centerY: number,
   cellSize: number,
   style: GlyphStyle,
+  level?: number,
 ): void {
   const radius = cellSize * TUNABLES.structure.glyphRadius
+  const markY = level === undefined ? centerY : centerY - cellSize * TUNABLES.structure.levelNumeralMarkLift
 
   ctx.lineWidth = strokeWidth(cellSize)
   ctx.lineJoin = 'miter'
@@ -65,8 +69,12 @@ export function drawGeneratorGlyph(
 
   switch (kind) {
     case 'biomass':
-      drawSprout(ctx, centerX, centerY, cellSize, style.stroke)
+      drawSprout(ctx, centerX, markY, cellSize, style.stroke)
       break
+  }
+
+  if (level !== undefined) {
+    drawLevelNumeral(ctx, centerX, centerY, cellSize, level, style.stroke)
   }
 }
 
@@ -100,21 +108,20 @@ export function drawAccumulatorGlyph(
 }
 
 /**
- * A structure's level: one tick per level, in a row along the bottom of the
- * silhouette. The row is never empty, because a structure is level 1 the moment
- * it is built, and it is never numerals — nothing on a cell is ever read.
+ * A structure's level, as a numeral inside the silhouette below its type mark.
+ * It is never absent, because a structure is level 1 the moment it is built.
  *
- * It sits inside the glyph rather than under it: the bottom of the cell belongs
- * to the resource marks, which are drawn low precisely so a structure never
- * covers them (docs/ui.md § Geometry).
+ * The one thing on the board that is read rather than seen, which is why it is
+ * kept to a single digit and given the structure's own ink: it is a part number
+ * stamped on the plate, not a label floating over the cell.
  * @param ctx - The context to draw into
  * @param centerX - Glyph centre
  * @param centerY - Glyph centre
- * @param cellSize - The cell edge the row is scaled against
+ * @param cellSize - The cell edge the numeral is scaled against
  * @param level - The structure's level, from 1
  * @param stroke - The ink to draw it in
  */
-export function drawLevelPips(
+function drawLevelNumeral(
   ctx: CanvasRenderingContext2D,
   centerX: number,
   centerY: number,
@@ -122,24 +129,15 @@ export function drawLevelPips(
   level: number,
   stroke: string,
 ): void {
-  const weight = Math.max(1, cellSize * TUNABLES.structure.levelPipWeight)
-  const height = cellSize * TUNABLES.structure.levelPipHeight
-  const gap = cellSize * TUNABLES.structure.levelPipGap
-  const baseline = centerY + cellSize * TUNABLES.structure.levelPipOffset
-  const step = weight + gap
-  let pipX = centerX - (level - 1) * step / 2
+  const size = cellSize * TUNABLES.structure.levelNumeralSize
 
-  ctx.strokeStyle = stroke
-  ctx.lineWidth = weight
-  ctx.beginPath()
-
-  for (let i = 0; i < level; i++) {
-    ctx.moveTo(pipX, baseline - height / 2)
-    ctx.lineTo(pipX, baseline + height / 2)
-    pipX += step
-  }
-
-  ctx.stroke()
+  ctx.save()
+  ctx.fillStyle = stroke
+  ctx.font = `${TUNABLES.structure.levelNumeralWeight} ${size}px ${TUNABLES.structure.levelNumeralFamily}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(String(level), centerX, centerY + cellSize * TUNABLES.structure.levelNumeralOffset)
+  ctx.restore()
 }
 
 /**

@@ -341,9 +341,9 @@ Written into `docs/specs.md`, which stays the source of truth:
 - **Gas keeps no special rule.** Its orphaned "rapidly adjust output" note is
   gone. Cost 2 / output 3 / max temp 2 / heat 3 is already the sharpest risk-reward
   profile in tier 2, and Biomass and Coal carry no note either.
-- **Levels cap at 5**, matching the spec's own 1-5 rating vocabulary and the five
-  pips docs/ui.md draws under a glyph. Stage 3 needed a ceiling to tune the growth
-  rates against; the rates themselves stay open until stage 12.
+- **Levels cap at 5**, matching the spec's own 1-5 rating vocabulary. Stage 3
+  needed a ceiling to tune the growth rates against; the rates themselves stay
+  open until stage 12.
 - **A sale refunds the build cost only.** Levels are sunk. Refunding them would
   make an upgrade a place to park energy and take the commitment out of going
   tall, which is the whole of stage 3's decision.

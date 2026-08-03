@@ -75,12 +75,14 @@ route overlays the spec demands.
 
 - Cell size = `floor(min(wellWidth, wellHeight) / max(cols, rows))`, floor 44px.
   A 10x10 level on 1080p gives ~80px cells; a 16x16 gives ~50px.
-- Glyph diameter `0.60 x cell`. State ring radius `0.39 x cell`. Level pips sit
-  inside the silhouette, in the band between the type mark and the glyph's lower
-  edge — around `0.71 x cell` from the cell's top. The bottom of the cell belongs
-  to the resource marks, which sit low precisely so a structure never covers
-  them, and a level belongs to the structure rather than to the ground it stands
-  on.
+- Glyph diameter `0.60 x cell`. State ring radius `0.39 x cell`. The level
+  numeral sits inside the silhouette, under the type mark, centred `0.178 x cell`
+  below the glyph's centre. A hexagon `0.52 x cell` tall cannot hold a centred
+  mark and a legible digit, so the two are centred as a pair: the mark rises
+  `0.055 x cell` and the digit takes the band it vacates. The bottom of the cell
+  is not available — it belongs to the resource marks, which sit low precisely so
+  a structure never covers them — and neither is anything at `0.39`, where the
+  state ring will arrive at stage 4.
 - Corner radius 2px on panels, 3px on controls. Near-square: this is an
   instrument, not a card layout.
 
@@ -297,9 +299,20 @@ Sharp corners belong to exactly the three generators that will kill you.
 | Intermediate relay | 2 pips                         |
 | Advanced relay     | 3 pips                         |
 
-**Level** is a row of ticks along the bottom of the silhouette, one per level, up
-to the cap of five — a row that is never empty, because a structure is level 1
-the moment it is built. No numerals appear on a cell at any size.
+**Level is a numeral** inside the silhouette, under the type mark, in the
+structure's own ink. It is never absent, because a structure is level 1 the
+moment it is built.
+
+> This is the one thing on the board that is read rather than seen, and it
+> replaces the row of ticks that shipped first. Ticks are the right answer for a
+> quantity you compare — which is longer — and the wrong one for a quantity you
+> name: at five levels in a 0.11-cell band the row was countable but never
+> glanceable, and "is that three or four" is the question the readout exists to
+> answer. A single digit at cap height reads at once and costs nothing else,
+> since the level is the only value on a cell that has an exact name. Nothing
+> else on a cell may become a numeral on this precedent: state stays geometric,
+> because a ring sweep is a comparison and a temperature is not something the
+> player ever needs to name.
 
 ## Cables
 
@@ -405,11 +418,24 @@ One row per buildable structure: glyph, name, cost. Rows are ordered by unlock.
 Strict precedence, highest first:
 
 1. **Armed tool** — the placement preview for the hovered cell.
-2. **Hovered cell** — what is there and its live numbers.
-3. **Selected structure** — its readouts and its actions.
+2. **Selected structure** — its readouts and its actions.
+3. **Hovered cell** — what is there and its live numbers.
 
-Selection persists while nothing is armed or hovered. There are no floating
-tooltips or popovers anywhere in the game.
+**A selection outranks a hover**, because it is the thing being acted on: its
+readouts and its actions have to hold still while the cursor crosses the board,
+or the buttons the player is reaching for move out from under them. Only arming
+a tool displaces it, which is the player saying they are done with it. The board
+still outlines the hovered cell — the board says where the cursor is, the rail
+says what is being acted on. There are no floating tooltips or popovers anywhere
+in the game.
+
+**Selling asks first.** The first press arms the sell and the button becomes
+`Confirm sell`; the second press fires it. A generator's levels are sunk, so a
+misclick can throw away an entire match's reinvestment — but the clock does not
+stop for the question, because selling under fire is exactly when it is needed.
+The armed state takes the same lift a build rail row takes when armed, since it
+is the same idea; § Colour bars red here, as a deliberate action is not an error.
+Anything else the player does backs out of it.
 
 ## The placement preview
 
@@ -438,10 +464,11 @@ Clicking a structure with nothing armed selects it. Clicking empty ground with
 nothing armed clears the selection.
 
 **`Esc` backs out of whatever is in front of the player**, in this order: a
-question being asked (the restart confirmation), then an armed tool, then a
-selection, and only then the match itself. That makes it the pause key at stage
-1, and it keeps that meaning at stage 2 — disarming simply sits ahead of pause in
-the same chain. One key, one idea, no retrofit.
+question being asked — the restart confirmation first, since it is modal and an
+armed sell sits behind it — then an armed tool, then a selection, and only then
+the match itself. That makes it the pause key at stage 1, and it keeps that
+meaning at stage 2 — disarming simply sits ahead of pause in the same chain. One
+key, one idea, no retrofit.
 
 **Hotkeys ship with the action they trigger** (`plan.md`), so this table fills
 in over the stages rather than landing at once.
@@ -452,7 +479,7 @@ in over the stages rather than landing at once.
 | `Esc`       | pause (look-only)            | 1     |
 | `R`         | restart (confirms)           | 1     |
 | Right-click | disarm                       | 2     |
-| `S`         | sell selected                | 2     |
+| `S`         | sell selected (confirms)     | 2     |
 | `U`         | upgrade selected             | 3     |
 | `D`         | demolish selected obstacle   | 6     |
 | `O`         | toggle selected on/off       | 5     |
@@ -516,7 +543,7 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 | ----: | ---------------------------------------------------------------------------------------------------------------- |
 |     1 | frame and three zones, tokens, font, terrain, HUD (stored/goal + progress bar, pace, clock), tween utility, pause and end overlays |
 |     2 | build rail, armed tool and ghost, cables, inspect rail, preview lines 1-2, sell                                  |
-|     3 | level pips, upgrade action                                                                                      |
+|     3 | level numeral, upgrade action, two-step sell confirmation                                                       |
 |     4 | escalation ladder (first use), heat ring, danger tint, warning pip, heat-penalty preview line, audio harness     |
 |     5 | off / transitioning states, vent action and its cost readout                                                     |
 |     6 | Solar and Wind glyphs, demolish action                                                                           |

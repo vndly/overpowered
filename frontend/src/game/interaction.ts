@@ -12,7 +12,7 @@ import type {GeneratorKind} from '@/game/generator'
 export interface Interaction {
   armed: GeneratorKind | null // The build tool in hand. It stays armed after placing.
   hovered: Position | null // The cell under the cursor
-  selected: Position | null // The structure being inspected, kept while nothing is armed or hovered
+  selected: Position | null // The structure being inspected. It outranks the hover in the rail, so it holds still while the cursor crosses the board
 }
 
 /** Nothing armed, nothing pointed at, nothing selected. */

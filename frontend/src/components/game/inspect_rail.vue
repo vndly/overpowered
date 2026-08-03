@@ -1,7 +1,8 @@
-<!-- The inspect rail: what the player is about to do, what they are pointing at,
-     or what they have selected — in that order of precedence, so the answer to
-     the most immediate question is always the one on screen. There are no
-     floating tooltips anywhere in the game; everything lands here. -->
+<!-- The inspect rail: what the player is about to do, what they have selected, or
+     what they are pointing at — in that order of precedence. A selection outranks
+     a hover because it is the thing being acted on: its readouts and its actions
+     have to hold still while the cursor crosses the board. There are no floating
+     tooltips anywhere in the game; everything lands here. -->
 <template>
   <aside class="rail rail--inspect">
     <h2 class="hud-label rail-heading">{{ view.title }}</h2>
@@ -26,8 +27,13 @@
         <kbd class="hotkey">U</kbd>
       </button>
 
-      <button type="button" class="control inspect-action" @click="emit('sell', view.actions.position)">
-        <span class="rail-title">Sell</span>
+      <button
+        type="button"
+        class="control inspect-action"
+        :class="{'inspect-action--confirming': confirmingSell}"
+        @click="emit('sell', view.actions.position)"
+      >
+        <span class="rail-title">{{ confirmingSell ? 'Confirm sell' : 'Sell' }}</span>
         <kbd class="hotkey">S</kbd>
       </button>
     </div>
@@ -78,6 +84,7 @@ const props = defineProps<{
   match: Match
   snapshot: MatchSnapshot
   interaction: Interaction
+  confirmingSell: boolean // The sell is armed and waiting to be confirmed. The screen owns it, because Esc has to be able to back out of it
 }>()
 
 const emit = defineEmits<{
@@ -320,8 +327,9 @@ function resourceName(resource: ResourceKind): string {
   return resource.charAt(0).toUpperCase() + resource.slice(1)
 }
 
-// Strict precedence, highest first. Selection persists while nothing is armed
-// and nothing is hovered, so it is the last thing consulted rather than the first.
+// Strict precedence, highest first. Only an armed tool outranks a selection:
+// arming is the player saying they are done with what they had selected, while
+// moving the cursor says nothing of the kind.
 const view = computed<InspectView>(() => {
   const armed = props.interaction.armed
 
@@ -329,12 +337,12 @@ const view = computed<InspectView>(() => {
     return describePlacement(armed)
   }
 
-  if (props.interaction.hovered !== null) {
-    return describeCell(props.interaction.hovered, false)
-  }
-
   if (props.interaction.selected !== null) {
     return describeCell(props.interaction.selected, true)
+  }
+
+  if (props.interaction.hovered !== null) {
+    return describeCell(props.interaction.hovered, false)
   }
 
   return {
@@ -406,5 +414,17 @@ const view = computed<InspectView>(() => {
 /* Name left, hotkey right, matching a build rail row */
 .inspect-action {
     justify-content: space-between;
+}
+
+/* A sell waiting to be confirmed takes the same lift an armed build row takes,
+   because it is the same idea: the action is in hand and the next press fires
+   it. docs/ui.md § Colour bars red here — a deliberate action is not an error —
+   so the state is carried by weight and ground, not by hue. The hover selector
+   is repeated to outrank .control:hover in styles.css. */
+.control.inspect-action--confirming,
+.control.inspect-action--confirming:hover {
+    color: var(--ink);
+    background: var(--surface-well);
+    border-color: var(--ink);
 }
 </style>

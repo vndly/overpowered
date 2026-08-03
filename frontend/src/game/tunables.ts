@@ -84,10 +84,17 @@ export const TUNABLES = {
     accumulatorInnerRadius: 0.21,
     strokeWeight: 0.028, // Heavier than the 1px terrain rules, so structures read forward of the ground
     markRadius: 0.15, // The type mark inside the silhouette
-    levelPipOffset: 0.21, // Below the glyph's centre: clear of the type mark at 0.15 and inside the hexagon's lower edge at 0.26. The bottom of the cell is the resource marks' (docs/ui.md § Geometry)
-    levelPipHeight: 0.06, // Tick length
-    levelPipWeight: 0.018, // Tick width. Lighter than the silhouette's stroke, so a full row never reads as part of the outline
-    levelPipGap: 0.035, // Separation, sized so five pips and their gaps clear the hexagon's width at that height
+    // The level numeral, and the lift the type mark takes to make room for it.
+    // A hexagon 0.52 cell tall cannot hold a centred mark and a legible digit,
+    // so the two are centred in the silhouette as a pair instead: the mark rises
+    // and the digit takes the band between it and the lower edge. The bottom of
+    // the cell is not available — it belongs to the resource marks, which sit low
+    // precisely so a structure never covers them (docs/ui.md § Geometry).
+    levelNumeralMarkLift: 0.055, // How far the type mark rises when a numeral is drawn under it
+    levelNumeralOffset: 0.178, // The numeral's centre, below the glyph's centre
+    levelNumeralSize: 0.16, // Font size. 13px on a 1080p board, 7px at the 44px cell floor
+    levelNumeralWeight: 600, // The weight the HUD gives a readout (.readout in styles.css)
+    levelNumeralFamily: "'IBM Plex Sans', system-ui, sans-serif", // Must match styles.css: canvas cannot inherit it
     cableWeight: 0.022, // Constant at stage 2: weight encodes relay load, which arrives at stage 8
     hoverInset: 0.5, // Pixels, keeping the hover outline crisp on the cell boundary
     selectionMarkLength: 0.20, // Corner ticks, drawn outside the glyph so they never obscure it
