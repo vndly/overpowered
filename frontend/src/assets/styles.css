@@ -19,6 +19,19 @@
     --ink-faint: #4A5563;
     --energy: #58C7DE;
 
+    /* Top of the state ramp. The rest of the ramp arrives with heat at stage 4;
+       stage 1 needs only this stop, for the clock's final minute. */
+    --state-4: #DF413A;
+
+    /* The race verdict, and the only place hue means good news. Kept well clear
+       of --energy in hue so "ahead" never reads as just more cyan. */
+    --pace-ahead: #43C07A;
+    --pace-behind: var(--state-4);
+
+    /* Energy numerals on the HUD and in the overlays. The board keeps --energy
+       cyan for cables, so no warm hue reaches the cells. */
+    --hud-energy: #F2C044;
+
     /* Geometry */
     --hud-height: 76px;
     --rail-width: 248px;

@@ -7,7 +7,13 @@ and HUD layout for all thirteen stages.
 
 ## The signature
 
-> **A healthy grid is achromatic. Every hue on screen is a warning.**
+> **A healthy board is achromatic. Every hue on the board is a warning.**
+
+The signature is scoped to the board, which is where it earns its keep: a
+cascade is only legible if colour appearing among the cells means danger and
+nothing else. The HUD strip is an instrument panel rather than terrain, and it
+is allowed hue to render the race verdict — see § HUD strip. Nothing in that
+concession reaches the board.
 
 Terrain, structures, glyphs and idle cables are drawn entirely in cool greys.
 Colour enters only where the simulation is producing something — cyan where
@@ -93,6 +99,18 @@ decorative colours and no per-type identity colours.
 | `energy`         | `#58C7DE`                | flowing cables, energy numerals        |
 | `state-0` … `4`  | see ramp below           | heat, relay load, starvation           |
 | `tint-danger`    | `rgba(223,65,58,0.12)`   | cell wash above the critical threshold |
+| `pace-ahead`     | `#43C07A`                | pace readout and progress bar, ahead — HUD only |
+| `pace-behind`    | = `state-4`              | pace readout and progress bar, behind — HUD only |
+| `hud-energy`     | `#F2C044`                | energy numerals and the mid progress band — HUD only |
+
+`pace-ahead` is the only green in the game and the only hue that means good
+news. It is held well clear of `energy` in hue so that "ahead" never reads as
+merely more cyan, and it is barred from the board.
+
+`hud-energy` is the yellow the HUD gives to energy numerals — `STORED`, `GOAL`,
+and the same values on the end overlays. **`energy` cyan is unchanged and still
+owns flowing cables**, so the board stays free of warm hue and heat keeps the
+warm end of the spectrum to itself where it matters.
 
 **The state ramp** — one ramp, three meanings (see § The escalation ladder):
 
@@ -106,10 +124,26 @@ decorative colours and no per-type identity colours.
 
 Two rules that must not erode:
 
-- **Red is reserved.** `#DF413A` appears only at the top of the state ramp.
-  No error text, no sell button, no destructive-action styling may use it.
-- **Warm hues are reserved.** Nothing that is not heat, load or starvation may
-  be amber or orange, anywhere, including menus.
+- **Red is reserved.** `#DF413A` appears only at the top of the state ramp and
+  in the two HUD readouts named below. No error text, no sell button, no
+  destructive-action styling may use it, and nothing on the board may.
+- **The two admitted uses**, both on the HUD strip and both meaning *you are
+  losing this match*: the clock inside its final minute, and the pace readout
+  while behind.
+
+  **The cost is real and was accepted deliberately.** Levels are tuned to demand
+  80-90% of practical max output (`specs.md`), so a player is behind for much of
+  a normal match and the pace readout will sit red for much of it too. That is
+  exactly the pressure the readout exists to convey, but it does spend some of
+  red's alarm value before stage 4 needs it for overheating. If red stops reading
+  as "act now" once heat ships, the first thing to try is returning the pace
+  readout to neutral while behind and keeping only the green surplus.
+- **Warm hues are reserved on the board.** Nothing that is not heat, load or
+  starvation may be amber or orange on a cell, ever. The HUD strip and the
+  overlays are exempt: they use `hud-energy` for energy numerals and the warm
+  end of the progress bar. This is the narrowing that makes the rule survive —
+  it protects the surface where warm hue has to mean heat, and gives up the
+  surface where it never had to.
 
 ---
 
@@ -273,22 +307,51 @@ is never encoded in colour alone. Thresholds live in `tunables.ts`.
 
 ## HUD strip
 
-Left to right: `STORED` (large, tabular, `energy`-coloured), `GOAL`, `PACE`, and
-`TIME`. Pace shows actual against required as two marks on one short track, so
-"am I falling behind" is a glance, not arithmetic.
+**Centred**, matching the board beneath it. The pause control sits at the right
+end; the strip is otherwise readouts only.
+
+Left to right: `STORED` (large, tabular, `energy`-coloured), `GOAL`, `PACE`,
+`TIME`.
+
+Both numerals are `hud-energy` yellow.
+
+**Stored and goal share a progress bar** running beneath both. They are one
+question — how far along am I — so they are one group, and the bar answers it
+without arithmetic. It is banded in thirds, so the colour alone gives the
+answer:
+
+| Filled      | Colour        |
+| ----------- | ------------- |
+| under 1/3   | `pace-behind` |
+| 1/3 to 2/3  | `hud-energy`  |
+| 2/3 and up  | `pace-ahead`  |
+
+Note that this makes the bar red at the opening of every match, since every
+match starts at zero. The bar reports position, not danger.
+
+**Pace is a signed whole number**, not a track: the surplus or shortfall against
+what the clock demands, e.g. `+10/m`, `-2/m`. It is truncated toward zero rather
+than floored, so a shortfall of half a unit is never reported as a whole one.
 
 - **Required** = `(goal - stored) / remainingMinutes`, in ⚡/m. It rises as the
   match runs, which is the pressure made visible.
 - **Actual** = live net rate, income minus consumption, in ⚡/m — not an average.
   It must fall the instant a generator dies, because reading a cascade early is
-  the entire point of the widget; a rolling window would hide the first seconds
+  the entire point of the readout; a rolling window would hide the first seconds
   of one. The HUD tween supplies the smoothing instead.
-- **Track domain** is `0` to `1.25 x required`, clamped, so the required mark
-  sits at 80% of the track and overproduction still has somewhere to show.
-- **Neither mark is warm.** Actual is `energy`, because it is energy being
-  earned; required is a neutral `ink` tick. Falling behind is not heat, load or
-  starvation, so it may not borrow their ramp — the reading comes from the gap
-  between the two marks, which is geometry, not colour.
+- **Shown value** = `actual - required`. The sign is the whole reading, so it is
+  always written, and the number answers "by how much" second.
+- **The sign is colour-coded**: `pace-ahead` above zero, `pace-behind` below it.
+  Exactly on pace stays neutral, so the colour only appears when there is a side
+  to be on. Colour and numeral are both derived from the same truncated value,
+  so a surplus too small to print can never still be printed green.
+
+**The clock turns `state-4` inside its final minute** — and goes neutral again
+once the match is over, because red warns that you are about to fail, not that
+you did.
+
+Both of these spend reserved colour; § Colour records what that costs and what
+to unwind first if it stops paying.
 
 ## Build rail (left)
 
@@ -329,11 +392,17 @@ placement.
 
 **Armed tool, stays armed.** Click a build row or press its number to arm it. A
 ghost follows the cursor showing legality and the full preview; clicking places;
-the tool stays armed, so a relay chain is click-click-click. Esc or right-click
+the tool stays armed, so a relay chain is click-click-click. Right-click
 disarms.
 
 Clicking a structure with nothing armed selects it. Clicking empty ground with
 nothing armed clears the selection.
+
+**`Esc` backs out of whatever is in front of the player**, in this order: a
+question being asked (the restart confirmation), then an armed tool, then a
+selection, and only then the match itself. That makes it the pause key at stage
+1, and it keeps that meaning at stage 2 — disarming simply sits ahead of pause in
+the same chain. One key, one idea, no retrofit.
 
 **Hotkeys ship with the action they trigger** (`plan.md`), so this table fills
 in over the stages rather than landing at once.
@@ -341,10 +410,9 @@ in over the stages rather than landing at once.
 | Key         | Action                       | Stage |
 | ----------- | ---------------------------- | ----- |
 | `1-9`       | arm build slot               | 2     |
-| `Esc`       | disarm, else clear selection | 2     |
-| Right-click | disarm                       | 2     |
-| `Space`     | pause (look-only)            | 1     |
+| `Esc`       | pause (look-only)            | 1     |
 | `R`         | restart (confirms)           | 1     |
+| Right-click | disarm                       | 2     |
 | `S`         | sell selected                | 2     |
 | `U`         | upgrade selected             | 3     |
 | `D`         | demolish selected obstacle   | 3     |
@@ -407,7 +475,7 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 
 | Stage | UI introduced                                                                                                    |
 | ----: | ---------------------------------------------------------------------------------------------------------------- |
-|     1 | frame and three zones, tokens, font, terrain, HUD (stored/goal/pace/time), tween utility, pause and end overlays |
+|     1 | frame and three zones, tokens, font, terrain, HUD (stored/goal + progress bar, pace, clock), tween utility, pause and end overlays |
 |     2 | build rail, armed tool and ghost, cables, inspect rail, preview lines 1-2, sell                                  |
 |     3 | level pips, upgrade and demolish actions                                                                         |
 |     4 | escalation ladder (first use), heat ring, danger tint, warning pip, heat-penalty preview line, audio harness     |

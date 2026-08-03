@@ -99,20 +99,18 @@ const readouts = computed<Readout[]>(() => {
       <div class="overlay-actions">
         <button v-if="mode === 'paused'" type="button" class="control" @click="emit('resume')">
           <span class="rail-title">Resume</span>
-          <kbd class="hotkey">Space</kbd>
+          <kbd class="hotkey">Esc</kbd>
         </button>
 
-        <template v-else>
-          <button type="button" class="control" @click="emit('restart')">
-            <span class="rail-title">Restart</span>
-            <kbd class="hotkey">R</kbd>
-          </button>
+        <button type="button" class="control" @click="emit('restart')">
+          <span class="rail-title">Restart</span>
+          <kbd class="hotkey">R</kbd>
+        </button>
 
-          <button v-if="mode === 'restart'" type="button" class="control" @click="emit('cancel')">
-            <span class="rail-title">Cancel</span>
-            <kbd class="hotkey">Esc</kbd>
-          </button>
-        </template>
+        <button v-if="mode === 'restart'" type="button" class="control" @click="emit('cancel')">
+          <span class="rail-title">Cancel</span>
+          <kbd class="hotkey">Esc</kbd>
+        </button>
       </div>
     </div>
   </div>
@@ -165,8 +163,10 @@ const readouts = computed<Readout[]>(() => {
     gap: 6px;
 }
 
+/* The same yellow the HUD gives stored and goal, so a number does not change
+   colour just because the match ended */
 .overlay-readout--energy {
-    color: var(--energy);
+    color: var(--hud-energy);
 }
 
 .overlay-actions {

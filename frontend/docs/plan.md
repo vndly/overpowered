@@ -7,6 +7,25 @@ depends on anything a later stage introduces.
 down, you win or you lose, you can restart. That is true from stage 1, where you
 always lose because nothing generates energy yet.
 
+## Status
+
+A stage is ticked only once it has passed its exit criteria, including a full
+match played start to finish.
+
+- [x] 1 — The match shell
+- [ ] 2 — Build, sell, connect
+- [ ] 3 — Upgrades and demolition
+- [ ] 4 — Heat
+- [ ] 5 — Generator controls
+- [ ] 6 — Solar and Wind
+- [ ] 7 — The campaign shell
+- [ ] 8 — Relays and routing
+- [ ] 9 — Cooling towers
+- [ ] 10 — Tier 2
+- [ ] 11 — Tier 3
+- [ ] 12 — Campaign content and race tuning
+- [ ] 13 — Polish
+
 ## Cross-cutting rules
 
 - **The working level.** Stages 1-10 use one hand-made 10x10 level with a ~2

@@ -37,9 +37,9 @@ export const TUNABLES = {
   },
 
   hud: {
-    // The pace track runs from 0 to this multiple of the required pace, which
-    // parks the required mark at 80% and leaves overproduction somewhere to show
-    paceTrackHeadroom: 1.25,
+    clockWarningSeconds: 60, // The clock turns red inside this much of the deadline
+    progressLowFraction: 1 / 3, // Below this the progress bar reads red
+    progressHighFraction: 2 / 3, // At or above this it reads green; between them, yellow
   },
 
   motion: {

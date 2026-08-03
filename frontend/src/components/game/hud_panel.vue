@@ -1,41 +1,47 @@
-<!-- The HUD strip: stored energy, the goal, the pace race and the clock, with the
-     two controls that are available in every match. -->
+<!-- The HUD strip: stored energy against the goal, the pace the clock demands,
+     and the clock. Centred, because the board below it is centred. -->
 <template>
   <header class="hud">
+    <div class="hud-spacer"></div>
+
     <div class="hud-fields">
-      <section class="hud-field">
-        <span class="hud-label">Stored</span>
-        <span class="hud-value hud-value--energy">{{ storedEnergy }}</span>
-      </section>
+      <!-- Stored and goal share a bar, because they are one question -->
+      <section class="hud-progress">
+        <div class="hud-progress-fields">
+          <div class="hud-field">
+            <span class="hud-label">Stored</span>
+            <span class="hud-value hud-value--energy">{{ storedEnergy }}</span>
+          </div>
 
-      <section class="hud-field">
-        <span class="hud-label">Goal</span>
-        <span class="hud-value">{{ goal }}</span>
-      </section>
+          <div class="hud-field">
+            <span class="hud-label">Goal</span>
+            <span class="hud-value hud-value--energy">{{ goal }}</span>
+          </div>
+        </div>
 
-      <section class="hud-field hud-field--pace">
-        <span class="hud-label">Pace</span>
-        <div class="pace" role="img" :aria-label="paceDescription">
-          <div class="pace-actual" :style="{width: actualOffset}"></div>
-          <div class="pace-required" :style="{left: requiredOffset}"></div>
+        <div class="progress" role="img" :aria-label="progressDescription">
+          <div class="progress-fill" :class="`progress-fill--${progressBand}`" :style="{width: progressWidth}"></div>
         </div>
       </section>
 
-      <section class="hud-field">
+      <section class="hud-field hud-field--ruled hud-field--pace">
+        <span class="hud-label">Pace</span>
+        <span class="pace" :class="{'pace--ahead': isAheadOfPace, 'pace--behind': isBehindPace}" :aria-label="paceDescription">
+          <span class="hud-value pace-value">{{ paceDelta }}</span>
+          <span class="pace-unit">/m</span>
+        </span>
+      </section>
+
+      <section class="hud-field hud-field--ruled">
         <span class="hud-label">Time</span>
-        <span class="hud-value">{{ remaining }}</span>
+        <span class="hud-value" :class="{'hud-value--expiring': isExpiring}">{{ remaining }}</span>
       </section>
     </div>
 
     <div class="hud-controls">
       <button type="button" class="control" :disabled="snapshot.status !== 'running'" @click="emit('toggle-pause')">
         <span class="rail-title">{{ snapshot.paused ? 'Resume' : 'Pause' }}</span>
-        <kbd class="hotkey">Space</kbd>
-      </button>
-
-      <button type="button" class="control" @click="emit('restart')">
-        <span class="rail-title">Restart</span>
-        <kbd class="hotkey">R</kbd>
+        <kbd class="hotkey">Esc</kbd>
       </button>
     </div>
   </header>
@@ -44,42 +50,63 @@
 <script setup lang="ts">
 import {computed} from 'vue'
 import type {MatchSnapshot} from '@/composables/use_match'
-import {formatClock, formatEnergy} from '@/game/format'
+import {formatClock, formatEnergy, formatPaceDelta, truncatePace} from '@/game/format'
 import {TUNABLES} from '@/game/tunables'
 
 const props = defineProps<{snapshot: MatchSnapshot}>()
 
 const emit = defineEmits<{
   'toggle-pause': []
-  'restart': []
 }>()
 
 const storedEnergy = computed(() => formatEnergy(props.snapshot.storedEnergy))
 const goal = computed(() => formatEnergy(props.snapshot.goal))
 const remaining = computed(() => formatClock(props.snapshot.remainingSeconds))
 
-/** The track's full-scale value, so the required mark parks at a fixed offset. */
-const paceDomain = computed(() => Math.max(props.snapshot.requiredPace * TUNABLES.hud.paceTrackHeadroom, 1))
+const progressFraction = computed(() => {
+  const fraction = props.snapshot.goal > 0 ? props.snapshot.storedEnergy / props.snapshot.goal : 0
 
-function offsetOf(pace: number): string {
-  return `${Math.max(0, Math.min(100, (pace / paceDomain.value) * 100))}%`
-}
+  return Math.max(0, Math.min(1, fraction))
+})
 
-const actualOffset = computed(() => offsetOf(props.snapshot.actualPace))
-const requiredOffset = computed(() => offsetOf(props.snapshot.requiredPace))
+const progressWidth = computed(() => `${progressFraction.value * 100}%`)
 
-// The marks are positional, so the track reads without colour; this carries the
-// same reading to anyone who cannot see it at all
+/** Thirds of the way to the goal, so the bar answers "how am I doing" by colour alone. */
+const progressBand = computed(() => {
+  if (progressFraction.value < TUNABLES.hud.progressLowFraction) {
+    return 'low'
+  }
+
+  return progressFraction.value < TUNABLES.hud.progressHighFraction ? 'mid' : 'high'
+})
+
+// Surplus over what the clock demands. Read at display resolution so the colour
+// and the numeral can never disagree about which side of zero this is on.
+const paceSurplus = computed(() => truncatePace(props.snapshot.actualPace - props.snapshot.requiredPace))
+const paceDelta = computed(() => formatPaceDelta(paceSurplus.value))
+const isAheadOfPace = computed(() => paceSurplus.value > 0)
+const isBehindPace = computed(() => paceSurplus.value < 0)
+
+const isExpiring = computed(
+  () => props.snapshot.status === 'running' && props.snapshot.remainingSeconds < TUNABLES.hud.clockWarningSeconds,
+)
+
+// The lightning glyph and the bar are both visual; these carry the same
+// readings to anyone who cannot see them
+const progressDescription = computed(
+  () => `${formatEnergy(props.snapshot.storedEnergy)} stored of ${formatEnergy(props.snapshot.goal)} needed`,
+)
+
 const paceDescription = computed(
-  () => `Earning ${formatEnergy(props.snapshot.actualPace)} of ${formatEnergy(props.snapshot.requiredPace)} energy per minute required`,
+  () => `${formatEnergy(Math.abs(paceSurplus.value))} energy per minute ${isAheadOfPace.value ? 'ahead of' : 'behind'} the pace the goal requires`,
 )
 </script>
 
 <style scoped>
 .hud {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: stretch;
-    justify-content: space-between;
     height: var(--hud-height);
     background: var(--surface-raised);
     border-bottom: 1px solid var(--rule);
@@ -94,55 +121,101 @@ const paceDescription = computed(
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     min-width: 132px;
     padding: 0 20px;
-    border-right: 1px solid var(--rule);
 }
 
-.hud-field:first-child {
-    padding-left: 24px;
+.hud-field--ruled {
+    border-left: 1px solid var(--rule);
 }
 
-.hud-field--pace {
-    min-width: 196px;
+.hud-progress {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    gap: 7px;
+    padding: 0 4px;
+}
+
+.hud-progress-fields {
+    display: flex;
+}
+
+.hud-progress-fields .hud-field {
+    padding: 0 20px;
+}
+
+/* How far along the match actually is, under the two numbers that say it */
+.progress {
+    height: 3px;
+    margin: 0 20px;
+    background: var(--surface-well);
+    border-radius: 1px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width var(--tween) var(--ease), background-color var(--tween) var(--ease);
+}
+
+.progress-fill--low {
+    background: var(--pace-behind);
+}
+
+.progress-fill--mid {
+    background: var(--hud-energy);
+}
+
+.progress-fill--high {
+    background: var(--pace-ahead);
 }
 
 .hud-value--energy {
-    color: var(--energy);
+    color: var(--hud-energy);
 }
 
-/* The pace race: how much is being earned, against how much the clock demands.
-   Cyan is energy earned; the required mark stays neutral, because falling
-   behind is not heat, load or starvation and may not borrow their warm ramp. */
+.hud-field--pace {
+    min-width: 168px;
+}
+
 .pace {
-    position: relative;
-    height: 8px;
-    margin-top: 6px;
-    background: var(--surface-well);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-panel);
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
 }
 
-.pace-actual {
-    height: 100%;
-    background: var(--energy);
-    opacity: 0.85;
+.pace-value {
+    font-size: 24px;
 }
 
-.pace-required {
-    position: absolute;
-    top: -3px;
-    bottom: -3px;
-    width: 2px;
-    background: var(--ink);
-    transform: translateX(-1px);
+.pace-unit {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-dim);
+}
+
+/* The race verdict, read before the number is. Exactly on pace stays neutral,
+   so the colour only ever appears when there is a side to be on. */
+.pace--ahead .pace-value {
+    color: var(--pace-ahead);
+}
+
+.pace--behind .pace-value {
+    color: var(--pace-behind);
+}
+
+/* The final minute. docs/ui.md § Colour admits this one use of the top of the
+   state ramp outside a structure: the clock running out is the loss condition. */
+.hud-value--expiring {
+    color: var(--state-4);
 }
 
 .hud-controls {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     padding: 0 24px;
 }

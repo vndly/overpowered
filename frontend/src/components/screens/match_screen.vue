@@ -3,7 +3,7 @@
 <template>
   <div class="match-screen">
     <div class="match-frame" :style="frameStyle">
-      <HudPanel :snapshot="snapshot" @toggle-pause="togglePause" @restart="requestRestart" />
+      <HudPanel :snapshot="snapshot" @toggle-pause="togglePause" />
 
       <div class="match-body">
         <aside class="rail rail--build"></aside>
@@ -16,7 +16,7 @@
             :mode="overlayMode"
             :snapshot="snapshot"
             @resume="togglePause"
-            @restart="confirmRestart"
+            @restart="onOverlayRestart"
             @cancel="cancelRestart"
           />
         </div>
@@ -106,6 +106,15 @@ function cancelRestart(): void {
   setPaused(wasPausedBeforeConfirm.value)
 }
 
+/** Restart reads as "ask" everywhere except on the panel that is already asking. */
+function onOverlayRestart(): void {
+  if (isConfirmingRestart.value) {
+    confirmRestart()
+  } else {
+    requestRestart()
+  }
+}
+
 function onResize(): void {
   viewportWidth.value = window.innerWidth
   viewportHeight.value = window.innerHeight
@@ -116,10 +125,12 @@ function onKeyDown(event: KeyboardEvent): void {
     return
   }
 
-  if (event.code === 'Space') {
-    event.preventDefault()
-
-    if (!isConfirmingRestart.value) {
+  // Escape backs out of whatever is in front of the player: the question first,
+  // the match second. Stage 2 puts disarming the build tool ahead of both.
+  if (event.key === 'Escape') {
+    if (isConfirmingRestart.value) {
+      cancelRestart()
+    } else {
       togglePause()
     }
 
@@ -132,12 +143,6 @@ function onKeyDown(event: KeyboardEvent): void {
     } else {
       requestRestart()
     }
-
-    return
-  }
-
-  if (event.key === 'Escape' && isConfirmingRestart.value) {
-    cancelRestart()
   }
 }
 

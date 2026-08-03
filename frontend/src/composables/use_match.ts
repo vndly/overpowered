@@ -60,6 +60,10 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
     }
   }
 
+  // Opened on its true values, so the HUD never eases up from a zero it was
+  // never actually showing
+  snapTweens()
+
   const snapshot = shallowRef<MatchSnapshot>(readSnapshot())
 
   /**
