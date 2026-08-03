@@ -392,9 +392,9 @@ export class BoardRenderer {
 
   /**
    * The armed tool's ghost on the hovered cell, and the cables it would create.
-   * Legality is drawn in value, never in colour: an illegal ghost drops to
-   * ink-faint, the same greying the build rail gives an illegal row, because red
-   * belongs to the state ramp alone.
+   * A refused placement is drawn in the same red as the reason printed beside it
+   * in the rail, so the cursor and the rail never disagree about whether the
+   * click will work.
    * @param match - The match to test the placement against
    * @param interaction - What the player is pointing at and holding
    */
@@ -416,12 +416,30 @@ export class BoardRenderer {
       this.drawGhostCables(match, hovered)
     }
 
-    drawGeneratorGlyph(this.ctx, armed, center.centerX, center.centerY, this.layout.cellSize, {
-      stroke: check.allowed ? TUNABLES.colors.ghostLegal : TUNABLES.colors.ghostIllegal,
-      fill: TUNABLES.colors.structureFill,
-    })
+    drawGeneratorGlyph(this.ctx, armed, center.centerX, center.centerY, this.layout.cellSize, this.ghostStyle(check.allowed))
 
     this.ctx.restore()
+  }
+
+  /**
+   * How a ghost is inked. A legal one is the structure it will become, drawn
+   * faintly; a refused one is a red wash rather than a plate, so it never reads
+   * as something that is already standing there.
+   * @param allowed - Whether the placement would succeed
+   * @returns The style to draw the ghost in
+   */
+  private ghostStyle(allowed: boolean): GlyphStyle {
+    if (allowed) {
+      return {
+        stroke: TUNABLES.colors.ghostLegal,
+        fill: TUNABLES.colors.structureFill,
+      }
+    }
+
+    return {
+      stroke: TUNABLES.colors.ghostIllegal,
+      fill: TUNABLES.colors.ghostIllegalFill,
+    }
   }
 
   /**

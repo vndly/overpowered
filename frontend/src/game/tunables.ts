@@ -103,7 +103,9 @@ export const TUNABLES = {
     cable: '#58C7DE', // energy: a cable exists only where flow reaches the accumulator, so it is never idle at stage 2
     hoverOutline: 'rgba(198, 210, 228, 0.22)',
     selectionMark: '#C8D3E2', // ink
+    inkFaint: '#4A5563', // A rail glyph greyed out because its row is illegal on the hovered cell
     ghostLegal: '#C8D3E2', // ink, drawn at ghostAlpha
-    ghostIllegal: '#4A5563', // ink-faint, matching the build rail row it greys out
+    ghostIllegal: '#DF413A', // state-4: a placement the cell refuses reads as an error, like the reason printed beside it
+    ghostIllegalFill: 'rgba(223, 65, 58, 0.18)', // A wash rather than the structure's plate, so an illegal ghost never reads as a thing that is there
   },
 } as const

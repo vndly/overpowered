@@ -126,10 +126,9 @@ Two rules that must not erode:
 
 - **Red is reserved**, and the rule is now stated positively: `#DF413A` means
   *this is wrong, or about to be*. It appears at the top of the state ramp, and
-  on the frame in the four cases below. Nothing on the board may use it outside
-  the ramp, and no sell button or destructive-action styling may use it at all —
-  a deliberate action is not an error.
-- **The four admitted uses.**
+  in the five cases below. No sell button or destructive-action styling may use
+  it: a deliberate action is not an error.
+- **The five admitted uses.**
 
   1. The clock inside its final minute.
   2. The pace readout while behind.
@@ -141,8 +140,20 @@ Two rules that must not erode:
      and every error message added after this. The rule is the class of message,
      not the list: `.error-text` in `styles.css` is the one place it is defined,
      composed with whichever type role the message sits in.
+  5. **The ghost of a placement the cell refuses** — silhouette, type mark and a
+     translucent wash, all in red. This is the one thing outside the state ramp
+     that may put red on a cell. Two things keep it clear of the ramp: it is a
+     *wash inside a glyph*, never a cell tint like `tint-danger`, and it lives
+     under the cursor, vanishing the moment the tool is disarmed.
 
-  The first two mean *you are losing this match*; the last two are the ones a
+     **Watch this at stage 4.** "Already built here" is a refusal, so a red ghost
+     is drawn over an existing structure — and from stage 4 a red ring on that
+     same structure means it is about to explode. The two are distinguishable
+     today (filled wash under the cursor versus a ring arc), but if they read as
+     one thing once heat ships, suppress the ghost on occupied cells rather than
+     weakening either colour.
+
+  The first two mean *you are losing this match*; the last three are the ones a
   player meets constantly, which is what makes this rule cost something — see
   the note above on what to unwind first if red stops reading as "act now".
 
@@ -400,9 +411,10 @@ tooltips or popovers anywhere in the game.
 `specs.md` requires five things at placement time. They split by kind, because
 nothing may overlap the board:
 
-**Drawn on the board** (ghost layer): the ghost glyph in its legal or illegal
-state, the connection route to the accumulator, the relay reach cross, the
-cooling radius, and an outline on every neighbour that will gain heat.
+**Drawn on the board** (ghost layer): the ghost glyph — `ink` when the placement
+is legal, red silhouette and wash when the cell refuses it — the connection route
+to the accumulator, the relay reach cross, the cooling radius, and an outline on
+every neighbour that will gain heat.
 
 **Rendered in the rail** (numeric): cost and resulting balance, delivered output
 after hop loss, heat penalty percentage, cooling received, and relay load after

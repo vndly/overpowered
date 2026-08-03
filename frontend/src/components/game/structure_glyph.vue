@@ -34,7 +34,7 @@ const boxStyle = computed(() => {
 function draw(): void {
   const kind = props.kind
   const size = props.size
-  const stroke = props.dimmed ? TUNABLES.colors.ghostIllegal : TUNABLES.colors.structureStroke
+  const stroke = props.dimmed ? TUNABLES.colors.inkFaint : TUNABLES.colors.structureStroke
   const element = canvas.value
 
   if (element === null) {
