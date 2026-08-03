@@ -18,8 +18,10 @@ always lose because nothing generates energy yet.
   The game is only ever experienced as a player experiences it.
 - **Visual language once, juice last.** Stage 1 commits palette, type, grid
   rendering style, HUD layout and alarm colours. Every later stage renders its
-  mechanic properly in that language. Effects, animation and non-alarm audio
-  batch into stage 13.
+  mechanic properly in that language. Effects, decoration and non-alarm audio
+  batch into stage 13 — but *not* animation: `docs/ui.md` § Motion amends this,
+  tweening anything that renders a simulation value from stage 1, because
+  escalation only communicates if it can be seen rising.
 - **Alarms are not polish.** Warning and alarm SFX ship in the stage that
   introduces the danger they announce, because the spec classifies them as
   gameplay-critical readability.
@@ -50,12 +52,14 @@ src/
     grid.ts               Grid          — bounds-checked access, neighbours
     match.ts              Match         — match state + tick
     match_loop.ts         MatchLoop     — fixed-timestep driver
+    format.ts             energy, pace and clock strings for the DOM
     generator.ts          Generator                                    (S2)
     accumulator.ts        Accumulator                                  (S2)
     network.ts            reach, chaining, obstacle blocking           (S2)
     economy.ts            build / sell / upgrade / demolish rules      (S2, S3)
     render/
-      board_layout.ts     BoardLayout   — cell size, DPR, point to cell
+      tween.ts            Tween         — eases one rendered simulation value
+      board_layout.ts     BoardLayout   — cell size, centring, point to cell
       board_renderer.ts   BoardRenderer — grid, structures, cables
   composables/
     use_match.ts          owns Match + MatchLoop, exposes HUD snapshot and actions

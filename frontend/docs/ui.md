@@ -173,6 +173,16 @@ Resource marks sit low in the cell so a placed structure never covers them, and
 stacking is native: coal + water is simply two marks. Obstacle masses are valued
 to recede behind live structures.
 
+**A resource mark is a hatched patch**, the way a drawing has always said "this
+is a material", with one hatch angle per resource. That keeps the terrain
+vocabulary generative — a ninth resource is a ninth angle, not a ninth picture —
+and it separates cleanly from the structures below, because:
+
+> **Terrain is stroked. Structures own the fills and the silhouettes.**
+
+No hatch can ever be misread as a hexagon, a rounded square, a diamond or a ring
+at any cell size, which a small filled resource glyph could.
+
 ## Structures
 
 The outer silhouette names the family and never varies. Everything inside names
@@ -275,6 +285,10 @@ Left to right: `STORED` (large, tabular, `energy`-coloured), `GOAL`, `PACE`, and
   of one. The HUD tween supplies the smoothing instead.
 - **Track domain** is `0` to `1.25 x required`, clamped, so the required mark
   sits at 80% of the track and overproduction still has somewhere to show.
+- **Neither mark is warm.** Actual is `energy`, because it is energy being
+  earned; required is a neutral `ink` tick. Falling behind is not heat, load or
+  starvation, so it may not borrow their ramp — the reading comes from the gap
+  between the two marks, which is geometry, not colour.
 
 ## Build rail (left)
 
