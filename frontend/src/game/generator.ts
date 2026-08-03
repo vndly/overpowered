@@ -38,30 +38,51 @@ export function generatorStats(kind: GeneratorKind): GeneratorStats {
 /**
  * One generator standing on the board.
  * Plain TypeScript with no knowledge of Vue or canvas. It carries only what it
- * owns: its type and where it stands. Level arrives at stage 3 and temperature
- * at stage 4, which is when this stops being a pure lookup.
+ * owns: its type, where it stands and how far it has been taken. Temperature
+ * arrives at stage 4.
  */
 export class Generator {
   readonly kind: GeneratorKind // Which generator this is
   readonly position: Position // The cell it stands on
   private readonly stats: GeneratorStats // Looked up once: its type cannot change
+  private currentLevel: number // From 1, capped at TUNABLES.economy.maxLevel
 
   constructor(kind: GeneratorKind, position: Position) {
     this.kind = kind
     this.position = position
     this.stats = generatorStats(kind)
+    this.currentLevel = 1
+  }
+
+  /**
+   * Takes the generator up one level.
+   * Whether it may happen, and what it costs, are economy.ts's answers — this
+   * only records the level, the way build() only records the placement.
+   */
+  upgrade(): void {
+    this.currentLevel++
   }
 
   get name(): string {
     return this.stats.name
   }
 
+  get level(): number {
+    return this.currentLevel
+  }
+
+  /** Whether it has run out of levels to buy. */
+  get isMaxLevel(): boolean {
+    return this.currentLevel >= TUNABLES.economy.maxLevel
+  }
+
+  /** What it cost to build, and the only thing a sale refunds against: levels are sunk. */
   get cost(): number {
     return this.stats.cost
   }
 
-  /** Energy per minute. It counts towards the global total only while connected. */
+  /** Energy per minute at its current level. It counts towards the global total only while connected. */
   get output(): number {
-    return this.stats.output
+    return this.stats.output * TUNABLES.economy.outputGrowth ** (this.currentLevel - 1)
   }
 }

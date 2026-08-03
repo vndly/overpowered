@@ -6,7 +6,7 @@ import type {Interaction} from '@/game/interaction'
 import type {Match} from '@/game/match'
 import type {NetworkLink} from '@/game/network'
 import type {BoardLayout, CellRect} from '@/game/render/board_layout'
-import {drawAccumulatorGlyph, drawGeneratorGlyph} from '@/game/render/glyphs'
+import {drawAccumulatorGlyph, drawGeneratorGlyph, drawLevelPips} from '@/game/render/glyphs'
 import type {GlyphStyle} from '@/game/render/glyphs'
 import {TUNABLES} from '@/game/tunables'
 
@@ -336,7 +336,9 @@ export class BoardRenderer {
   }
 
   /**
-   * One generator, on the cell it stands on.
+   * One generator, on the cell it stands on, with its level under its mark.
+   * The ghost carries no pips: a placement is not yet a structure, and what the
+   * player is deciding there is the cell, not the level.
    * @param generator - The generator to draw
    * @param style - How to ink it
    */
@@ -344,6 +346,7 @@ export class BoardRenderer {
     const center = this.layout.cellCenterAt(generator.position.x, generator.position.y)
 
     drawGeneratorGlyph(this.ctx, generator.kind, center.centerX, center.centerY, this.layout.cellSize, style)
+    drawLevelPips(this.ctx, center.centerX, center.centerY, this.layout.cellSize, generator.level, style.stroke)
   }
 
   /**

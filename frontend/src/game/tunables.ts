@@ -22,7 +22,23 @@ export const TUNABLES = {
   economy: {
     costUnit: 10, // Energy per point of a generator's cost rating
     outputUnit: 8, // Energy per minute per point of its output rating
-    sellRefund: 0.5, // Fraction of the build cost returned on a sell
+    sellRefund: 0.5, // Fraction of the build cost returned on a sell. Levels are never refunded: docs/specs.md § Generators
+
+    // Levels run 1 to maxLevel. Output multiplies by outputGrowth per level, the
+    // rate docs/specs.md gives in its own example (100 → 140 ⚡/m), and the next
+    // level's price is the build cost times upgradeCostBase, multiplied again by
+    // upgradeCostGrowth for every level already bought.
+    //
+    // Two properties are deliberate and are what the working level is tuned
+    // against. upgradeCostBase buys 6.4⚡/m for 6⚡ where a whole generator buys
+    // 16⚡/m for 10⚡, so building wide is always the better deal while a cell
+    // remains. upgradeCostGrowth sits above outputGrowth, so each level buys
+    // less per ⚡ than the last and levelling every generator once beats
+    // levelling one of them five times.
+    maxLevel: 5,
+    outputGrowth: 1.4,
+    upgradeCostBase: 0.6,
+    upgradeCostGrowth: 1.6,
   },
 
   // Ratings straight from docs/specs.md § Types of generators, plus the cell the
@@ -68,6 +84,10 @@ export const TUNABLES = {
     accumulatorInnerRadius: 0.21,
     strokeWeight: 0.028, // Heavier than the 1px terrain rules, so structures read forward of the ground
     markRadius: 0.15, // The type mark inside the silhouette
+    levelPipOffset: 0.21, // Below the glyph's centre: clear of the type mark at 0.15 and inside the hexagon's lower edge at 0.26. The bottom of the cell is the resource marks' (docs/ui.md § Geometry)
+    levelPipHeight: 0.06, // Tick length
+    levelPipWeight: 0.018, // Tick width. Lighter than the silhouette's stroke, so a full row never reads as part of the outline
+    levelPipGap: 0.035, // Separation, sized so five pips and their gaps clear the hexagon's width at that height
     cableWeight: 0.022, // Constant at stage 2: weight encodes relay load, which arrives at stage 8
     hoverInset: 0.5, // Pixels, keeping the hover outline crisp on the cell boundary
     selectionMarkLength: 0.20, // Corner ticks, drawn outside the glyph so they never obscure it

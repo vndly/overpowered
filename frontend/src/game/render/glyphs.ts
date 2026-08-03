@@ -100,6 +100,49 @@ export function drawAccumulatorGlyph(
 }
 
 /**
+ * A structure's level: one tick per level, in a row along the bottom of the
+ * silhouette. The row is never empty, because a structure is level 1 the moment
+ * it is built, and it is never numerals — nothing on a cell is ever read.
+ *
+ * It sits inside the glyph rather than under it: the bottom of the cell belongs
+ * to the resource marks, which are drawn low precisely so a structure never
+ * covers them (docs/ui.md § Geometry).
+ * @param ctx - The context to draw into
+ * @param centerX - Glyph centre
+ * @param centerY - Glyph centre
+ * @param cellSize - The cell edge the row is scaled against
+ * @param level - The structure's level, from 1
+ * @param stroke - The ink to draw it in
+ */
+export function drawLevelPips(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  cellSize: number,
+  level: number,
+  stroke: string,
+): void {
+  const weight = Math.max(1, cellSize * TUNABLES.structure.levelPipWeight)
+  const height = cellSize * TUNABLES.structure.levelPipHeight
+  const gap = cellSize * TUNABLES.structure.levelPipGap
+  const baseline = centerY + cellSize * TUNABLES.structure.levelPipOffset
+  const step = weight + gap
+  let pipX = centerX - (level - 1) * step / 2
+
+  ctx.strokeStyle = stroke
+  ctx.lineWidth = weight
+  ctx.beginPath()
+
+  for (let i = 0; i < level; i++) {
+    ctx.moveTo(pipX, baseline - height / 2)
+    ctx.lineTo(pipX, baseline + height / 2)
+    pipX += step
+  }
+
+  ctx.stroke()
+}
+
+/**
  * Biomass's mark: a stem with two leaves. Each leaf is one curve closing against
  * the stem, so the whole thing is three strokes and survives a 44px cell.
  * @param ctx - The context to draw into

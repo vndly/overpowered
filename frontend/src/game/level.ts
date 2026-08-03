@@ -96,10 +96,22 @@ const WORKING_LEVEL_MAP = [
  * The race, derived rather than guessed. Biomass costs 10⚡ and delivers 16⚡/m,
  * so it pays for itself in 37.5s and reinvestment compounds: opening with six
  * generators and rebuilding the moment each 10⚡ lands fills all seventeen cells
- * by t≈41s and banks 357⚡ by the whistle. The goal is 84% of that, inside
- * docs/specs.md's 80-90% band, and idling on the opening six banks only 192⚡ —
- * a mathematical loss, which is what the band exists to guarantee.
- * Stage 12 re-measures this across the authored campaign.
+ * by t≈41s. From there the board is full and the only thing left to buy is
+ * levels, cheapest first — every generator to 2 by t≈60s, to 3 by t≈83s, to 4 by
+ * t≈107s. Level 5 never pays: at 25⚡ for 17.6⚡/m it takes 85s to return, and by
+ * the time it is affordable there is less than that left on the clock. Stopping
+ * there and banking the rest reaches 903⚡.
+ *
+ * The goal is 83% of that, inside docs/specs.md's 80-90% band. Building wide and
+ * banking without ever upgrading reaches 629⚡ — 84% of the goal and a
+ * mathematical loss, which is what makes this stage's decision compulsory rather
+ * than optional. Idling on the opening six banks 288⚡.
+ *
+ * Three minutes rather than two, because at two the upgrade path was worth 22⚡
+ * over doing nothing and no goal in the band could have demanded it. An
+ * investment only counts if it pays back before the whistle, and upgrades pay
+ * back in 56-85s where a generator pays back in 37.5s.
+ * Stage 12 re-measures all of this across the authored campaign.
  */
 export const WORKING_LEVEL: Level = {
   id: 'working',
@@ -108,8 +120,8 @@ export const WORKING_LEVEL: Level = {
   rows: 10,
   cells: parseMap(WORKING_LEVEL_MAP),
   startingEnergy: 60,
-  goal: 300,
-  durationSeconds: 120,
+  goal: 750,
+  durationSeconds: 180,
   accumulator: {
     x: 1,
     y: 5,

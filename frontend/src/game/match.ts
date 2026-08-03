@@ -1,7 +1,7 @@
 import {Accumulator} from '@/game/accumulator'
 import type {Position} from '@/game/cell'
 import {samePosition} from '@/game/cell'
-import {checkBuild, refundFor} from '@/game/economy'
+import {checkBuild, checkUpgrade, refundFor, upgradeCostFor} from '@/game/economy'
 import type {GeneratorKind} from '@/game/generator'
 import {Generator} from '@/game/generator'
 import {Grid} from '@/game/grid'
@@ -85,6 +85,28 @@ export class Match {
 
     this.energy -= generator.cost
     this.builtGenerators.push(generator)
+    this.tracedNetwork = this.trace()
+
+    return true
+  }
+
+  /**
+   * Upgrades a generator, charging the player for it.
+   * The network is retraced even though nothing moved: delivered output is
+   * summed when the trace runs, so a generator that grows has to be counted
+   * again or the HUD keeps reading the rate it had before.
+   * @param position - The cell the generator stands on
+   * @returns Whether it was upgraded
+   */
+  upgrade(position: Position): boolean {
+    const generator = this.generatorAt(position)
+
+    if (this.isOver || generator === undefined || !checkUpgrade(this, generator).allowed) {
+      return false
+    }
+
+    this.energy -= upgradeCostFor(generator)
+    generator.upgrade()
     this.tracedNetwork = this.trace()
 
     return true

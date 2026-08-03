@@ -15,8 +15,18 @@
 
     <p v-if="view.reason !== null" class="caption error-text inspect-reason">{{ view.reason }}</p>
 
-    <div v-if="view.sellable !== null" class="inspect-actions">
-      <button type="button" class="control" @click="emit('sell', view.sellable)">
+    <div v-if="view.actions !== null" class="inspect-actions">
+      <button
+        type="button"
+        class="control inspect-action"
+        :disabled="!view.actions.canUpgrade"
+        @click="emit('upgrade', view.actions.position)"
+      >
+        <span class="rail-title">Upgrade</span>
+        <kbd class="hotkey">U</kbd>
+      </button>
+
+      <button type="button" class="control inspect-action" @click="emit('sell', view.actions.position)">
         <span class="rail-title">Sell</span>
         <kbd class="hotkey">S</kbd>
       </button>
@@ -29,12 +39,14 @@ import {computed} from 'vue'
 import type {MatchSnapshot} from '@/composables/use_match'
 import type {Position, ResourceKind} from '@/game/cell'
 import {samePosition} from '@/game/cell'
-import {checkBuild, refundFor} from '@/game/economy'
+import {checkBuild, checkUpgrade, refundFor, upgradeCostFor, upgradedOutputFor} from '@/game/economy'
+import type {UpgradeCheck} from '@/game/economy'
 import type {Generator, GeneratorKind} from '@/game/generator'
 import {generatorStats} from '@/game/generator'
 import {formatEnergy, formatRate} from '@/game/format'
 import type {Interaction} from '@/game/interaction'
 import type {Match} from '@/game/match'
+import {TUNABLES} from '@/game/tunables'
 
 /**
  * How a value is inked. `energy` is the HUD's yellow, which every energy amount
@@ -49,11 +61,17 @@ interface Readout {
   tone: ReadoutTone
 }
 
+/** What the rail offers on the selected structure. Selling is always available; upgrading runs out. */
+interface InspectActions {
+  position: Position // The cell every action here acts on
+  canUpgrade: boolean // False at the level cap, and while the price is out of reach
+}
+
 interface InspectView {
   title: string
   readouts: Readout[]
   reason: string | null // What is standing in the way, stated and nothing else
-  sellable: Position | null // The generator the Sell action would remove
+  actions: InspectActions | null // Offered on a selection only, never on a hover
 }
 
 const props = defineProps<{
@@ -64,6 +82,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'sell': [position: Position]
+  'upgrade': [position: Position]
 }>()
 
 /**
@@ -84,12 +103,13 @@ function energyReadout(label: string, value: number): Readout {
  * A price, inked by whether the player can meet it right now. It reads against
  * the untweened balance, so the colour can never disagree with the rule that
  * decides whether the click will work.
- * @param cost - Energy the structure costs
+ * @param label - The field's name
+ * @param cost - Energy the action costs
  * @returns The readout
  */
-function costReadout(cost: number): Readout {
+function costReadout(label: string, cost: number): Readout {
   return {
-    label: 'Cost',
+    label: label,
     value: formatEnergy(cost),
     tone: props.snapshot.spendableEnergy >= cost ? 'plain' : 'alert',
   }
@@ -123,11 +143,11 @@ function describePlacement(kind: GeneratorKind): InspectView {
     return {
       title: stats.name,
       readouts: [
-        costReadout(stats.cost),
+        costReadout('Cost', stats.cost),
         rateReadout('Output', stats.output),
       ],
       reason: null,
-      sellable: null,
+      actions: null,
     }
   }
 
@@ -136,38 +156,87 @@ function describePlacement(kind: GeneratorKind): InspectView {
   return {
     title: stats.name,
     readouts: [
-      costReadout(stats.cost),
+      costReadout('Cost', stats.cost),
       rateReadout('Delivered', delivered),
     ],
     reason: checkBuild(props.match, kind, hovered).reason,
-    sellable: null,
+    actions: null,
+  }
+}
+
+/**
+ * A structure's level against the cap, so "one more" and "no more" read the same
+ * way. Plain ink: a level is a fact about the structure, not a price.
+ * @param generator - The generator on the cell
+ * @returns The readout
+ */
+function levelReadout(generator: Generator): Readout {
+  return {
+    label: 'Level',
+    value: `${generator.level} / ${TUNABLES.economy.maxLevel}`,
+    tone: 'plain',
   }
 }
 
 /**
  * A generator already on the board. Output is what it makes; delivered is what
  * survives the trip, which is zero while it is off the network.
+ *
+ * Offered its actions, it also prices its next level and says what that level
+ * would make. That pair against the build rail's — a whole generator, and what a
+ * whole generator makes — is the decision this stage is about, and both halves
+ * are on screen at once.
  * @param generator - The generator on the cell
- * @param withActions - Whether the rail may offer to sell it
+ * @param withActions - Whether the rail may offer to act on it
  * @returns The rail's contents
  */
 function describeGenerator(generator: Generator, withActions: boolean): InspectView {
   const connected = props.match.isConnected(generator)
+  const upgrade = checkUpgrade(props.match, generator)
   const readouts = [
+    levelReadout(generator),
     rateReadout('Output', generator.output),
     rateReadout('Delivered', connected ? generator.output : 0),
   ]
 
   if (withActions) {
+    if (upgrade.upgradeable) {
+      readouts.push(
+        costReadout('Upgrade', upgradeCostFor(generator)),
+        rateReadout('Next level', upgradedOutputFor(generator)),
+      )
+    }
+
     readouts.push(energyReadout('Refund', refundFor(generator)))
   }
 
   return {
     title: generator.name,
     readouts: readouts,
-    reason: connected ? null : 'Not connected to the accumulator',
-    sellable: withActions ? generator.position : null,
+    reason: generatorReason(connected, withActions ? upgrade : null),
+    actions: withActions
+      ? {
+        position: generator.position,
+        canUpgrade: upgrade.allowed,
+      }
+      : null,
   }
+}
+
+/**
+ * The one line the rail prints under a generator's readouts: whatever most
+ * immediately stands in the player's way. Being off the network outranks
+ * anything about an upgrade, because it is costing energy every second.
+ * @param connected - Whether the generator reaches the accumulator
+ * @param upgrade - The upgrade rules, or null when the rail is not offering the action
+ * @returns The line to print, or null when nothing is in the way
+ */
+function generatorReason(connected: boolean, upgrade: UpgradeCheck | null): string | null {
+  if (!connected) {
+    return 'Not connected to the accumulator'
+  }
+
+  return upgrade === null ? null : upgrade.reason
 }
 
 /**
@@ -188,7 +257,7 @@ function describeCell(position: Position, withActions: boolean): InspectView {
       title: 'Accumulator',
       readouts: [rateReadout('Delivered', props.match.network.deliveredOutput)],
       reason: null,
-      sellable: null,
+      actions: null,
     }
   }
 
@@ -206,7 +275,7 @@ function describeGround(position: Position): InspectView {
     title: 'Empty cell',
     readouts: [],
     reason: null,
-    sellable: null,
+    actions: null,
   }
 
   if (cell === undefined) {
@@ -225,7 +294,7 @@ function describeGround(position: Position): InspectView {
           },
         ],
         reason: null,
-        sellable: null,
+        actions: null,
       }
     case 'water':
       return {
@@ -272,7 +341,7 @@ const view = computed<InspectView>(() => {
     title: 'Inspect',
     readouts: [],
     reason: null,
-    sellable: null,
+    actions: null,
   }
 })
 </script>
@@ -325,9 +394,17 @@ const view = computed<InspectView>(() => {
     border-top: 1px solid var(--rule);
 }
 
+/* Stacked full width rather than in a row: stage 5 adds two more actions here,
+   and a column takes them without the buttons ever narrowing. */
 .inspect-actions {
     display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-top: auto;
+}
+
+/* Name left, hotkey right, matching a build rail row */
+.inspect-action {
+    justify-content: space-between;
 }
 </style>

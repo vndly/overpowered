@@ -76,7 +76,11 @@ route overlays the spec demands.
 - Cell size = `floor(min(wellWidth, wellHeight) / max(cols, rows))`, floor 44px.
   A 10x10 level on 1080p gives ~80px cells; a 16x16 gives ~50px.
 - Glyph diameter `0.60 x cell`. State ring radius `0.39 x cell`. Level pips sit
-  in the bottom `0.14 x cell` band.
+  inside the silhouette, in the band between the type mark and the glyph's lower
+  edge — around `0.71 x cell` from the cell's top. The bottom of the cell belongs
+  to the resource marks, which sit low precisely so a structure never covers
+  them, and a level belongs to the structure rather than to the ground it stands
+  on.
 - Corner radius 2px on panels, 3px on controls. Near-square: this is an
   instrument, not a card layout.
 
@@ -293,8 +297,9 @@ Sharp corners belong to exactly the three generators that will kill you.
 | Intermediate relay | 2 pips                         |
 | Advanced relay     | 3 pips                         |
 
-**Level** is a row of 3px ticks below the glyph, up to five; beyond five they
-stack into a second row. No numerals appear on a cell at any size.
+**Level** is a row of ticks along the bottom of the silhouette, one per level, up
+to the cap of five — a row that is never empty, because a structure is level 1
+the moment it is built. No numerals appear on a cell at any size.
 
 ## Cables
 
@@ -449,7 +454,7 @@ in over the stages rather than landing at once.
 | Right-click | disarm                       | 2     |
 | `S`         | sell selected                | 2     |
 | `U`         | upgrade selected             | 3     |
-| `D`         | demolish selected obstacle   | 3     |
+| `D`         | demolish selected obstacle   | 6     |
 | `O`         | toggle selected on/off       | 5     |
 | `V`         | vent selected                | 5     |
 
@@ -511,10 +516,10 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 | ----: | ---------------------------------------------------------------------------------------------------------------- |
 |     1 | frame and three zones, tokens, font, terrain, HUD (stored/goal + progress bar, pace, clock), tween utility, pause and end overlays |
 |     2 | build rail, armed tool and ghost, cables, inspect rail, preview lines 1-2, sell                                  |
-|     3 | level pips, upgrade and demolish actions                                                                         |
+|     3 | level pips, upgrade action                                                                                      |
 |     4 | escalation ladder (first use), heat ring, danger tint, warning pip, heat-penalty preview line, audio harness     |
 |     5 | off / transitioning states, vent action and its cost readout                                                     |
-|     6 | Solar and Wind glyphs                                                                                            |
+|     6 | Solar and Wind glyphs, demolish action                                                                           |
 |     7 | main menu, level select, locked rows                                                                             |
 |     8 | relay glyphs, reach cross, route ghost, load ring, cable weight, load-after-placement line                       |
 |     9 | tower glyphs, radius ring, cooling-received line, starvation ring                                                |

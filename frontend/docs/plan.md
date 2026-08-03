@@ -14,10 +14,10 @@ match played start to finish.
 
 - [x] 1 — The match shell
 - [x] 2 — Build, sell, connect
-- [ ] 3 — Upgrades and demolition
+- [ ] 3 — Upgrades
 - [ ] 4 — Heat
 - [ ] 5 — Generator controls
-- [ ] 6 — Solar and Wind
+- [ ] 6 — Solar, Wind and demolition
 - [ ] 7 — The campaign shell
 - [ ] 8 — Relays and routing
 - [ ] 9 — Cooling towers
@@ -28,10 +28,14 @@ match played start to finish.
 
 ## Cross-cutting rules
 
-- **The working level.** Stages 1-10 use one hand-made 10x10 level with a ~2
+- **The working level.** Stages 1-10 use one hand-made 10x10 level with a ~3
   minute timer and a goal scaled to match. The board is full size; only the clock
   is compressed. Stage 7 adds a second, full-length ~5 minute level whose only
   job is to show the match arc the compressed one cannot.
+  The clock is a floor, not a preference: an investment is only worth making if
+  it pays back before the whistle, so a stage that adds a slower-paying
+  investment than the one before it needs runway to be judged on. Stage 3
+  measured this and moved the clock from 2 minutes to 3; see its entry.
 - **No dev tooling.** No debug overlay, no speed control, no cheats, at any
   stage. Every constant lives in one tunables module, edited and hot-reloaded.
   The game is only ever experienced as a player experiences it.
@@ -72,14 +76,16 @@ src/
     match.ts              Match         — match state + tick
     match_loop.ts         MatchLoop     — fixed-timestep driver
     format.ts             energy, pace and clock strings for the DOM
-    generator.ts          Generator                                    (S2)
+    generator.ts          Generator                                    (S2, S3)
     accumulator.ts        Accumulator                                  (S2)
     network.ts            reach, chaining, obstacle blocking           (S2)
-    economy.ts            build / sell / upgrade / demolish rules      (S2, S3)
+    economy.ts            build / sell / upgrade rules                 (S2, S3)
+    interaction.ts        Interaction   — armed, hovered, selected     (S2)
     render/
       tween.ts            Tween         — eases one rendered simulation value
       board_layout.ts     BoardLayout   — cell size, centring, point to cell
       board_renderer.ts   BoardRenderer — grid, structures, cables
+      glyphs.ts           structure drawings, shared by board and rails (S2)
   composables/
     use_match.ts          owns Match + MatchLoop, exposes HUD snapshot and actions
   components/
@@ -89,8 +95,9 @@ src/
       board_canvas.vue    owns <canvas>, resize and DPR, emits cell pointer events
       hud_panel.vue       stored energy, goal, timer, required pace
       match_overlay.vue   pause, win, lose, restart
-      build_bar.vue       structure palette                            (S2)
-      structure_panel.vue selected structure: sell, upgrade            (S2, S3)
+      build_rail.vue      structure palette                            (S2)
+      inspect_rail.vue    armed, hovered or selected: sell, upgrade    (S2, S3)
+      structure_glyph.vue one glyph as a rail swatch                   (S2)
 ```
 
 Per `docs/typescript.md`: `snake_case` files, one class per file, `@` imports
@@ -137,9 +144,11 @@ Stage 2 adds `Generator`, `Accumulator`, `network.ts` and `economy.ts`.
 `Match.tick` gains an income step that asks the network which generators are
 connected; `BoardRenderer` gains structures and cables.
 
-Stage 3 adds **no new modules** — a level field on `Generator`, upgrade and
-demolition rules in `economy.ts`, and actions in `structure_panel.vue`. That it
-needs nothing new is the main evidence this shape is right.
+Stage 3 adds **no new modules** — a level field on `Generator`, upgrade rules in
+`economy.ts`, and an action in `inspect_rail.vue`. That it needs nothing new is
+the main evidence this shape is right. Its one demand on an existing seam is that
+`Match.upgrade` retraces the network: output is summed when the trace runs, so a
+generator that grows without the topology changing still has to be counted again.
 
 ---
 
@@ -167,14 +176,32 @@ Sell refunds at a lower rate.
 **The match:** the first one you can win. Spend your starting energy on generators
 you can actually reach, and the decision is where and when.
 
-## Stage 3 — Upgrades and demolition
+## Stage 3 — Upgrades
 
-Generator levels from 1, exponential upgrade cost, output scaling per level, and
-obstacle demolition for energy.
+Generator levels from 1 to 5, exponential upgrade cost, and output scaling per
+level. Selling still refunds the build cost only: levels are sunk the moment they
+are bought, which is what makes going tall a commitment rather than a parking
+space for energy.
 
 **The match:** wide versus tall becomes the whole game — another generator needs a
-free resource cell in reach, an upgrade needs no space but costs exponentially
-more, and demolishing a blocker buys you reach. One new idea, tuned alone.
+free resource cell in reach, while an upgrade needs no space and always costs
+more per ⚡/m than the generator it improves. Wide wins while cells remain; the
+board saturates a third of the way in, and everything after that is tall. One new
+idea, tuned alone.
+
+**The clock moved from 2 minutes to 3 here**, because at 2 the stage could not
+exist. Building wide pays back in 37.5s and saturates the board at t≈41s;
+upgrades pay back in 56-85s. On a 120s clock the whole upgrade path was worth
+22⚡ over building wide and doing nothing — 379⚡ against 357⚡ — which put the
+spec's 80-90% band *below* what building wide alone banks, so no goal could have
+demanded a single upgrade. At 180s the same curve is worth 274⚡ and the goal
+sits where it should.
+
+**Obstacle demolition is not here.** It was, and it bought nothing: a demolished
+obstacle becomes an empty cell, and nothing may stand on an empty cell until
+Solar and Wind arrive. Reach is 1 and orthogonal, so obstacle blocking is not
+felt either until relays reach further. It moved to stage 6, the first stage
+where clearing a cell is worth energy.
 
 ## Stage 4 — Heat
 
@@ -196,19 +223,22 @@ proportional to level, escalating with repeated use. Hotkeys and alarm states.
 
 **The match:** micro under fire. Tuned against a heat curve you already trust.
 
-## Stage 6 — Solar and Wind
+## Stage 6 — Solar, Wind and demolition
 
 Solar — Biomass's price for half its output and half its heat — and Wind, losing
-output near obstacles. Tier 1 is complete.
+output near obstacles. Tier 1 is complete. Obstacle demolition for energy lands
+with them, because an obstacle becomes an empty cell and this is the stage where
+an empty cell is worth having.
 
-Both build on empty cells, so this stage hands the player a second way to extend
-the network: a hot, cheap chain of ambient generators competing with the cool,
-lossy, expensive relays that arrive at stage 8. Expect the economy to need a pass
-here.
+All three build on empty cells, so this stage hands the player a second way to
+extend the network: a hot, cheap chain of ambient generators competing with the
+cool, lossy, expensive relays that arrive at stage 8. Expect the economy to need
+a pass here.
 
 **The match:** the board stops being resource cells with dead space between them.
-Every empty cell is buildable now, so reach becomes something you buy with
-generators two stages before relays offer to sell it to you.
+Every empty cell is buildable now — and every obstacle is an empty cell you can
+buy — so reach becomes something you pay for two stages before relays offer to
+sell it to you.
 
 ## Stage 7 — The campaign shell
 
@@ -256,8 +286,9 @@ Coal, Hydroelectric (on water, stronger beside adjacent water cells), Nuclear
 
 The full authored level set, biome presets (desert, storm coast, arctic), goals
 and timers set at 80-90% of measured practical max output, and the match length
-ramp from ~5 to ~12-15 minutes. Resolves the spec's open tuning list: upgrade caps
-and growth, sell refund, demolition cost, and the race margin.
+ramp from ~5 to ~12-15 minutes. Resolves what is left of the spec's open tuning
+list: upgrade growth rates, sell refund, demolition cost, and the race margin.
+The upgrade cap was fixed at 5 by stage 3, which needed something to tune against.
 
 **The match:** the actual game.
 
@@ -310,6 +341,12 @@ Written into `docs/specs.md`, which stays the source of truth:
 - **Gas keeps no special rule.** Its orphaned "rapidly adjust output" note is
   gone. Cost 2 / output 3 / max temp 2 / heat 3 is already the sharpest risk-reward
   profile in tier 2, and Biomass and Coal carry no note either.
+- **Levels cap at 5**, matching the spec's own 1-5 rating vocabulary and the five
+  pips docs/ui.md draws under a glyph. Stage 3 needed a ceiling to tune the growth
+  rates against; the rates themselves stay open until stage 12.
+- **A sale refunds the build cost only.** Levels are sunk. Refunding them would
+  make an upgrade a place to park energy and take the commitment out of going
+  tall, which is the whole of stage 3's decision.
 
 # Accepted costs
 

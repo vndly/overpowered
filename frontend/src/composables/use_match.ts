@@ -35,6 +35,7 @@ export interface MatchController {
   restart: () => void
   build: (kind: GeneratorKind, position: Position) => boolean
   sell: (position: Position) => boolean
+  upgrade: (position: Position) => boolean
 }
 
 /**
@@ -201,6 +202,10 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
 
     sell: (position: Position): boolean => {
       return act(() => match.value.sell(position))
+    },
+
+    upgrade: (position: Position): boolean => {
+      return act(() => match.value.upgrade(position))
     },
   }
 }

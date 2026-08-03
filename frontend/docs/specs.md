@@ -64,9 +64,11 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - Cost
   - How much energy it takes to build it (e.g. 50⚡)
   - Can be sold at a lower cost
+  - The refund is a fraction of the build cost only: levels are sunk the moment they are bought, so going tall is a commitment and never a place to park energy
 - Level
-  - From 1 (when it's built)
+  - From 1 (when it's built) to 5
   - Each increase costs energy (exponential growth)
+  - An upgrade always costs more per ⚡/m than the generator it improves, so building wide is the better deal wherever there is still a cell for it
 - Max temperature
   - The maximum temperature the generator can withstand before it melts down (e.g. 100°C)
 - Current temperature
@@ -325,7 +327,7 @@ A successful match should often end with the player reaching the goal while the 
 
 # Open (tuning)
 
-- Upgrade caps and growth rates
+- Upgrade growth rates (the cap is fixed at 5)
 - Sell refund percentage
 - Obstacle demolition costs
 - Race-tuning margin (goal ≈ 80-90% of measured practical max output)

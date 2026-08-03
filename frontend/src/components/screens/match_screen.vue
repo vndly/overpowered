@@ -28,7 +28,13 @@
           />
         </div>
 
-        <InspectRail :match="match" :snapshot="snapshot" :interaction="interaction" @sell="onSell" />
+        <InspectRail
+          :match="match"
+          :snapshot="snapshot"
+          :interaction="interaction"
+          @sell="onSell"
+          @upgrade="upgrade"
+        />
       </div>
     </div>
   </div>
@@ -53,7 +59,7 @@ import {TUNABLES} from '@/game/tunables'
 const board = useTemplateRef<InstanceType<typeof BoardCanvas>>('board')
 
 const {
-  snapshot, match, start, stop, setPaused, togglePause, restart, build, sell,
+  snapshot, match, start, stop, setPaused, togglePause, restart, build, sell, upgrade,
 } = useMatch(WORKING_LEVEL, () => {
   board.value?.render()
 })
@@ -257,6 +263,18 @@ function onKeyDown(event: KeyboardEvent): void {
 
     if (selected !== null) {
       onSell(selected)
+    }
+
+    return
+  }
+
+  // The selection survives an upgrade, unlike a sell: what it described is still
+  // standing there, one level taller, and the next level is the obvious next key
+  if (event.key === 'u' || event.key === 'U') {
+    const selected = interaction.value.selected
+
+    if (selected !== null) {
+      upgrade(selected)
     }
 
     return
