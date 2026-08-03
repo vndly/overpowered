@@ -14,7 +14,7 @@ match played start to finish.
 
 - [x] 1 — The match shell
 - [x] 2 — Build, sell, connect
-- [ ] 3 — Upgrades
+- [x] 3 — Upgrades
 - [ ] 4 — Heat
 - [ ] 5 — Generator controls
 - [ ] 6 — Solar, Wind and demolition
@@ -42,7 +42,7 @@ match played start to finish.
 - **Visual language once, juice last.** Stage 1 commits palette, type, grid
   rendering style, HUD layout and alarm colours. Every later stage renders its
   mechanic properly in that language. Effects, decoration and non-alarm audio
-  batch into stage 13 — but *not* animation: `docs/ui.md` § Motion amends this,
+  batch into stage 13 — but _not_ animation: `docs/ui.md` § Motion amends this,
   tweening anything that renders a simulation value from stage 1, because
   escalation only communicates if it can be seen rising.
 - **Alarms are not polish.** Warning and alarm SFX ship in the stage that
@@ -126,7 +126,7 @@ structure are plain TypeScript that knows nothing about Vue or canvas.
 Behaviour lives in classes; pure data lives in types and interfaces.
 
 - `Cell` is a discriminated union on `kind` — `empty`, `resource` (carrying a
-  list of `ResourceKind`, since a cell can hold coal *and* water), `water`,
+  list of `ResourceKind`, since a cell can hold coal _and_ water), `water`,
   `obstacle`. `ResourceKind` starts as a single member and gains one per
   generator stage.
 - `Grid` stores cells row-major and exposes `cellAt(x, y): Cell | undefined`.
@@ -193,7 +193,7 @@ idea, tuned alone.
 exist. Building wide pays back in 37.5s and saturates the board at t≈41s;
 upgrades pay back in 56-85s. On a 120s clock the whole upgrade path was worth
 22⚡ over building wide and doing nothing — 379⚡ against 357⚡ — which put the
-spec's 80-90% band *below* what building wide alone banks, so no goal could have
+spec's 80-90% band _below_ what building wide alone banks, so no goal could have
 demanded a single upgrade. At 180s the same curve is worth 274⚡ and the goal
 sits where it should.
 
@@ -364,7 +364,7 @@ Consequences of decisions already taken, not open problems:
 - **Stage 8 carries the algorithmic risk** — deterministic routing, load
   accounting and reroute cascades — eight stages in, so a flaw in the routing
   model surfaces late. Partly mitigated: the connection graph itself (reach,
-  chaining, obstacle blocking) lands at stage 2, so only routing *over* an
+  chaining, obstacle blocking) lands at stage 2, so only routing _over_ an
   already-proven graph is new at stage 8.
 - **Stage 6 may destabilise the economy.** Solar and Wind on empty cells give the
   player a cheap, hot alternative to relays for extending the network, arriving
