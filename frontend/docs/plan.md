@@ -11,8 +11,7 @@ always lose because nothing generates energy yet.
 
 - **The working level.** Stages 1-10 use one hand-made 10x10 level with a ~2
   minute timer and a goal scaled to match. The board is full size; only the clock
-  is compressed. From stage 6 its day/night cycle is shortened to ~40s so several
-  waves still fit. Stage 7 adds a second, full-length ~5 minute level whose only
+  is compressed. Stage 7 adds a second, full-length ~5 minute level whose only
   job is to show the match arc the compressed one cannot.
 - **No dev tooling.** No debug overlay, no speed control, no cheats, at any
   stage. Every constant lives in one tunables module, edited and hot-reloaded.
@@ -174,28 +173,26 @@ proportional to level, escalating with repeated use. Hotkeys and alarm states.
 
 **The match:** micro under fire. Tuned against a heat curve you already trust.
 
-## Stage 6 — Day/night, Solar and Wind
+## Stage 6 — Solar and Wind
 
-The global sine wave scaling heat generation for every generator, Solar output
-following the curve, Wind losing output near obstacles, and the forecast strip in
-the HUD. Tier 1 is complete.
+Solar — Biomass's price for half its output and half its heat — and Wind, losing
+output near obstacles. Tier 1 is complete.
 
-Solar and Wind build on empty cells, so this stage also hands the player a second
-way to extend the network: a hot, cheap chain of ambient generators competing with
-the cool, lossy, expensive relays that arrive at stage 8. Expect the economy to
-need a pass here.
+Both build on empty cells, so this stage hands the player a second way to extend
+the network: a hot, cheap chain of ambient generators competing with the cool,
+lossy, expensive relays that arrive at stage 8. Expect the economy to need a pass
+here.
 
-**The match:** it acquires a rhythm — day is income and danger, night is relief
-and your push window. Both remaining tier 1 generators arrive at the exact moment
-their rules mean something.
+**The match:** the board stops being resource cells with dead space between them.
+Every empty cell is buildable now, so reach becomes something you buy with
+generators two stages before relays offer to sell it to you.
 
 ## Stage 7 — The campaign shell
 
 The `Level` type formalised (map, resources, obstacles, goal, timer, unlocks, and
-environment presets for cycle length, amplitude, ambient heat and starting
-energy), a level select screen, unlock gating, localStorage progression, and a
-main menu. Three hand-made levels varying map, goal and timer, plus the
-full-length arc-check level.
+environment presets for ambient heat and starting energy), a level select screen,
+unlock gating, localStorage progression, and a main menu. Three hand-made levels
+varying map, goal and timer, plus the full-length arc-check level.
 
 **The match:** it stops being one level and becomes a campaign you progress
 through. Everything after this lands into a real structure — there is never a
@@ -237,8 +234,7 @@ Coal, Hydroelectric (on water, stronger beside adjacent water cells), Nuclear
 The full authored level set, biome presets (desert, storm coast, arctic), goals
 and timers set at 80-90% of measured practical max output, and the match length
 ramp from ~5 to ~12-15 minutes. Resolves the spec's open tuning list: upgrade caps
-and growth, sell refund, demolition cost, the ambient day/night curve, and the
-race margin.
+and growth, sell refund, demolition cost, and the race margin.
 
 **The match:** the actual game.
 
@@ -258,7 +254,8 @@ final readability pass.
 3. Visual language early, juice batched last.
 4. One generator to start; each later one arrives with the system that gives it a
    rule.
-5. Order: heat, then controls, then day/night, then relays, then cooling towers.
+5. Order: heat, then controls, then ambient generators, then relays, then cooling
+   towers.
 6. Upgrades arrive before heat, so "tall" becomes dangerous for free.
 7. Campaign shell mid-spine, authored content late.
 8. Generators by tier, matching the spec's own structure and the unlock gating.

@@ -33,7 +33,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 - Each level is self-contained: fixed starting energy, nothing carries over
 - Progression unlocks new content only (generator types, structures) — no permanent upgrades
 - What can be built in a level is gated by unlocks and by the resources on the map
-- Level variety comes from parameters, not authored drama: baseline knobs (map, resources, obstacles, goal, timer, unlocks) plus per-level environment presets (day-cycle length/amplitude, ambient heat scale, starting energy) — biome-flavored presets (desert, storm coast, arctic)
+- Level variety comes from parameters, not authored drama: baseline knobs (map, resources, obstacles, goal, timer, unlocks) plus per-level environment presets (ambient heat scale, starting energy) — biome-flavored presets (desert, storm coast, arctic)
 - Every level starts from a clean board: no pre-placed structures, no scripted mid-match events
 
 # Grid
@@ -84,7 +84,7 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 
 | Generator | Cost | Output | Max Temp | Heat | Total | Category                    | Notes                              |
 | --------- | ---: | -----: | -------: | ---: | ----: | --------------------------- | ---------------------------------- |
-| Solar     |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable | Output varies over time            |
+| Solar     |    1 |      1 |        1 |    1 |     0 | normal cost / normal stable |                                    |
 | Wind      |    2 |      1 |        2 |    1 |     0 | high cost / high stable     | Nearby obstacles reduce its output |
 | Biomass   |    1 |      2 |        1 |    2 |     0 | low cost / low stable       |                                    |
 
@@ -111,13 +111,6 @@ A fast-paced, real-time grid strategy game where the player must generate enough
 3 = medium
 4 = high
 5 = very high
-
-## Day/night cycle
-
-- A global sine wave drives the board's rhythm; cycle ≈ 2-3 minutes, so every match sees several
-- Solar output follows the curve
-- The wave scales heat generation for ALL generators (e.g. ×1.0 at noon, ×0.5 at night): day = income + danger, night = relief + push window
-- The upcoming curve is shown as a forecast strip in the HUD
 
 ## Actions
 
@@ -275,7 +268,6 @@ There are 2 ways to cool down a generator:
   - Current stored energy
   - Goal
   - Energy pace required to achieve the goal according to the remaining time (so the player knows if they are falling behind or not)
-  - Day/night forecast strip (drives solar output and global heat)
 
 - When placing a structure, show:
   - Connection route
@@ -336,5 +328,4 @@ A successful match should often end with the player reaching the goal while the 
 - Upgrade caps and growth rates
 - Sell refund percentage
 - Obstacle demolition costs
-- Ambient day/night heat multiplier curve (e.g. ×1.0 noon / ×0.5 night)
 - Race-tuning margin (goal ≈ 80-90% of measured practical max output)

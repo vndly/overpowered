@@ -249,9 +249,7 @@ is never encoded in colour alone. Thresholds live in `tunables.ts`.
 
 Left to right: `STORED` (large, tabular, `energy`-coloured), `GOAL`, `PACE`, and
 `TIME`. Pace shows actual against required as two marks on one short track, so
-"am I falling behind" is a glance, not arithmetic. The day/night forecast strip
-(stage 6) occupies the right end, scrolling right to left with now at the left
-edge.
+"am I falling behind" is a glance, not arithmetic.
 
 ## Build rail (left)
 
@@ -327,7 +325,7 @@ is decoration, it waits for stage 13.**
 | cable weight          | build flourishes         |
 | danger tint and pulse | flow dashes along cables |
 | HUD numerals          | screen shake             |
-| forecast strip scroll | screen transitions       |
+|                       | screen transitions       |
 
 Escalation only communicates if it can be seen rising, and a cascade is only
 readable if flow can be watched moving onto the survivor. A ring that snaps from
@@ -375,7 +373,7 @@ No progress bars, no medals, no percentages — `specs.md` rules out grading.
 |     3 | level pips, upgrade and demolish actions                                                                         |
 |     4 | escalation ladder (first use), heat ring, danger tint, warning pip, heat-penalty preview line, audio harness     |
 |     5 | off / transitioning states, vent action and its cost readout                                                     |
-|     6 | forecast strip, Solar and Wind glyphs                                                                            |
+|     6 | Solar and Wind glyphs                                                                                            |
 |     7 | main menu, level select, locked rows                                                                             |
 |     8 | relay glyphs, reach cross, route ghost, load ring, cable weight, load-after-placement line                       |
 |     9 | tower glyphs, radius ring, cooling-received line, starvation ring                                                |
