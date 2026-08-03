@@ -12,6 +12,16 @@ export function formatEnergy(value: number): string {
 }
 
 /**
+ * A rate as the rails show it. Unsigned: these are readings, not verdicts, so
+ * they carry no sign the way the HUD's pace delta does.
+ * @param value - A rate in energy per minute
+ * @returns A whole number with its unit, e.g. "16/m"
+ */
+export function formatRate(value: number): string {
+  return `${energyFormat.format(Math.max(0, truncatePace(value)))}/m`
+}
+
+/**
  * How far ahead or behind the required pace the player is running.
  * Always signed, because the sign is the entire reading: the player needs to
  * know which side of the line they are on before they read the magnitude.

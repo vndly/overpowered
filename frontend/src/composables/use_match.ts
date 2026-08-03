@@ -1,5 +1,7 @@
 import {shallowRef} from 'vue'
 import type {ShallowRef} from 'vue'
+import type {Position} from '@/game/cell'
+import type {GeneratorKind} from '@/game/generator'
 import type {Level} from '@/game/level'
 import {Match} from '@/game/match'
 import type {MatchStatus} from '@/game/match'
@@ -16,6 +18,7 @@ export interface MatchSnapshot {
   status: MatchStatus
   paused: boolean
   storedEnergy: number // Tweened, so the numeral is seen to move
+  spendableEnergy: number // The same balance untweened: what the rails test a cost against, so a price can never read as affordable while the rule refuses it
   goal: number
   remainingSeconds: number // Never tweened: the clock reads true
   requiredPace: number
@@ -30,6 +33,8 @@ export interface MatchController {
   setPaused: (paused: boolean) => void
   togglePause: () => void
   restart: () => void
+  build: (kind: GeneratorKind, position: Position) => boolean
+  sell: (position: Position) => boolean
 }
 
 /**
@@ -53,6 +58,7 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
       status: match.value.status,
       paused: loop?.paused ?? false,
       storedEnergy: storedEnergyTween.value,
+      spendableEnergy: match.value.storedEnergy,
       goal: match.value.level.goal,
       remainingSeconds: match.value.remainingSeconds,
       requiredPace: requiredPaceTween.value,
@@ -79,6 +85,7 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
     return next.status !== published.status
       || next.paused !== published.paused
       || next.storedEnergy !== published.storedEnergy
+      || next.spendableEnergy !== published.spendableEnergy
       || next.goal !== published.goal
       || next.remainingSeconds !== published.remainingSeconds
       || next.requiredPace !== published.requiredPace
@@ -116,6 +123,25 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
   function runLoop(): void {
     loop = new MatchLoop(match.value, onFrame)
     loop.start()
+  }
+
+  /**
+   * Runs an action the player took, if they are allowed to act at all.
+   * Pause is look-only, and the loop is the only thing that knows the match is
+   * paused — which is why this guard lives here rather than in the sim.
+   * @param action - The change to apply to the match
+   * @returns Whether anything changed
+   */
+  function act(action: () => boolean): boolean {
+    if (loop === null || loop.paused || !action()) {
+      return false
+    }
+
+    // Published straight away rather than on the next frame, so a rail never
+    // shows a balance the player has already spent
+    publish(0)
+
+    return true
   }
 
   return {
@@ -167,6 +193,14 @@ export function useMatch(level: Level, renderFrame: () => void): MatchController
       snapTweens()
       runLoop()
       publish(0)
+    },
+
+    build: (kind: GeneratorKind, position: Position): boolean => {
+      return act(() => match.value.build(kind, position))
+    },
+
+    sell: (position: Position): boolean => {
+      return act(() => match.value.sell(position))
     },
   }
 }

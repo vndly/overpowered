@@ -1,7 +1,13 @@
-import type {ResourceKind} from '@/game/cell'
+import type {Position, ResourceKind} from '@/game/cell'
+import {checkBuild} from '@/game/economy'
+import type {Generator} from '@/game/generator'
 import type {Grid} from '@/game/grid'
+import type {Interaction} from '@/game/interaction'
 import type {Match} from '@/game/match'
+import type {NetworkLink} from '@/game/network'
 import type {BoardLayout, CellRect} from '@/game/render/board_layout'
+import {drawAccumulatorGlyph, drawGeneratorGlyph} from '@/game/render/glyphs'
+import type {GlyphStyle} from '@/game/render/glyphs'
 import {TUNABLES} from '@/game/tunables'
 
 /**
@@ -19,7 +25,7 @@ function noise(x: number, y: number, salt: number): number {
 }
 
 /**
- * Draws the board: terrain now, structures and cables from stage 2.
+ * Draws the board: terrain, then what the player has built on it.
  * It reads the Match directly each frame — nothing reactive sits in the render
  * path — and works entirely in CSS pixels, the canvas transform having already
  * absorbed the device pixel ratio.
@@ -37,10 +43,12 @@ export class BoardRenderer {
   }
 
   /**
-   * Renders one frame.
+   * Renders one frame, ground up: terrain, then the cursor's mark on it, then
+   * cables under the structures they serve, and the ghost over everything.
    * @param match - The match to draw
+   * @param interaction - What the player is pointing at and holding
    */
-  draw(match: Match): void {
+  draw(match: Match, interaction: Interaction): void {
     this.clear()
     this.drawPlates(match.grid)
     this.drawGridLines()
@@ -48,6 +56,11 @@ export class BoardRenderer {
     this.drawWaterRules(match.grid)
     this.drawObstacles(match.grid)
     this.drawResourceMarks(match.grid)
+    this.drawHover(interaction)
+    this.drawCables(match.network.links)
+    this.drawStructures(match)
+    this.drawSelection(interaction)
+    this.drawGhost(match, interaction)
   }
 
   /** Clears in device pixels, the one place the canvas transform is stepped around. */
@@ -268,5 +281,183 @@ export class BoardRenderer {
 
     this.ctx.stroke()
     this.ctx.restore()
+  }
+
+  /**
+   * The cell under the cursor. An armed tool draws its ghost there instead, so
+   * the cursor never says the same thing twice.
+   * @param interaction - What the player is pointing at and holding
+   */
+  private drawHover(interaction: Interaction): void {
+    if (interaction.hovered === null || interaction.armed !== null) {
+      return
+    }
+
+    const rect = this.layout.cellRectAt(interaction.hovered.x, interaction.hovered.y)
+    const inset = TUNABLES.structure.hoverInset
+
+    this.ctx.strokeStyle = TUNABLES.colors.hoverOutline
+    this.ctx.lineWidth = 1
+    this.ctx.strokeRect(rect.left + inset, rect.top + inset, rect.size - inset * 2, rect.size - inset * 2)
+  }
+
+  /**
+   * Cables, centre to centre. Every link on the board reaches the accumulator,
+   * so all of them carry flow and none is idle — the ink-dim idle state waits
+   * for the relays and towers that can sit on the network doing nothing.
+   * @param links - The network's links
+   */
+  private drawCables(links: readonly NetworkLink[]): void {
+    this.ctx.strokeStyle = TUNABLES.colors.cable
+    this.ctx.lineWidth = this.hairline
+    this.ctx.beginPath()
+
+    for (const link of links) {
+      const from = this.layout.cellCenterAt(link.from.x, link.from.y)
+      const to = this.layout.cellCenterAt(link.to.x, link.to.y)
+
+      this.ctx.moveTo(from.centerX, from.centerY)
+      this.ctx.lineTo(to.centerX, to.centerY)
+    }
+
+    this.ctx.stroke()
+  }
+
+  /** The accumulator and everything built since. Nothing here says whether a generator is connected: its cable does. */
+  private drawStructures(match: Match): void {
+    const style = this.structureStyle()
+    const accumulator = this.layout.cellCenterAt(match.accumulator.position.x, match.accumulator.position.y)
+
+    drawAccumulatorGlyph(this.ctx, accumulator.centerX, accumulator.centerY, this.layout.cellSize, style)
+
+    for (const generator of match.generators) {
+      this.drawGenerator(generator, style)
+    }
+  }
+
+  /**
+   * One generator, on the cell it stands on.
+   * @param generator - The generator to draw
+   * @param style - How to ink it
+   */
+  private drawGenerator(generator: Generator, style: GlyphStyle): void {
+    const center = this.layout.cellCenterAt(generator.position.x, generator.position.y)
+
+    drawGeneratorGlyph(this.ctx, generator.kind, center.centerX, center.centerY, this.layout.cellSize, style)
+  }
+
+  /**
+   * The selected structure, marked by four corner ticks. They sit at the cell's
+   * corners, clear of the glyph, so selection never obscures what is selected.
+   * @param interaction - What the player is pointing at and holding
+   */
+  private drawSelection(interaction: Interaction): void {
+    if (interaction.selected === null) {
+      return
+    }
+
+    const rect = this.layout.cellRectAt(interaction.selected.x, interaction.selected.y)
+    const inset = rect.size * TUNABLES.structure.selectionInset
+    const length = rect.size * TUNABLES.structure.selectionMarkLength
+    const left = rect.left + inset
+    const right = rect.left + rect.size - inset
+    const top = rect.top + inset
+    const bottom = rect.top + rect.size - inset
+
+    this.ctx.strokeStyle = TUNABLES.colors.selectionMark
+    this.ctx.lineWidth = this.hairline
+    this.ctx.beginPath()
+
+    this.traceCorner(left, top, length, 1, 1)
+    this.traceCorner(right, top, length, -1, 1)
+    this.traceCorner(left, bottom, length, 1, -1)
+    this.traceCorner(right, bottom, length, -1, -1)
+
+    this.ctx.stroke()
+  }
+
+  /**
+   * One corner tick: two arms meeting at a right angle.
+   * @param cornerX - Where the arms meet
+   * @param cornerY - Where the arms meet
+   * @param length - How far each arm runs
+   * @param towardX - Which way the horizontal arm points, 1 or -1
+   * @param towardY - Which way the vertical arm points, 1 or -1
+   */
+  private traceCorner(cornerX: number, cornerY: number, length: number, towardX: number, towardY: number): void {
+    this.ctx.moveTo(cornerX + towardX * length, cornerY)
+    this.ctx.lineTo(cornerX, cornerY)
+    this.ctx.lineTo(cornerX, cornerY + towardY * length)
+  }
+
+  /**
+   * The armed tool's ghost on the hovered cell, and the cables it would create.
+   * Legality is drawn in value, never in colour: an illegal ghost drops to
+   * ink-faint, the same greying the build rail gives an illegal row, because red
+   * belongs to the state ramp alone.
+   * @param match - The match to test the placement against
+   * @param interaction - What the player is pointing at and holding
+   */
+  private drawGhost(match: Match, interaction: Interaction): void {
+    const armed = interaction.armed
+    const hovered = interaction.hovered
+
+    if (armed === null || hovered === null) {
+      return
+    }
+
+    const check = checkBuild(match, armed, hovered)
+    const center = this.layout.cellCenterAt(hovered.x, hovered.y)
+
+    this.ctx.save()
+    this.ctx.globalAlpha = TUNABLES.structure.ghostAlpha
+
+    if (check.allowed) {
+      this.drawGhostCables(match, hovered)
+    }
+
+    drawGeneratorGlyph(this.ctx, armed, center.centerX, center.centerY, this.layout.cellSize, {
+      stroke: check.allowed ? TUNABLES.colors.ghostLegal : TUNABLES.colors.ghostIllegal,
+      fill: TUNABLES.colors.structureFill,
+    })
+
+    this.ctx.restore()
+  }
+
+  /**
+   * The connection route a placement would open: a cable to every structure
+   * already on the network within reach. Nothing is drawn when the cell reaches
+   * none of them, which reads correctly — no cable means no network.
+   * @param match - The match to test the placement against
+   * @param position - The cell being hovered
+   */
+  private drawGhostCables(match: Match, position: Position): void {
+    this.ctx.strokeStyle = TUNABLES.colors.cable
+    this.ctx.lineWidth = this.hairline
+    this.ctx.beginPath()
+
+    const from = this.layout.cellCenterAt(position.x, position.y)
+
+    for (const neighbour of match.networkNeighbours(position)) {
+      const to = this.layout.cellCenterAt(neighbour.x, neighbour.y)
+
+      this.ctx.moveTo(from.centerX, from.centerY)
+      this.ctx.lineTo(to.centerX, to.centerY)
+    }
+
+    this.ctx.stroke()
+  }
+
+  /** The weight every line that is not a glyph is drawn at: cables, selection marks and the ghost's route. */
+  private get hairline(): number {
+    return Math.max(1, this.layout.cellSize * TUNABLES.structure.cableWeight)
+  }
+
+  /** Structures are filled and stroked at full strength, so they read in front of the stroked terrain. */
+  private structureStyle(): GlyphStyle {
+    return {
+      stroke: TUNABLES.colors.structureStroke,
+      fill: TUNABLES.colors.structureFill,
+    }
   }
 }

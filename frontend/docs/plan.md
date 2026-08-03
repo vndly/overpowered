@@ -13,7 +13,7 @@ A stage is ticked only once it has passed its exit criteria, including a full
 match played start to finish.
 
 - [x] 1 — The match shell
-- [ ] 2 — Build, sell, connect
+- [x] 2 — Build, sell, connect
 - [ ] 3 — Upgrades and demolition
 - [ ] 4 — Heat
 - [ ] 5 — Generator controls

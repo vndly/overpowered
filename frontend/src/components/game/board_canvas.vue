@@ -1,16 +1,36 @@
 <!-- The board. Owns the canvas, its size and its device pixel ratio, and renders
-     only when the match loop asks it to — it drives no loop of its own. -->
+     only when the match loop asks it to — it drives no loop of its own.
+     It reports the cell under the cursor and nothing more: what that means is
+     the screen's business. -->
 <template>
-  <canvas ref="canvas" class="board-canvas"></canvas>
+  <canvas
+    ref="canvas"
+    class="board-canvas"
+    @pointermove="onPointerMove"
+    @pointerleave="emit('hover', null)"
+    @click="onClick"
+    @contextmenu.prevent="emit('disarm')"
+  ></canvas>
 </template>
 
 <script setup lang="ts">
 import {onBeforeUnmount, onMounted, useTemplateRef} from 'vue'
+import type {Position} from '@/game/cell'
+import type {Interaction} from '@/game/interaction'
 import type {Match} from '@/game/match'
 import {BoardLayout} from '@/game/render/board_layout'
 import {BoardRenderer} from '@/game/render/board_renderer'
 
-const props = defineProps<{match: Match}>()
+const props = defineProps<{
+  match: Match
+  interaction: Interaction
+}>()
+
+const emit = defineEmits<{
+  'hover': [position: Position | null]
+  'activate': [position: Position]
+  'disarm': []
+}>()
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 
@@ -19,9 +39,43 @@ let layout: BoardLayout | null = null
 let renderer: BoardRenderer | null = null
 let observer: ResizeObserver | null = null
 
-/** Draws the current match. The match object is read fresh, so a restart needs no rewiring. */
+/** Draws the current match. Both props are read fresh, so a restart needs no rewiring. */
 function render(): void {
-  renderer?.draw(props.match)
+  renderer?.draw(props.match, props.interaction)
+}
+
+/**
+ * The cell a pointer event landed on.
+ * @param event - The pointer event, in client coordinates
+ * @returns The cell address, or undefined if the point missed the board
+ */
+function positionOf(event: MouseEvent): Position | undefined {
+  const element = canvas.value
+
+  if (element === null || layout === null) {
+    return undefined
+  }
+
+  const bounds = element.getBoundingClientRect()
+
+  // The frame scales as a unit below the minimum viewport, so the bounds are
+  // measured rather than assumed: they already carry that scale
+  const scaleX = element.clientWidth / bounds.width
+  const scaleY = element.clientHeight / bounds.height
+
+  return layout.positionAt((event.clientX - bounds.left) * scaleX, (event.clientY - bounds.top) * scaleY)
+}
+
+function onPointerMove(event: PointerEvent): void {
+  emit('hover', positionOf(event) ?? null)
+}
+
+function onClick(event: MouseEvent): void {
+  const position = positionOf(event)
+
+  if (position !== undefined) {
+    emit('activate', position)
+  }
 }
 
 /**

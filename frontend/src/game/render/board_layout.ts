@@ -1,3 +1,4 @@
+import type {Position} from '@/game/cell'
 import {TUNABLES} from '@/game/tunables'
 
 /** A cell's square in canvas coordinates, in CSS pixels. */
@@ -5,6 +6,12 @@ export interface CellRect {
   left: number
   top: number
   size: number
+}
+
+/** A cell's midpoint, where a glyph is centred and a cable terminates. */
+export interface CellCenter {
+  centerX: number
+  centerY: number
 }
 
 /**
@@ -72,6 +79,39 @@ export class BoardLayout {
       left: this.left + x * this.size,
       top: this.top + y * this.size,
       size: this.size,
+    }
+  }
+
+  /**
+   * The centre of a cell, where a glyph is drawn and where a cable terminates.
+   * @param x - Column, from 0
+   * @param y - Row, from 0
+   * @returns The centre point in CSS pixels
+   */
+  cellCenterAt(x: number, y: number): CellCenter {
+    return {
+      centerX: this.left + (x + 0.5) * this.size,
+      centerY: this.top + (y + 0.5) * this.size,
+    }
+  }
+
+  /**
+   * The cell under a point on the canvas.
+   * @param pointX - Distance from the canvas's left edge, in CSS pixels
+   * @param pointY - Distance from the canvas's top edge, in CSS pixels
+   * @returns The cell address, or undefined if the point misses the board
+   */
+  positionAt(pointX: number, pointY: number): Position | undefined {
+    const x = Math.floor((pointX - this.left) / this.size)
+    const y = Math.floor((pointY - this.top) / this.size)
+
+    if (x < 0 || y < 0 || x >= this.columns || y >= this.rows) {
+      return undefined
+    }
+
+    return {
+      x: x,
+      y: y,
     }
   }
 }

@@ -6,10 +6,17 @@
       <HudPanel :snapshot="snapshot" @toggle-pause="togglePause" />
 
       <div class="match-body">
-        <aside class="rail rail--build"></aside>
+        <BuildRail :match="match" :snapshot="snapshot" :interaction="interaction" @arm="arm" />
 
         <div class="board-well">
-          <BoardCanvas ref="board" :match="match" />
+          <BoardCanvas
+            ref="board"
+            :match="match"
+            :interaction="interaction"
+            @hover="onHover"
+            @activate="onActivate"
+            @disarm="disarm"
+          />
 
           <MatchOverlay
             v-if="overlayMode !== null"
@@ -21,25 +28,32 @@
           />
         </div>
 
-        <aside class="rail rail--inspect"></aside>
+        <InspectRail :match="match" :snapshot="snapshot" :interaction="interaction" @sell="onSell" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onBeforeUnmount, onMounted, ref, useTemplateRef} from 'vue'
+import {computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef} from 'vue'
 import BoardCanvas from '@/components/game/board_canvas.vue'
+import BuildRail from '@/components/game/build_rail.vue'
 import HudPanel from '@/components/game/hud_panel.vue'
+import InspectRail from '@/components/game/inspect_rail.vue'
 import MatchOverlay from '@/components/game/match_overlay.vue'
 import {useMatch} from '@/composables/use_match'
+import type {Position} from '@/game/cell'
+import type {GeneratorKind} from '@/game/generator'
+import {GENERATOR_KINDS} from '@/game/generator'
+import type {Interaction} from '@/game/interaction'
+import {idleInteraction} from '@/game/interaction'
 import {WORKING_LEVEL} from '@/game/level'
 import {TUNABLES} from '@/game/tunables'
 
 const board = useTemplateRef<InstanceType<typeof BoardCanvas>>('board')
 
 const {
-  snapshot, match, start, stop, setPaused, togglePause, restart,
+  snapshot, match, start, stop, setPaused, togglePause, restart, build, sell,
 } = useMatch(WORKING_LEVEL, () => {
   board.value?.render()
 })
@@ -48,6 +62,10 @@ const viewportWidth = ref(window.innerWidth)
 const viewportHeight = ref(window.innerHeight)
 const isConfirmingRestart = ref(false)
 const wasPausedBeforeConfirm = ref(false)
+
+// Replaced rather than mutated, so the rails see a reactive change while the
+// renderer still reads a plain object with no proxy in its path
+const interaction = shallowRef<Interaction>(idleInteraction())
 
 /**
  * The frame fills the viewport at or above the minimum, and below it scales
@@ -83,10 +101,72 @@ const overlayMode = computed(() => {
   return snapshot.value.paused ? 'paused' : null
 })
 
+/**
+ * Replaces the interaction state with one changed field.
+ * @param change - The fields to change
+ */
+function setInteraction(change: Partial<Interaction>): void {
+  interaction.value = {
+    ...interaction.value,
+    ...change,
+  }
+}
+
+/** Arming keeps the tool in hand after a placement, so a run of cells is click-click-click. */
+function arm(kind: GeneratorKind): void {
+  setInteraction({
+    armed: kind,
+    selected: null,
+  })
+}
+
+function disarm(): void {
+  setInteraction({
+    armed: null,
+  })
+}
+
+function onHover(position: Position | null): void {
+  setInteraction({
+    hovered: position,
+  })
+}
+
+/**
+ * A click on the board: place what is armed, or select what is there.
+ * @param position - The cell clicked
+ */
+function onActivate(position: Position): void {
+  const armed = interaction.value.armed
+
+  if (armed !== null) {
+    build(armed, position)
+
+    return
+  }
+
+  setInteraction({
+    selected: match.value.structureAt(position) === undefined ? null : position,
+  })
+}
+
+/**
+ * Sells a generator. The selection goes with it, because what it described is
+ * no longer on the board.
+ * @param position - The cell the generator stands on
+ */
+function onSell(position: Position): void {
+  if (sell(position)) {
+    setInteraction({
+      selected: null,
+    })
+  }
+}
+
 /** Restarting a live match asks first; restarting a finished one has nothing to lose. */
 function requestRestart(): void {
   if (snapshot.value.status !== 'running') {
-    restart()
+    confirmRestart()
 
     return
   }
@@ -98,6 +178,7 @@ function requestRestart(): void {
 
 function confirmRestart(): void {
   isConfirmingRestart.value = false
+  interaction.value = idleInteraction()
   restart()
 }
 
@@ -120,18 +201,62 @@ function onResize(): void {
   viewportHeight.value = window.innerHeight
 }
 
+/**
+ * Escape backs out of whatever is in front of the player, in order: the question
+ * being asked, then the armed tool, then the selection, and only then the match
+ * itself. One key, one idea, and pause simply sits at the end of the chain.
+ */
+function onEscape(): void {
+  if (isConfirmingRestart.value) {
+    cancelRestart()
+  } else if (interaction.value.armed !== null) {
+    disarm()
+  } else if (interaction.value.selected !== null) {
+    setInteraction({
+      selected: null,
+    })
+  } else {
+    togglePause()
+  }
+}
+
+/**
+ * Arms a build slot by its number, as printed on the build rail's rows.
+ * @param key - The digit pressed
+ * @returns Whether a slot was armed
+ */
+function armSlot(key: string): boolean {
+  const slot = GENERATOR_KINDS[Number(key) - 1]
+
+  if (slot === undefined) {
+    return false
+  }
+
+  arm(slot)
+
+  return true
+}
+
 function onKeyDown(event: KeyboardEvent): void {
   if (event.repeat) {
     return
   }
 
-  // Escape backs out of whatever is in front of the player: the question first,
-  // the match second. Stage 2 puts disarming the build tool ahead of both.
   if (event.key === 'Escape') {
-    if (isConfirmingRestart.value) {
-      cancelRestart()
-    } else {
-      togglePause()
+    onEscape()
+
+    return
+  }
+
+  if (event.key >= '1' && event.key <= '9' && armSlot(event.key)) {
+    return
+  }
+
+  if (event.key === 's' || event.key === 'S') {
+    const selected = interaction.value.selected
+
+    if (selected !== null) {
+      onSell(selected)
     }
 
     return
@@ -180,19 +305,6 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: var(--rail-width) 1fr var(--rail-width);
     min-height: 0;
-}
-
-/* Empty until stage 2 fills them: the frame is what stage 1 commits, not its contents */
-.rail {
-    background: var(--surface-raised);
-}
-
-.rail--build {
-    border-right: 1px solid var(--rule);
-}
-
-.rail--inspect {
-    border-left: 1px solid var(--rule);
 }
 
 .board-well {

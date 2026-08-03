@@ -19,8 +19,10 @@
     --ink-faint: #4A5563;
     --energy: #58C7DE;
 
-    /* Top of the state ramp. The rest of the ramp arrives with heat at stage 4;
-       stage 1 needs only this stop, for the clock's final minute. */
+    /* The state ramp. The rest of it arrives with heat at stage 4; only two
+       stops are needed before then — the warning stop for a cost the player
+       cannot meet, and the top stop for the clock's final minute. */
+    --state-2: #D8A63F;
     --state-4: #DF413A;
 
     /* The race verdict, and the only place hue means good news. Kept well clear
@@ -130,6 +132,13 @@ button {
     font-size: 11px;
     font-weight: 400;
     color: var(--ink-dim);
+}
+
+/* Anything the game refuses or reports as wrong, at whatever type role it sits
+   in — compose it with one of the roles above. Declared after them so it wins
+   on colour alone. docs/ui.md § Colour admits this use of reserved red. */
+.error-text {
+    color: var(--state-4);
 }
 
 /* ============================================

@@ -2,11 +2,12 @@
 
 The frontend of Overpowered — a real-time grid strategy game (Vite + Vue 3, TypeScript, Composition API with `<script setup>`, ESLint + @stylistic + type-aware typescript-eslint via @vue/eslint-config-typescript).
 
-The app is a scaffold: routing, tooling and the build are wired end to end, and the one screen it has renders nothing. No game code exists yet.
+The game is built in the thirteen sequential stages of `docs/plan.md`, every one of which ends with a playable match. Stages 1 and 2 are done: the sim loop, the board, the HUD, and building, connecting and selling generators. `docs/plan.md` § Status is the source of truth for what has shipped.
 
 ## Reference Docs
 
-- `docs/specs.md` — game specs: grid, generators, energy, campaign. Read when working on game rules.
+- `docs/specs.md` — game specs: grid, generators, energy, campaign. Read when working on game rules. It rates generators 1-5 rather than in energy; `src/game/tunables.ts` holds what a rating point is worth, so the spec's tables stay the source of truth.
+- `docs/plan.md` — the thirteen stages, their order and their exit criteria. Read before starting a stage.
 - `docs/ui.md` — visual language, palette, type, glyphs, interaction, motion. Read when building or changing UI.
 - `docs/typescript.md` — style, naming, imports. Read when editing TypeScript files.
 

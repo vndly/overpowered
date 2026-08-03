@@ -124,12 +124,34 @@ warm end of the spectrum to itself where it matters.
 
 Two rules that must not erode:
 
-- **Red is reserved.** `#DF413A` appears only at the top of the state ramp and
-  in the two HUD readouts named below. No error text, no sell button, no
-  destructive-action styling may use it, and nothing on the board may.
-- **The two admitted uses**, both on the HUD strip and both meaning *you are
-  losing this match*: the clock inside its final minute, and the pace readout
-  while behind.
+- **Red is reserved**, and the rule is now stated positively: `#DF413A` means
+  *this is wrong, or about to be*. It appears at the top of the state ramp, and
+  on the frame in the four cases below. Nothing on the board may use it outside
+  the ramp, and no sell button or destructive-action styling may use it at all —
+  a deliberate action is not an error.
+- **The four admitted uses.**
+
+  1. The clock inside its final minute.
+  2. The pace readout while behind.
+  3. The placement preview's cost, when the balance will not cover it. It reads
+     against the untweened balance, so the colour can never disagree with the
+     rule that decides the click.
+  4. **Any message stating that something is refused or wrong** — the blocked
+     reasons in the inspect rail ("Needs a biomass cell", "Not enough energy"),
+     and every error message added after this. The rule is the class of message,
+     not the list: `.error-text` in `styles.css` is the one place it is defined,
+     composed with whichever type role the message sits in.
+
+  The first two mean *you are losing this match*; the last two are the ones a
+  player meets constantly, which is what makes this rule cost something — see
+  the note above on what to unwind first if red stops reading as "act now".
+
+  **The build rail keeps `state-2` for an unaffordable cost**, because there the
+  whole row is already carrying legality: red would compete with the `ink-faint`
+  greying rather than add to it.
+
+  **A lost match stays neutral**, because red warns that you are about to fail,
+  not that you did.
 
   **The cost is real and was accepted deliberately.** Levels are tuned to demand
   80-90% of practical max output (`specs.md`), so a player is behind for much of
@@ -184,8 +206,8 @@ counter and timer shift horizontally several times a second for twelve minutes.
 `TIME`. Structure names are sentence case: "Ventilation fan". Actions are verbs
 naming their outcome — Build, Sell, Upgrade, Vent, Shut down, Restart — and keep
 the same word everywhere they appear. Blocked states state the reason and
-nothing else: "Needs a coal cell", "Not enough energy", "Out of reach". No
-flavour text anywhere.
+nothing else, in red: "Needs a coal cell", "Not enough energy", "Out of reach".
+No flavour text anywhere.
 
 ---
 

@@ -36,3 +36,15 @@ export interface Position {
   x: number
   y: number
 }
+
+/**
+ * Whether two addresses name the same cell. Positions are compared by value
+ * rather than by identity, because a fresh one is built every time a pointer
+ * event or a reach walk produces an address.
+ * @param first - One address
+ * @param second - The other
+ * @returns Whether they are the same cell
+ */
+export function samePosition(first: Position, second: Position): boolean {
+  return first.x === second.x && first.y === second.y
+}
