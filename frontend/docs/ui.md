@@ -26,8 +26,9 @@ Inherited, not open to redesign:
   alarms (`specs.md` § UI).
 - Canvas for the board, DOM for HUD and menus (`specs.md` § Tech).
 - No illustration assets: no sprites, no textures, no icon files. Everything on
-  the board is drawn from primitives at runtime. The one binary shipped is a
-  single variable font.
+  the board is drawn from primitives at runtime. The build ships no binary asset
+  at all.
+- Every font comes from Google Fonts, served by its CDN (`CLAUDE.md` § Rules).
 
 ---
 
@@ -114,9 +115,24 @@ Two rules that must not erode:
 
 # Typography
 
-One family: **IBM Plex Sans Variable** (OFL, ~50kb woff2, real tabular lining
-figures, weight axis 100-700). Engineered rather than neutral, which suits the
-instrument reading; alternates if it needs swapping are Archivo or Geist.
+One family: **IBM Plex Sans Variable** (OFL, real tabular lining figures, weight
+axis 100-700). Engineered rather than neutral, which suits the instrument
+reading; alternates if it needs swapping are Archivo or Inter — both, like Plex,
+served as true variable fonts by Google Fonts.
+
+**Sourcing.** Every font comes from Google Fonts, served by its CDN. No font
+file lives in the repo and no font package is added to `package.json`. The
+family is requested once from `index.html`, with `display=block` so numerals
+never render in a fallback metric and reflow the HUD mid-match:
+
+```html
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..700&display=block" rel="stylesheet">
+```
+
+Choosing a replacement family therefore means choosing from the Google Fonts
+catalogue, and the axis range must be confirmed against the CDN before it is
+written into the type scale.
 
 `font-variant-numeric: tabular-nums` is set globally. Without it the energy
 counter and timer shift horizontally several times a second for twelve minutes.
@@ -250,6 +266,15 @@ is never encoded in colour alone. Thresholds live in `tunables.ts`.
 Left to right: `STORED` (large, tabular, `energy`-coloured), `GOAL`, `PACE`, and
 `TIME`. Pace shows actual against required as two marks on one short track, so
 "am I falling behind" is a glance, not arithmetic.
+
+- **Required** = `(goal - stored) / remainingMinutes`, in ⚡/m. It rises as the
+  match runs, which is the pressure made visible.
+- **Actual** = live net rate, income minus consumption, in ⚡/m — not an average.
+  It must fall the instant a generator dies, because reading a cascade early is
+  the entire point of the widget; a rolling window would hide the first seconds
+  of one. The HUD tween supplies the smoothing instead.
+- **Track domain** is `0` to `1.25 x required`, clamped, so the required mark
+  sits at 80% of the track and overproduction still has somewhere to show.
 
 ## Build rail (left)
 
