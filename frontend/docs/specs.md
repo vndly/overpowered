@@ -1,6 +1,8 @@
 # Overpowered
 
-## Pulverizer
+## Components
+
+### Pulverizer
 
 The pulverizer converts raw coal supplied from the plant's stockpile into pulverized coal for the boilers.
 
@@ -21,7 +23,7 @@ The pulverizer converts raw coal supplied from the plant's stockpile into pulver
 | Variable          | Output             | kg/s  | Capacity × Setting × (1 − ExcessTemperature × TemperaturePenalty)                 | 37.33 |
 | Variable          | Consumption        | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                               |  4.71 |
 
-## Boiler
+### Boiler
 
 The boiler burns pulverized coal to produce high-pressure steam for the turbine.
 
@@ -42,7 +44,7 @@ The boiler burns pulverized coal to produce high-pressure steam for the turbine.
 | Variable          | Output          | kg/s  | Capacity × Setting × (1 − ExcessPressure × PressurePenalty)           | 39.36 |
 | Variable          | Consumption     | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                   |  4.71 |
 
-## Turbine
+### Turbine
 
 The turbine converts high-pressure steam supplied by the boiler into electrical power.
 
@@ -62,3 +64,11 @@ The turbine converts high-pressure steam supplied by the boiler into electrical 
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1) |  0.16 |
 | Variable          | Output           | MW      | Capacity × Setting × (1 − ExcessVibration × VibrationPenalty)             |  38.4 |
 | Variable          | Consumption      | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                       | 37.65 |
+
+## UI
+
+```text
+┌────────────┐    ┌────────┐    ┌─────────┐
+│ Pulverizer │ -> │ Boiler │ -> │ Turbine │
+└────────────┘    └────────┘    └─────────┘
+```
