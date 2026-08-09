@@ -3,15 +3,15 @@
  * History mode — backend/firebase.json rewrites all paths to /index.html.
  */
 import {createRouter, createWebHistory} from 'vue-router'
-import MatchScreen from '@/components/screens/match_screen.vue'
+import HomeScreen from '@/components/screens/home_screen.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'match',
-      component: MatchScreen,
+      name: 'home',
+      component: HomeScreen,
     },
   ],
 })

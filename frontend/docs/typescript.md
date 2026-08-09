@@ -36,7 +36,7 @@ Prefer getters over methods for parameterless functions that only read instance 
 ```typescript
 /**
  * Brief description of class purpose.
- * Additional context about role in the game architecture.
+ * Additional context about its role in the architecture.
  */
 class ClassName {
 ```

@@ -1,54 +1,12 @@
-/* Global tokens, reset and type roles.
-   Colour and geometry come from docs/ui.md; the tokens the canvas needs are
-   mirrored in src/game/tunables.ts. */
+/* Global tokens and reset. */
 
 /* ============================================
    Tokens
    ============================================ */
 
 :root {
-    /* Colour — every token is either neutral or reserved for a simulation state.
-       Red and the warm ramp are reserved for heat, load and starvation, and
-       arrive with the danger they announce at stage 4. */
-    --surface-well: #080B10;
     --surface-base: #0D1117;
-    --surface-raised: #141A22;
-    --rule: rgba(198, 210, 228, 0.08);
     --ink: #C8D3E2;
-    --ink-dim: #7C8899;
-    --ink-faint: #4A5563;
-    --energy: #58C7DE;
-
-    /* The state ramp. The rest of it arrives with heat at stage 4; only two
-       stops are needed before then — the warning stop for a cost the player
-       cannot meet, and the top stop for the clock's final minute. */
-    --state-2: #D8A63F;
-    --state-4: #DF413A;
-
-    /* The race verdict, and the only place hue means good news. Kept well clear
-       of --energy in hue so "ahead" never reads as just more cyan. */
-    --pace-ahead: #43C07A;
-    --pace-behind: var(--state-4);
-
-    /* Energy numerals on the HUD and in the overlays. The board keeps --energy
-       cyan for cables, so no warm hue reaches the cells. */
-    --hud-energy: #F2C044;
-
-    /* Geometry */
-    --hud-height: 76px;
-    --rail-width: 248px;
-    --radius-panel: 2px;
-    --radius-control: 3px;
-
-    /* Motion — mirrors TUNABLES.motion */
-    --tween: 160ms;
-    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    :root {
-        --tween: 0ms;
-    }
 }
 
 /* ============================================
@@ -71,111 +29,12 @@ body,
 
 body {
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
-
-    /* Without this the energy counter and the timer shift horizontally several
-       times a second for twelve minutes */
-    font-variant-numeric: tabular-nums;
     background: var(--surface-base);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
 }
 
-button {
-    font: inherit;
-    color: inherit;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
 :focus-visible {
-    /* Neutral by necessity: the warm ramp and the energy cyan are both spoken for */
     outline: 1px solid var(--ink);
     outline-offset: 2px;
-}
-
-/* ============================================
-   Type roles
-   ============================================ */
-
-.hud-value {
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
-
-.hud-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    color: var(--ink-dim);
-}
-
-.rail-title {
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.readout {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.body-text {
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-.caption {
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--ink-dim);
-}
-
-/* Anything the game refuses or reports as wrong, at whatever type role it sits
-   in — compose it with one of the roles above. Declared after them so it wins
-   on colour alone. docs/ui.md § Colour admits this use of reserved red. */
-.error-text {
-    color: var(--state-4);
-}
-
-/* ============================================
-   Controls
-   ============================================ */
-
-/* An instrument switch: a verb naming its outcome, with its hotkey beside it.
-   Shared by the HUD strip and the match overlay. */
-.control {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-control);
-    transition: border-color var(--tween) var(--ease), background-color var(--tween) var(--ease);
-}
-
-.control:hover:not(:disabled) {
-    background: var(--surface-well);
-    border-color: var(--ink-faint);
-}
-
-.control:disabled {
-    color: var(--ink-faint);
-    cursor: default;
-}
-
-.hotkey {
-    font-family: inherit;
-    font-size: 11px;
-    color: var(--ink-dim);
-    padding: 1px 5px;
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-control);
-}
-
-.control:disabled .hotkey {
-    color: var(--ink-faint);
 }
