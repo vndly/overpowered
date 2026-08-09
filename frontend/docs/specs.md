@@ -23,6 +23,8 @@ The pulverizer converts raw coal supplied from the plant's stockpile into pulver
 
 ## Boiler
 
+The boiler burns pulverized coal to produce high-pressure steam for the turbine.
+
 | Type              | Parameter       | Unit  | Description / Formula                                                 | Value |
 | ----------------- | --------------- | ----- | --------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity        | kg/s  | Maximum output                                                        |    50 |
@@ -41,6 +43,8 @@ The pulverizer converts raw coal supplied from the plant's stockpile into pulver
 | Variable          | Consumption     | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                   |  4.71 |
 
 ## Turbine
+
+The turbine converts high-pressure steam supplied by the boiler into electrical power.
 
 | Type              | Parameter        | Unit    | Description / Formula                                                     | Value |
 | ----------------- | ---------------- | ------- | ------------------------------------------------------------------------- | ----: |
