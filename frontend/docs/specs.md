@@ -18,21 +18,31 @@ Machines have no separate enable control. A machine is enabled when `Setting > 0
 
 Storage capacities can only be increased by purchasing upgrades. All storage components start empty except the Battery, which starts with enough energy to start the production chain.
 
+## Economy
+
+Energy stored in the Battery, measured in MWh, is the game's only currency. There is no separate money balance.
+
+- The Turbine produces energy and adds it to the Battery.
+- The Pulverizer and Boiler consume energy from the Battery while running.
+- Buying raw coal immediately deducts its energy cost from the Battery.
+- Every storage and machine upgrade is purchased with energy and immediately deducts its cost from the Battery.
+- An upgrade is unavailable when the Battery does not contain enough energy to pay its full cost. A coal purchase is automatically reduced to the amount that the player can afford.
+
 ## Components
 
 ### Stockpile
 
-The Stockpile stores raw coal purchased by the player. A purchase adds as much of the requested coal as will fit and charges only for the amount added.
+The Stockpile stores raw coal purchased by the player. A purchase adds as much of the requested coal as will fit and as the player can afford, then deducts the resulting energy cost from the Battery.
 
-| Type              | Parameter        | Unit       | Description / Formula                       | Value |
-| ----------------- | ---------------- | ---------- | ------------------------------------------- | ----: |
-| Player controlled | Capacity         | kg         | Maximum raw coal that can be stored         | 1,000 |
-| Player controlled | CoalPrice        | credits/kg | Current purchase price                      |  1.00 |
-| Constant          | PriceReduction   | %          | CoalPrice reduction from each price upgrade |  0.10 |
-| Constant          | MinimumCoalPrice | credits/kg | Lowest price obtainable through upgrades    |  0.25 |
-| Variable          | Contents         | kg         | Raw coal currently stored                   |     0 |
-| Variable          | PurchasedCoal    | kg         | min(RequestedCoal, Capacity − Contents)     |     — |
-| Variable          | PurchaseCost     | credits    | PurchasedCoal × CoalPrice                   |     — |
+| Type              | Parameter        | Unit   | Description / Formula                                                    | Value |
+| ----------------- | ---------------- | ------ | ------------------------------------------------------------------------ | ----: |
+| Player controlled | Capacity         | kg     | Maximum raw coal that can be stored                                      | 1,000 |
+| Player controlled | CoalPrice        | MWh/kg | Current energy price                                                     | 0.001 |
+| Constant          | PriceReduction   | %      | CoalPrice reduction from each price upgrade                              |  0.10 |
+| Constant          | MinimumCoalPrice | MWh/kg | Lowest price obtainable through upgrades                                 | 0.00025 |
+| Variable          | Contents         | kg     | Raw coal currently stored                                                |     0 |
+| Variable          | PurchasedCoal    | kg     | min(RequestedCoal, Capacity − Contents, Battery Contents / CoalPrice)     |     — |
+| Variable          | PurchaseCost     | MWh    | PurchasedCoal × CoalPrice                                                |     — |
 
 The player can buy any positive amount of raw coal. `Capacity` can be increased with a capacity upgrade. `CoalPrice` can be reduced with an expensive price upgrade:
 
@@ -135,7 +145,9 @@ The Battery stores electricity produced by the Turbine and supplies electricity 
 | Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 32.94 |
 | Variable          | EnergyChange   | MWh  | NetFlow × DeltaTimeSeconds / 3,600                                           |     — |
 
-The starting charge can run the Pulverizer and Boiler at their initial settings for roughly eleven minutes without Turbine output, which provides ample time for steam production to begin.
+Before any purchases, the starting charge can run the Pulverizer and Boiler at their initial settings for roughly eleven minutes without Turbine output. The default 100 kg coal purchase costs 0.10 MWh, leaving roughly ten minutes of startup energy for steam production to begin.
+
+`NetFlow` represents continuous generation and machine consumption. Coal purchases and upgrade costs are discrete expenses deducted directly from `Contents` when the player confirms them.
 
 ## UI
 
@@ -143,18 +155,18 @@ The starting charge can run the Pulverizer and Boiler at their initial settings 
 [Stockpile] -> [Pulverizer] -> [Silo] -> [Boiler] -> [Tank] -> [Turbine] -> [Battery]
 ```
 
-Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost. The Stockpile also displays coal-purchase controls, the current price per kg, and the expensive price-upgrade cost.
+Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per kg, and the expensive price-upgrade cost.
 
 ```text
 ┌──────────────────────────────────────┐
 │ Stockpile                            │
 ├──────────────────────────────────────┤
 │ Stored       0 / 1,000 kg        0%  │
-│ Coal price   1.00 credits/kg         │
+│ Coal price   0.001 MWh/kg            │
 │ Buy coal     [-]      100 kg     [+] │
-│              [Buy: 100 credits]      │
-│ Capacity     [Upgrade: {cost}]       │
-│ Coal price   [Upgrade: {high cost}]  │
+│              [Buy: 0.10 MWh]         │
+│ Capacity     [Upgrade: {cost} MWh]   │
+│ Coal price   [Upgrade: {cost} MWh]   │
 └──────────────────────────────────────┘
 
 ┌──────────────────────────────────────┐
@@ -162,18 +174,18 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 ├──────────────────────────────────────┤
 │ Stored       {amount} / {capacity}   │
 │ Fill         {percentage}%           │
-│ Capacity     [Upgrade: {cost}]       │
+│ Capacity     [Upgrade: {cost} MWh]   │
 └──────────────────────────────────────┘
 
-┌──────────────────────────────────────┐
-│ Pulverizer / Boiler / Turbine        │
-├──────────────────────────────────────┤
-│ Status     {Running/Waiting/Off}     │
-│ Capacity   {value} [Upgrade: {cost}] │
-│ Efficiency {value} [Upgrade: {cost}] │
-│ Control    {value} [Upgrade: {cost}] │
-│ Setting    [-]      {value}      [+] │
-└──────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Pulverizer / Boiler / Turbine            │
+├──────────────────────────────────────────┤
+│ Status     {Running/Waiting/Off}         │
+│ Capacity   {value} [Upgrade: {cost} MWh] │
+│ Efficiency {value} [Upgrade: {cost} MWh] │
+│ Control    {value} [Upgrade: {cost} MWh] │
+│ Setting    [-]      {value}      [+]     │
+└──────────────────────────────────────────┘
 ```
 
-The player can decrease or increase `Setting` freely. Reducing it to zero turns the machine off; increasing it above zero enables the machine. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by purchasing an upgrade at the displayed `{cost}`.
+The player can decrease or increase `Setting` freely. Reducing it to zero turns the machine off; increasing it above zero enables the machine. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by spending the displayed energy cost.
