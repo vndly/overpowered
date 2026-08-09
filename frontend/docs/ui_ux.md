@@ -129,7 +129,7 @@ Example:
 ```text
 CAPACITY      50.0 MW
 EFFICIENCY     0.85
-STABILITY      0.40
+SETTING        0.80
 OUTPUT         31.9 MW
 ```
 
@@ -408,6 +408,24 @@ Generic layout:
 
 The fill bar should always make current storage visually obvious.
 
+## Strain markers
+
+The Silo and Tank fill bars carry tick marks for the points at which a neighbouring machine begins to wear:
+
+```text
+SILO                          TANK
+STORED  0.7 / 1.0 t           STORED  1.4 / 3.0 t
+███████░░░╷                   ████╵░░░░░░╷
+          ╵ backlog 70%           ╵ starve 30%
+                                         ╷ backlog 70%
+```
+
+- Silo: one mark at `BacklogThreshold`. Above it the Pulverizer heats.
+- Tank: two marks, at `StarveThreshold` and `BacklogThreshold`. Below the first the Turbine vibrates; above the second the Boiler strains.
+- Stockpile and Battery carry no marks — neither has a strain rule.
+
+Keep the marks in the same green as the bar outline and thinner than the fill blocks. They are a scale, not an alarm; the alarm is the machine card's stress gauge. Without them the player watches a machine start to wear with nothing on screen explaining why, so they are required, not decorative.
+
 ---
 
 # 11. Stockpile Card
@@ -463,7 +481,6 @@ TITLE
 
 CAPACITY
 EFFICIENCY
-CONTROL
 
 SETTING       [-] 0.80 [+]
 
@@ -473,6 +490,7 @@ STRESS TYPE
 [STRESS GAUGE]
 
 STRESS        62%
+CLEAN TO      0.69
 PENALTY       -7%
 
 OUTPUT        value
@@ -482,13 +500,9 @@ OUTPUT        value
 UPGRADES
 ```
 
-Use the component-specific control names:
+`CAPACITY` and `EFFICIENCY` are the only upgradable rows. There is no control row: wear headroom is bought as Silo and Tank capacity on the storage cards, not on the machine.
 
-```text
-PULVERIZER → COOLING
-BOILER     → REGULATION
-TURBINE    → STABILITY
-```
+`CLEAN TO` is the highest `SETTING` that accrues no wear right now. It is not a constant — it falls as the store beside the machine moves toward its strain threshold, so it can come down to meet a `SETTING` the player never touched. Render it as a live value and let it move.
 
 Use the component-specific stress names:
 
@@ -536,6 +550,7 @@ SAFE                 MAX
 ██████████|████░░░░░
 
 STRESS        62%
+CLEAN TO      0.69
 PENALTY       -7%
 ```
 
@@ -545,6 +560,8 @@ The gauge should communicate:
 - safe region
 - maximum region
 - current penalty
+
+The `SAFE` marker is fixed but the fill is not bounded by `MAX`: a machine straining against a backed-up or empty store can read past its maximum. Peg the fill at the right-hand end rather than letting it overflow the gauge.
 
 Recommended visual construction:
 
@@ -726,10 +743,13 @@ LOW BATTERY
 STOCKPILE EMPTY
 SILO FULL
 TANK FULL
+TANK LOW
 HIGH TEMPERATURE
 HIGH PRESSURE
 HIGH VIBRATION
 ```
+
+`SILO FULL`, `TANK FULL`, and `TANK LOW` fire on the strain thresholds rather than on the store actually reaching an end, because that is the point at which they start costing the player something.
 
 For higher-priority warnings, use:
 
@@ -1043,9 +1063,10 @@ UI components should primarily receive already-computed values such as:
   stored: 12.4,
   capacity: 40,
   netFlow: 26.4,
-  setting: 0.80,
+  setting: 0.8,
   stress: 62,
-  penalty: 7
+  cleanTo: 0.69,
+  penalty: 7,
 }
 ```
 

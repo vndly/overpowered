@@ -12,30 +12,37 @@ import sys
 
 import sim
 
+# `buffer` dominates the sweep and wants small values: every second of stock a store is
+# sized and filled to is storage capacity bought and coal held instead of energy banked.
+# It reaches down to 5 s because the grid's floor was the winner at every wider setting
+# tried, which means a floor set too high silently caps the measured peak.
 SWEEP_GRID = dict(
-    ride=[1.0, 1.15, 1.3, 1.45, 1.6],
+    ride=[1.3, 1.45, 1.6, 1.75],
     backoff=['all', 'turbine'],
     wear_hi=[0.85], wear_lo=[0.15],
-    slack=[1.0, 1.15, 1.3, 1.6],
-    buffer=[45.0],
-    t_stop=[260.0, 320.0, 380.0, 440.0, 500.0],
+    slack=[1.3, 1.6, 2.0, 2.5],
+    buffer=[3.0, 5.0, 8.0, 12.0],
+    t_stop=[380.0, 440.0, 500.0],
 )
 
 # best policies from the last full sweep; --quick starts here instead of re-sweeping
 KNOWN_BEST = [
-    dict(ride=1.15, backoff='turbine', slack=1.30, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=45.0),
-    dict(ride=1.15, backoff='turbine', slack=1.15, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=45.0),
-    dict(ride=1.15, backoff='turbine', slack=1.30, t_stop=500.0, wear_hi=0.85, wear_lo=0.15, buffer=45.0),
-    dict(ride=1.00, backoff='turbine', slack=1.30, t_stop=500.0, wear_hi=0.85, wear_lo=0.15, buffer=45.0),
+    dict(ride=1.75, backoff='all', slack=2.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
+    dict(ride=1.45, backoff='turbine', slack=1.30, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
+    dict(ride=1.45, backoff='all', slack=1.30, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
+    dict(ride=1.75, backoff='turbine', slack=2.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
 ]
 
 SEEDS, DT = range(60), 0.1
-TARGETS = (60, 70, 75, 80, 85, 90, 100)
+
+# Candidate targets as a share of the measured median peak, so the table stays useful at
+# any scale. A fixed tuple silently goes off the end of the distribution after a retune.
+TARGET_SHARES = (0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1.0)
 
 
 def label(pol):
-    return (f'ride={pol["ride"]:.2f} back={pol["backoff"]:<7} '
-            f'slack={pol["slack"]:.2f} stop={pol["t_stop"]:.0f}')
+    return (f'ride={pol["ride"]:.2f} back={pol["backoff"]:<7} slack={pol["slack"]:.2f} '
+            f'buf={pol["buffer"]:.0f} stop={pol["t_stop"]:.0f}')
 
 
 def pct(peaks, q):
@@ -66,14 +73,16 @@ def main():
           f'{st.median(envelope):6.0f} {st.mean(envelope):6.0f} {pct(envelope, .75):6.0f} '
           f'{envelope[-1]:6.0f}')
 
-    print(f'\nmedian peak {st.median(best):.0f} MWh  ->  suggested TargetEnergy '
-          f'{round(0.8 * st.median(best) / 5) * 5:.0f}  (80% of it, to the nearest 5)')
+    median = st.median(best)
+    print(f'\nmedian peak {median:.0f} MWh  ->  suggested TargetEnergy '
+          f'{round(0.8 * median / 5) * 5:.0f}  (80% of it, to the nearest 5)')
     print('\nwin rate by candidate TargetEnergy')
-    print(f'{"target":>7} {"single policy":>14} {"best-of":>9}')
-    for target in TARGETS:
+    print(f'{"target":>7} {"of median":>10} {"single policy":>14} {"best-of":>9}')
+    for share in TARGET_SHARES:
+        target = round(share * median / 5) * 5
         a = sum(p >= target for p in best) / n
         b = sum(p >= target for p in envelope) / n
-        print(f'{target:7} {a:13.0%} {b:8.0%}')
+        print(f'{target:7} {share:9.0%} {a:13.0%} {b:8.0%}')
 
 
 if __name__ == '__main__':

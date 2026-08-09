@@ -19,15 +19,34 @@ MAX_SETTING = 2.0
 
 # cap: base Capacity | base/rng/safe/mx: the stress curve | cons: BaseConsumption
 # wg/wr: WearGrowth, WearRecovery | rep: RepairSeconds
-P = dict(cap=8.0,  base=30.0, rng=100.0, safe=70.0, mx=150.0, cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
-B = dict(cap=50.0, base=20.0, rng=180.0, safe=95.0, mx=236.0, cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
-T = dict(cap=50.0, base=1.0,  rng=10.0,  safe=6.0,  mx=13.0,  cons=0.75, wg=0.067, wr=0.020, rep=20.0)
+P = dict(cap=8.0,  base=30.0, rng=60.0,  safe=70.0, mx=150.0, cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
+B = dict(cap=50.0, base=20.0, rng=108.0, safe=95.0, mx=236.0, cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
+T = dict(cap=50.0, base=1.0,  rng=6.0,   safe=6.0,  mx=13.0,  cons=0.75, wg=0.067, wr=0.020, rep=20.0)
 
 PULV_YIELD, STEAM_YIELD = 0.95, 8.0
-MAX_EFF, MAX_CTRL, UPGRADE_GAIN, CAPACITY_GROWTH = 0.95, 0.75, 0.25, 1.5
+MAX_EFF, UPGRADE_GAIN, CAPACITY_GROWTH = 0.95, 0.25, 1.5
 RESERVE_FRACTION, STARTUP_SECONDS, RESTART_MULTIPLE, STARTING_CHARGE = 0.10, 30.0, 2.0, 4.0
 START_PRICE, PRICE_GROWTH, MARKET_RANGE, VOLATILITY, REVERSION = 1.0, 1.06, 0.25, 0.03, 0.01
 START_SETTING = 0.6
+
+# Strain: a machine out of step with the chain runs hotter than its Setting alone implies.
+# The Pulverizer and Boiler push into the store below them and strain when it backs up; the
+# Turbine draws from the store above it and strains when that runs dry. See "Buffers and
+# strain" in ../docs/specs.md.
+STRAIN_GAIN, BACKLOG_THRESHOLD, STARVE_THRESHOLD = 1.25, 0.70, 0.30
+
+
+def backlog(contents, capacity):
+    """Strain multiplier for a machine pushing into `contents` of `capacity`."""
+    fill = 0.0 if capacity <= 0 else contents / capacity
+    return STRAIN_GAIN * max(0.0, min(1.0, (fill - BACKLOG_THRESHOLD) / (1 - BACKLOG_THRESHOLD)))
+
+
+def starve(contents, capacity):
+    """Strain multiplier for a machine drawing from `contents` of `capacity`."""
+    fill = 0.0 if capacity <= 0 else contents / capacity
+    return STRAIN_GAIN * max(0.0, min(1.0, (STARVE_THRESHOLD - fill) / STARVE_THRESHOLD))
+
 
 # The spec advances the market once per simulation step, which ties the realised price
 # path to DeltaTimeSeconds -- two implementations stepping differently would face
@@ -40,7 +59,6 @@ COST = {
     'capP': (0.02, 1.70), 'capB': (0.02, 1.70), 'capT': (0.02, 1.70),
     'stock': (0.02, 1.55), 'silo': (0.02, 1.55), 'tank': (0.02, 1.55), 'batt': (0.02, 1.55),
     'effP': (0.05, 1.30), 'effB': (0.05, 1.30), 'effT': (0.05, 1.30),
-    'cool': (0.05, 1.45), 'reg': (0.05, 1.45), 'stab': (0.05, 1.45),
 }
 
 
@@ -52,7 +70,6 @@ class State:
         self.capP, self.capB, self.capT = P['cap'], B['cap'], T['cap']
         self.capStock, self.capSilo, self.capTank, self.capBatt = 1000.0, 500.0, 3000.0, 10.0
         self.effP = self.effB = self.effT = 0.85
-        self.cool = self.reg = self.stab = 0.4
         self.stock = self.silo = self.tank = 0.0
         self.batt = STARTING_CHARGE
         self.wear = {'P': 0.0, 'B': 0.0, 'T': 0.0}
@@ -82,11 +99,24 @@ class State:
     def spendable(self):
         return max(0.0, self.batt - self.reserve())
 
-    def ceilings(self):
-        """Wear-free Setting ceiling for each machine at its current control."""
-        return ((P['safe'] - P['base']) / (P['rng'] * (1 - self.cool)),
-                (B['safe'] - B['base']) / (B['rng'] * (1 - self.reg)),
-                (T['safe'] - T['base']) / (T['rng'] * (1 - self.stab)))
+    def strains(self):
+        """Strain on each machine from the store it is fighting."""
+        return (backlog(self.silo, self.capSilo),
+                backlog(self.tank, self.capTank),
+                starve(self.tank, self.capTank))
+
+    def ceilings(self, strained=True):
+        """Wear-free Setting ceiling for each machine.
+
+        Strained is what the player reads off the card and throttles against. The
+        slack-store ceiling is what an upgrade decision should be judged against instead:
+        a store that happens to be backed up this second is a balance problem, and buying
+        capacity is the wrong answer to it.
+        """
+        sP, sB, sT = self.strains() if strained else (0.0, 0.0, 0.0)
+        return ((P['safe'] - P['base']) / (P['rng'] * (1 + sP)),
+                (B['safe'] - B['base']) / (B['rng'] * (1 + sB)),
+                (T['safe'] - T['base']) / (T['rng'] * (1 + sT)))
 
     def ratios(self):
         """sP/sT and sB/sT for a chain matched to the Turbine's draw."""
@@ -112,9 +142,6 @@ class State:
         elif track == 'effP': self.effP += (MAX_EFF - self.effP) * UPGRADE_GAIN
         elif track == 'effB': self.effB += (MAX_EFF - self.effB) * UPGRADE_GAIN
         elif track == 'effT': self.effT += (MAX_EFF - self.effT) * UPGRADE_GAIN
-        elif track == 'cool': self.cool += (MAX_CTRL - self.cool) * UPGRADE_GAIN
-        elif track == 'reg': self.reg += (MAX_CTRL - self.reg) * UPGRADE_GAIN
-        elif track == 'stab': self.stab += (MAX_CTRL - self.stab) * UPGRADE_GAIN
 
 
 def income(s, sT, price):
@@ -153,6 +180,21 @@ def deliverable(s, sT):
 #   buffer   seconds of downstream flow each store is sized and filled to
 #   t_stop   stop upgrading and bank from here on
 
+def band(want, capacity):
+    """Pull a store's target fill inside the strain-free band.
+
+    Sizing a store purely as seconds of downstream flow was enough when fill had no
+    consequence. It is not any more: the same seconds are a smaller fraction of every
+    capacity upgrade, so a target left alone drifts under StarveThreshold and strains the
+    machine drawing from it. A player who could not hold the band would be a weak player,
+    and a weak policy measures the wrong TargetEnergy.
+    """
+    margin = 0.05
+    lo = capacity * (STARVE_THRESHOLD + margin)
+    hi = capacity * (BACKLOG_THRESHOLD - margin)
+    return min(max(want, lo), hi)
+
+
 def settings(s, pol, mode):
     ceilP, ceilB, ceilT = s.ceilings()
     rP, rB = s.ratios()
@@ -171,19 +213,19 @@ def settings(s, pol, mode):
     # deliberate redlining is the ride mode's job.
     REFILL = 60.0
     tSteam = sT * s.capT * T['cons'] / s.effT
-    want_tank = min(s.capTank, tSteam * pol['buffer'])
+    want_tank = band(tSteam * pol['buffer'], s.capTank)
     boost = (tSteam + max(0.0, want_tank - s.tank) / REFILL) / s.capB
     sB = min(max(tSteam / s.capB, min(boost, ceilB)), MAX_SETTING)
 
     bFuel = sB * s.capB / (STEAM_YIELD * s.effB)
-    want_silo = min(s.capSilo, bFuel * pol['buffer'])
+    want_silo = band(bFuel * pol['buffer'], s.capSilo)
     boost = (bFuel + max(0.0, want_silo - s.silo) / REFILL) / s.capP
     sP = min(max(bFuel / s.capP, min(boost, ceilP)), MAX_SETTING)
     return sP, sB, sT
 
 
 def purchase(s, pol):
-    ceilP, ceilB, ceilT = s.ceilings()
+    ceilP, ceilB, ceilT = s.ceilings(strained=False)
     rP, rB = s.ratios()
     rideT = deliverable(s, pol['ride'] * ceilT)
     price = s.price()
@@ -202,12 +244,12 @@ def purchase(s, pol):
     for setting, capt in ((rideT * rB, 'capB'), (rideT * rP, 'capP')):
         if setting > 1.9 and afford(capt): s.apply(capt); return
 
-    # headroom: keep the upstream machines near their own ceilings at the ride point
-    for setting, ceil, capt, ctrlt in ((rideT * rB, ceilB, 'capB', 'reg'),
-                                       (rideT * rP, ceilP, 'capP', 'cool')):
-        if setting > ceil * pol['slack']:
-            pick = min((capt, ctrlt), key=s.cost_of)
-            if afford(pick): s.apply(pick); return
+    # headroom: keep the upstream machines near their own ceilings at the ride point.
+    # Capacity is now the only lever for this -- there is no control track to raise the
+    # ceiling, so the required Setting has to come down instead.
+    for setting, ceil, capt in ((rideT * rB, ceilB, 'capB'),
+                                (rideT * rP, ceilP, 'capP')):
+        if setting > ceil * pol['slack'] and afford(capt): s.apply(capt); return
 
     # storage that has become too small for the flow through it
     raw = rideT * rP * s.capP / PULV_YIELD
@@ -224,10 +266,10 @@ def purchase(s, pol):
     # Turbine instead, and a run then buys capacity it can never feed.
     base = income(s, rideT, price)
     best, best_score = None, 0.0
-    for tr in ('capT', 'capB', 'capP', 'effT', 'effB', 'effP', 'stab', 'reg', 'cool'):
+    for tr in ('capT', 'capB', 'capP', 'effT', 'effB', 'effP'):
         if not afford(tr): continue
         c = clone_with(s, tr)
-        gain = income(c, deliverable(c, pol['ride'] * c.ceilings()[2]), price) - base
+        gain = income(c, deliverable(c, pol['ride'] * c.ceilings(strained=False)[2]), price) - base
         if gain <= 0: continue
         cost = s.cost_of(tr)
         if cost / gain > (pol['t_stop'] - s.t): continue
@@ -280,6 +322,10 @@ def run(pol, seed, dt=0.2):
         ratB = 0.0 if tripped['B'] else min(er, 1.0 if bFuel <= 0 else min(1.0, s.silo / (bFuel * dt)))
         ratT = 0.0 if tripped['T'] else (1.0 if tSteam <= 0 else min(1.0, s.tank / (tSteam * dt)))
 
+        # read before the storage writes below: strain is start-of-step state like every
+        # other input to a step, so wear does not depend on evaluation order
+        strain = dict(zip('PBT', s.strains()))
+
         made_mwh = sT * s.capT * ratT * dt / 3600.0
         used_elec = (pEl * ratP + bEl * ratB) * dt / 3600.0
         stored = min(made_mwh, s.capBatt - s.batt)
@@ -295,8 +341,7 @@ def run(pol, seed, dt=0.2):
         s.peak = max(s.peak, s.batt)
 
         for key, m, setting, rat in (('P', P, sP, ratP), ('B', B, sB, ratB), ('T', T, sT, ratT)):
-            ctrl = {'P': s.cool, 'B': s.reg, 'T': s.stab}[key]
-            stress = m['base'] + m['rng'] * setting * (1 - ctrl)
+            stress = m['base'] + m['rng'] * setting * (1 + strain[key])
             ex = max(0.0, min(1.0, (stress - m['safe']) / (m['mx'] - m['safe'])))
             rate = -m['wr'] if (s.repair[key] > 0 or ex == 0) else m['wg'] * ex * ex * rat
             s.wear[key] = max(0.0, min(1.0, s.wear[key] + rate * dt))
