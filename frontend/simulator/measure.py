@@ -14,21 +14,23 @@ import sim
 
 # `buffer` dominates the sweep and wants small values: every second of stock a store is
 # sized and filled to is storage capacity bought and coal held instead of energy banked.
-# It reaches down to 1 s because the grid's floor was the winner at every wider setting
-# tried, which means a floor set too high silently caps the measured peak.
+# It reaches down to 0.5 s because the grid's floor was the winner at every wider setting
+# tried, which means a floor set too high silently caps the measured peak. Below about 2 s
+# the axis saturates -- `band()` clamps the target fill into the strain-free window anyway,
+# and the storage-purchase rule stops firing -- so 0.5 is there to demonstrate the floor,
+# not because anything is expected to move.
 #
-# `ride` bottoms out at 1.0 -- the Turbine parked exactly on its clean ceiling. Below that
-# is strictly worse: less output for the same zero wear. Every other axis has to bracket
-# its winner, which is why widening the Efficiency band forced this grid open on four of
-# them at once: the wider band pays for Efficiency over throughput, and that moves the
-# whole policy towards a gentler ride, tighter capacity, and reinvesting for longer.
+# Every axis has to bracket its winner on both sides. Widening the Efficiency band moved
+# the winner on four of them at once, and the first attempt at rewidening this grid pushed
+# the low ends out while quietly dropping `ride` 1.75 and `t_stop` 380 off the high and low
+# ends -- which promptly became the new winners. Extend an axis; do not slide it.
 SWEEP_GRID = dict(
-    ride=[1.0, 1.15, 1.3, 1.45, 1.6],
+    ride=[1.3, 1.45, 1.6, 1.75, 1.9],
     backoff=['all', 'turbine'],
     wear_hi=[0.85], wear_lo=[0.15],
-    slack=[1.0, 1.15, 1.3, 1.6, 2.0, 2.5, 3.0],
-    buffer=[1.0, 2.0, 3.0, 5.0],
-    t_stop=[440.0, 500.0, 560.0, 600.0],
+    slack=[1.6, 2.0, 2.5, 3.0, 3.5, 4.0],
+    buffer=[0.5, 1.0, 2.0, 3.0],
+    t_stop=[320.0, 380.0, 440.0, 500.0],
 )
 
 # best policies from the last full sweep; --quick starts here instead of re-sweeping
