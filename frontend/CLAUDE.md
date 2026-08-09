@@ -9,6 +9,7 @@ The frontend of Overpowered (Vite + Vue 3, TypeScript, Composition API with `<sc
 - `docs/specs.md` — the game design: objective, production chain, simulation rules, economy, component parameters, and UI. The source of truth for all gameplay values.
 - `docs/ui_ux.md` — the interface design: CRT terminal visual direction, typography, color system, layout, per-card specs, interaction timing, and accessibility. The source of truth for all UI decisions. Read when building or changing UI.
 - `docs/typescript.md` — style, naming, imports. Read when editing TypeScript files.
+- `simulator/` — a Python reference implementation of `docs/specs.md`, used to measure `TargetEnergy`. A design tool, not application code: no dependencies, and nothing the frontend builds, lints, or ships. See `simulator/README.md`.
 
 ## Rules
 
@@ -17,4 +18,5 @@ The frontend of Overpowered (Vite + Vue 3, TypeScript, Composition API with `<sc
 - **Fonts**: Every font must come from Google Fonts, served by its CDN via a `<link>` in `index.html`. No font files in the repo, no font packages in `package.json`, no other font source.
 - **TypeScript projects**: `tsconfig.json` only references `tsconfig.app.json` (browser, `src/`, extends `@vue/tsconfig/tsconfig.dom.json`) and `tsconfig.node.json` (`vite.config.ts`, extends `@tsconfig/node24`). An option the two bases don't already cover must be set in both.
 - **Build output**: `npm run build` writes into `../backend/public`, the directory Firebase Hosting serves, and empties it first. Routing is history mode, which relies on the catch-all rewrite in `../backend/firebase.json`.
+- **Economy changes**: After changing any gameplay constant in `docs/specs.md`, update the matching constant in `simulator/sim.py`, run `simulator/verify.py` (it checks the opening state against the spec's tables), then re-measure `TargetEnergy` with `simulator/measure.py`.
 - **Doc Maintenance**: After changes, check if `CLAUDE.md`, `docs/specs.md`, `docs/ui_ux.md`, and `docs/typescript.md` need updating.

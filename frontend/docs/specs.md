@@ -16,13 +16,13 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 `TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
 
-The current value of 80 was measured against the economy as it now stands. A simulator built to this document, run under a greedy reinvestment policy across 60 market seeds, reaches a **median peak of about 103 MWh** — quartiles 86 and 125, individual runs from 27 to 192. A target of 80 is reached on 82% of seeds by one good line of play, and 87% when the line is chosen to suit the market. The previous value of 40 predated the coal market and was reached on every seed; it had stopped being a target at all.
+The current value of 80 was measured with [`simulator/`](../simulator/), which implements this document. Run under a greedy reinvestment policy across 60 market seeds, it reaches a **median peak of about 110 MWh** — quartiles 90 and 152, individual runs from 52 to 251. A target of 80 is reached on 77% of seeds by one good line of play, and 83% when the line is chosen to suit the market. The previous value of 40 predated the coal market and was reached on every seed; it had stopped being a target at all.
 
 | TargetEnergy         |  60 |  70 |  75 |  80 |  85 |  90 | 100 |
 | -------------------- | --: | --: | --: | --: | --: | --: | --: |
-| Strong-play win rate | 93% | 90% | 87% | 82% | 75% | 70% | 57% |
+| Strong-play win rate | 92% | 88% | 83% | 77% | 70% | 65% | 60% |
 
-Two caveats attach to the number. The policy measured is a strong heuristic, not proven-optimal play, so the true peak sits at or above 103 and 80 errs towards the generous. And the spread is wide — the market alone separates a 27 MWh run from a 192 MWh one — so no single target is equally fair on every seed.
+Three caveats attach to the number. A strict reading of the 80% rule would put the target at 90 rather than 80; 80 is 73% of the measured median, chosen because it holds the strong-play win rate above three quarters. The policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 110 and the target errs towards the generous either way. And the spread is wide — the market alone separates a 52 MWh run from a 251 MWh one — so no single target is equally fair on every seed.
 
 ### Stalling
 
