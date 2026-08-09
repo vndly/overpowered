@@ -38,8 +38,8 @@ The Stockpile stores raw coal purchased by the player. A purchase adds as much o
 | ----------------- | ---------------- | ----- | --------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity         | t     | Maximum raw coal that can be stored                                   |     1 |
 | Player controlled | CoalPrice        | MWh/t | Current energy price                                                  |     1 |
-| Constant          | PriceReduction   | %     | CoalPrice reduction from each price upgrade                           |  0.10 |
-| Constant          | MinimumCoalPrice | MWh/t | Lowest price obtainable through upgrades                              |  0.25 |
+| Constant          | PriceReduction   | %     | CoalPrice reduction from each price upgrade                           |  0.05 |
+| Constant          | MinimumCoalPrice | MWh/t | Lowest price obtainable through upgrades                              |  0.20 |
 | Variable          | Contents         | t     | Raw coal currently stored                                             |     0 |
 | Variable          | PurchasedCoal    | t     | min(RequestedCoal, Capacity − Contents, Battery Contents / CoalPrice) |     — |
 | Variable          | PurchaseCost     | MWh   | PurchasedCoal × CoalPrice                                             |     — |
