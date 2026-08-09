@@ -68,7 +68,14 @@ The turbine converts high-pressure steam supplied by the boiler into electrical 
 ## UI
 
 ```text
-┌────────────┐    ┌────────┐    ┌─────────┐
-│ Pulverizer │ -> │ Boiler │ -> │ Turbine │
-└────────────┘    └────────┘    └─────────┘
+┌──────────────────────────────────────┐    ┌──────────────────────────────────────┐    ┌──────────────────────────────────────┐
+│ Pulverizer                           │ -> │ Boiler                               │ -> │ Turbine                              │
+├──────────────────────────────────────┤    ├──────────────────────────────────────┤    ├──────────────────────────────────────┤
+│ Capacity   50 kg/s [Upgrade: {cost}] │    │ Capacity   50 kg/s [Upgrade: {cost}] │    │ Capacity   50 MW   [Upgrade: {cost}] │
+│ Efficiency 85%     [Upgrade: {cost}] │    │ Efficiency 85%     [Upgrade: {cost}] │    │ Efficiency 85%     [Upgrade: {cost}] │
+│ Cooling    40%     [Upgrade: {cost}] │    │ Regulation 40%     [Upgrade: {cost}] │    │ Stability  40%     [Upgrade: {cost}] │
+│ Setting    [-]        80%        [+] │    │ Setting    [-]        80%        [+] │    │ Setting    [-]        80%        [+] │
+└──────────────────────────────────────┘    └──────────────────────────────────────┘    └──────────────────────────────────────┘
 ```
+
+The player can decrease or increase `Setting` freely. `Capacity`, `Efficiency`, and the component-specific control can only be increased by purchasing an upgrade at the displayed `{cost}`.
