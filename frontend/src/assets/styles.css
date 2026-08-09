@@ -1,12 +1,46 @@
-/* Global tokens and reset. */
+/* Global font, tokens and reset. */
+
+/* ============================================
+   Font
+   ============================================ */
+
+/* PxPlus IBM VGA8 by VileR, from The Ultimate Oldschool PC Font Pack v2.2
+   (https://int10h.org/oldschool-pc-fonts/), CC BY-SA 4.0.
+   Attribution and provenance: src/assets/fonts/LICENSE.txt. CSS comments are
+   stripped from the build, so the shipped attribution lives in index.html. */
+@font-face {
+    font-family: 'PxPlus IBM VGA8';
+    src: url('./fonts/PxPlus_IBM_VGA8.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
 
 /* ============================================
    Tokens
    ============================================ */
 
 :root {
-    --surface-base: #0D1117;
-    --ink: #C8D3E2;
+    /* Monochrome green on black (ui_ux.md §4) */
+    --bg: #000000;
+    --fg: #39ff14;
+    --fg-dim: rgba(57, 255, 20, 0.55);
+    --fg-faint: rgba(57, 255, 20, 0.25);
+    --fg-disabled: rgba(57, 255, 20, 0.30);
+
+    --border: 1px solid var(--fg);
+
+    /* Spacing scale (ui_ux.md §31) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+
+    /* One character cell of PxPlus IBM VGA8 at 16px. Every card width, gap
+       and padding is a whole multiple of these. */
+    --cell-width: 8px;
+    --cell-height: 16px;
 }
 
 /* ============================================
@@ -27,14 +61,22 @@ body,
     height: 100%;
 }
 
+/* A bitmap face only stays crisp unsmoothed at its native 8x16 cell, so the
+   body size is fixed at 16px and hierarchy comes from case, borders and
+   inversion rather than weight (ui_ux.md §2). */
 body {
-    font-family: 'IBM Plex Sans', system-ui, sans-serif;
-    background: var(--surface-base);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
+    font-family: 'PxPlus IBM VGA8', monospace;
+    font-size: 16px;
+    line-height: 16px;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    text-rendering: geometricPrecision;
 }
 
+/* Never the browser default blue (ui_ux.md §27) */
 :focus-visible {
-    outline: 1px solid var(--ink);
-    outline-offset: 2px;
+    outline: 2px solid var(--fg);
+    outline-offset: 0;
 }

@@ -15,7 +15,7 @@ number), [`docs/ui_ux.md`](docs/ui_ux.md) (interface), [`docs/typescript.md`](do
 Tick a box only when the stage's acceptance criteria hold and its
 [Per-stage commands](#per-stage-commands) have passed.
 
-- [ ] [Stage 1 — Foundations: font, tokens, character grid, terminal primitives](#stage-1--foundations-font-tokens-character-grid-terminal-primitives)
+- [x] [Stage 1 — Foundations: font, tokens, character grid, terminal primitives](#stage-1--foundations-font-tokens-character-grid-terminal-primitives)
 - [ ] [Stage 2 — The engine](#stage-2--the-engine) — not tickable on its own; Stage 3 is its proof
 - [ ] [Stage 3 — Verification screen](#stage-3--verification-screen)
 - [ ] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
