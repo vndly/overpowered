@@ -6,15 +6,15 @@
 Stockpile -> Pulverizer -> Silo -> Boiler -> Tank -> Turbine -> Battery
 ```
 
-The Stockpile, Silo, Tank, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity; resources are never silently discarded.
+The Stockpile, Silo, Tank, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity. Output produced beyond the available storage capacity is silently discarded.
 
 Machines start enabled. They have an `Enabled` state controlled by the player and a derived `Running` state:
 
-- When a machine's output storage becomes full, the machine is automatically turned off (`Enabled = false`). It consumes no input or electricity and must be turned on again by the player after storage space becomes available.
+- When a machine's output storage is full, the machine continues running without pausing or turning off. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded. Its `Enabled` state is not changed.
 - When a machine's input storage is empty, the machine stops running but remains enabled. It resumes automatically as soon as input becomes available.
 - When the Battery is empty, electricity-consuming machines stop running but remain enabled. They resume automatically when electricity becomes available.
-- A machine only consumes resources while it is running. The rates in the component tables assume that input and electricity are available and that the output storage has space.
-- During each simulation step, production is limited by the available input and free output-storage capacity. Once the output storage reaches capacity, the upstream machine is turned off; no excess output is discarded.
+- A machine only consumes resources while it is running. The rates in the component tables assume that input and electricity are available; output-storage capacity does not affect those rates.
+- During each simulation step, the amount added to output storage is `min(ProducedOutput, Capacity − Contents)`. The remaining `ProducedOutput` is discarded. This rule also applies to electricity produced while the Battery is full.
 
 Storage capacities can only be increased by purchasing upgrades. All storage components start empty except the Battery, which starts with enough energy to start the production chain.
 
