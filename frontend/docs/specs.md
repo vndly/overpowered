@@ -107,12 +107,14 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 
 ### Tank
 
-The Tank stores high-pressure steam produced by the Boiler and supplies it to the Turbine.
+The Tank stores high-pressure steam produced by the Boiler and supplies it to the Turbine. Its contents and capacity are displayed in metric tonnes, while production and consumption rates continue to use kg/s internally.
 
 | Type              | Parameter | Unit | Description / Formula                          | Value |
 | ----------------- | --------- | ---- | ---------------------------------------------- | ----: |
-| Player controlled | Capacity  | kg   | Maximum high-pressure steam that can be stored | 3,000 |
-| Variable          | Contents  | kg   | High-pressure steam currently stored           |     0 |
+| Player controlled | Capacity  | t    | Maximum high-pressure steam that can be stored |     3 |
+| Variable          | Contents  | t    | High-pressure steam currently stored           |     0 |
+
+The player can increase `Capacity` by purchasing a Tank capacity upgrade with energy stored in the Battery. The upgrade is unavailable when the Battery does not contain the displayed energy cost.
 
 ### Turbine
 
