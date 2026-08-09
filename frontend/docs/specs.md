@@ -159,32 +159,30 @@ Before any purchases, the starting charge can run the Pulverizer and Boiler at t
 [Stockpile] -> [Pulverizer] -> [Silo] -> [Boiler] -> [Tank] -> [Turbine] -> [Battery]
 ```
 
-Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and the expensive price-upgrade cost.
+Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. Stored capacity is represented by a ten-character indicator that uses `█` for filled segments and `░` for empty segments. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and the expensive price-upgrade cost.
 
 ```text
-┌──────────────────────────────────────┐
-│ Stockpile                            │
-├──────────────────────────────────────┤
-│ Stored       █░░░░░░░░░    1 t (10%) │
-│ Coal price   1 MWh/t                 │
-│ Buy coal     [-]       0.1 t     [+] │
-│              [Buy: 0.10 MWh]         │
-│ Capacity     [Upgrade: {cost} MWh]   │
-│ Coal price   [Upgrade: {cost} MWh]   │
-└──────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ Stockpile                                 │
+├───────────────────────────────────────────┤
+│ Stored       █░░░░░░░░░ {value} ({fill}%) │
+│ Coal price   1 MWh/t                      │
+│ Buy coal     [-] {value} t [+]            │
+│              [Buy: {cost} MWh]            │
+│ Capacity     [Upgrade: {cost} MWh]        │
+│ Coal price   [Upgrade: {cost} MWh]        │
+└───────────────────────────────────────────┘
 
-┌──────────────────────────────────────┐
-│ Silo / Tank / Battery                │
-├──────────────────────────────────────┤
-│ Stored       {amount} / {capacity}   │
-│ Fill         {percentage}%           │
-│ Capacity     [Upgrade: {cost} MWh]   │
-└──────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ Silo / Tank / Battery                     │
+├───────────────────────────────────────────┤
+│ Stored       █░░░░░░░░░ {value} ({fill}%) │
+│ Capacity     [Upgrade: {cost} MWh]        │
+└───────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────┐
 │ Pulverizer / Boiler / Turbine            │
 ├──────────────────────────────────────────┤
-│ Status     {Running/Waiting/Off}         │
 │ Capacity   {value} [Upgrade: {cost} MWh] │
 │ Efficiency {value} [Upgrade: {cost} MWh] │
 │ Control    {value} [Upgrade: {cost} MWh] │
