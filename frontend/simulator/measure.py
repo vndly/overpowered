@@ -14,15 +14,21 @@ import sim
 
 # `buffer` dominates the sweep and wants small values: every second of stock a store is
 # sized and filled to is storage capacity bought and coal held instead of energy banked.
-# It reaches down to 5 s because the grid's floor was the winner at every wider setting
+# It reaches down to 1 s because the grid's floor was the winner at every wider setting
 # tried, which means a floor set too high silently caps the measured peak.
+#
+# `ride` bottoms out at 1.0 -- the Turbine parked exactly on its clean ceiling. Below that
+# is strictly worse: less output for the same zero wear. Every other axis has to bracket
+# its winner, which is why widening the Efficiency band forced this grid open on four of
+# them at once: the wider band pays for Efficiency over throughput, and that moves the
+# whole policy towards a gentler ride, tighter capacity, and reinvesting for longer.
 SWEEP_GRID = dict(
-    ride=[1.3, 1.45, 1.6, 1.75],
+    ride=[1.0, 1.15, 1.3, 1.45, 1.6],
     backoff=['all', 'turbine'],
     wear_hi=[0.85], wear_lo=[0.15],
-    slack=[1.3, 1.6, 2.0, 2.5],
-    buffer=[3.0, 5.0, 8.0, 12.0],
-    t_stop=[380.0, 440.0, 500.0],
+    slack=[1.0, 1.15, 1.3, 1.6, 2.0, 2.5, 3.0],
+    buffer=[1.0, 2.0, 3.0, 5.0],
+    t_stop=[440.0, 500.0, 560.0, 600.0],
 )
 
 # best policies from the last full sweep; --quick starts here instead of re-sweeping

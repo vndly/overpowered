@@ -92,13 +92,13 @@ Spending is floored twice, because upgrades and coal need different protections.
 | Constant | ReserveFraction | %    | Share of Battery Capacity held back from upgrade spending                |   0.10 |
 | Constant | StartupSeconds  | s    | Machine runtime the restart floor must cover                             |     30 |
 | Constant | RestartMultiple | ×    | Restarts the upgrade floor must leave affordable                         |      2 |
-| Variable | StartupEnergy   | MWh  | (Pulverizer + Boiler ElectricConsumption) × StartupSeconds / 3,600       | 0.0341 |
+| Variable | StartupEnergy   | MWh  | (Pulverizer + Boiler ElectricConsumption) × StartupSeconds / 3,600       | 0.0414 |
 | Variable | MinimumReserve  | MWh  | max(Battery Capacity × ReserveFraction, StartupEnergy × RestartMultiple) |      1 |
 | Variable | SpendableEnergy | MWh  | max(0, Battery Contents − MinimumReserve)                                |      3 |
 
 **Upgrades** are limited by `SpendableEnergy`. This is the floor the player sees and plans around: it stops a run from being wrecked by one over-ambitious purchase, and because it is a share of Battery `Capacity` it keeps scaling as the plant grows.
 
-`MinimumReserve` takes the larger of the two terms because they scale with different things, and the share-of-Capacity term alone is not always the larger. It tracks the **Battery**, while `StartupEnergy` tracks **machine** consumption. A player who pours everything into throughput and leaves the Battery behind drives `StartupEnergy` past `Capacity × ReserveFraction` — at base Settings that happens once machine capacity reaches about 29× with the Battery unupgraded, a little over eight capacity levels. Past that crossover the upgrade floor sits _below_ the coal floor, so spending upgrades down to the reserve leaves `max(0, Contents − StartupEnergy)` at exactly zero: no coal is purchasable at any price, the chain starves, and nothing can restart it. It is not even a quick loss, because the Battery is still above zero and [Stalling](#stalling) does not fire until the machines have drained it. Holding the reserve at `RestartMultiple` startups keeps a restart affordable at every scale, and costs nothing at base, where `StartupEnergy × 2` is 0.068 MWh against a 1 MWh reserve.
+`MinimumReserve` takes the larger of the two terms because they scale with different things, and the share-of-Capacity term alone is not always the larger. It tracks the **Battery**, while `StartupEnergy` tracks **machine** consumption. A player who pours everything into throughput and leaves the Battery behind drives `StartupEnergy` past `Capacity × ReserveFraction` — at base Settings that happens once machine capacity reaches about 24× with the Battery unupgraded, a little under eight capacity levels. Past that crossover the upgrade floor sits _below_ the coal floor, so spending upgrades down to the reserve leaves `max(0, Contents − StartupEnergy)` at exactly zero: no coal is purchasable at any price, the chain starves, and nothing can restart it. It is not even a quick loss, because the Battery is still above zero and [Stalling](#stalling) does not fire until the machines have drained it. Holding the reserve at `RestartMultiple` startups keeps a restart affordable at every scale, and costs nothing at base, where `StartupEnergy × 2` is 0.083 MWh against a 1 MWh reserve.
 
 Because `StartupEnergy` is computed from current consumption, `MinimumReserve` moves with the `Setting`s once that term dominates. The Battery card displays the reserve, so the player sees it move.
 
@@ -108,7 +108,7 @@ Because `StartupEnergy` is computed from current consumption, `MinimumReserve` m
 
 Together these cover every recoverable case, at every scale. `StartupEnergy` always covers the Pulverizer and Boiler for `StartupSeconds`, and because a machine throttles instead of stopping, the Turbine begins returning energy as soon as the first steam reaches the Tank — well inside that window. Both `StartupEnergy` and `MinimumReserve` are derived from current consumption once the plant is large, so they scale with every capacity upgrade together rather than drifting apart. From a Battery sitting at `MinimumReserve` with the whole chain empty, one coal purchase restarts production and the Battery recovers without ever reaching zero.
 
-Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. At base capacities a restart from `MinimumReserve` buys 966 kg of raw coal at the opening price and 540 kg at the end-of-run trend — 191 s and 107 s of Pulverizer runtime at its 5.05 kg/s raw draw, against the few seconds the Turbine needs before it starts returning energy. Both sides of that comparison scale with capacity — the reserve with the Battery's until the startup term takes over, the coal draw with the Pulverizer's — so the margin narrows as the plant grows but never closes.
+Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. At base capacities a restart from `MinimumReserve` buys 959 kg of raw coal at the opening price and 535 kg at the end-of-run trend — 190 s and 106 s of Pulverizer runtime at its 5.05 kg/s raw draw, against the few seconds the Turbine needs before it starts returning energy. Both sides of that comparison scale with capacity — the reserve with the Battery's until the startup term takes over, the coal draw with the Pulverizer's — so the margin narrows as the plant grows but never closes.
 
 The floors cannot cover every case, because the player can always choose a configuration that consumes energy without producing any — running the Pulverizer and Boiler with the Turbine's `Setting` at zero drains the Battery no matter what the floors are. That is handled as a loss condition rather than a spending rule; see [Stalling](#stalling).
 
@@ -143,9 +143,9 @@ There is no upgrade that directly buys wear headroom. A machine's wear-free ceil
 
 The tracks are not priced at the same rate because they do not weaken at the same rate. A machine capacity level always multiplies throughput by `CapacityGrowth`, so its gain never shrinks. An Efficiency level closes a quarter of the remaining gap to `MaxEfficiency`, so each one is worth about three quarters of the last.
 
-Under a single growth rate that decay is what decides the game: capacity's gain per MWh stays almost flat while Efficiency's falls away, so capacity is the strongest buy at level zero and its lead only widens. Both tracks still get bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay puts them on comparable footing — capacity is still the strongest opening buy, Efficiency is expected to overtake it after roughly four levels, and that crossing is what the player is actually choosing between.
+Under a single growth rate that decay is what decides the game: capacity's gain per MWh stays almost flat while Efficiency's falls away, so capacity is the strongest buy at level zero and its lead only widens. Both tracks still get bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay narrows that gap without closing it: at a fixed price capacity still leads at every level, because 1.70 against a gain that never shrinks decays more slowly than 1.30 against a gain that loses a quarter each time. What the separate rates buy is a crossing that the price can reach inside a run.
 
-The coal market then moves the crossing during the run. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Capacity is the early buy and Efficiency the late one, and where the run turns over depends on how the market has behaved — see [The coal market](#the-coal-market).
+The coal market is what actually moves it. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs and turns negative once the price passes the yield. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Against a bare plant the two cross at a coal price of 1.45 MWh/t, which the trend reaches at 6:24; a plant three capacity rounds in crosses at 1.72, which it reaches at 9:17. Capacity is the early buy and Efficiency the late one, the turn comes somewhere in the back half of a run, and how far into it depends on both the build and how the market has behaved — see [The coal market](#the-coal-market).
 
 Storage capacity is the third choice rather than an afterthought, because it is what buys wear headroom. A Silo or Tank held below its strain threshold keeps the machine beside it on its full clean ceiling, and a larger store is more seconds of mismatch before that threshold is reached.
 
@@ -195,12 +195,14 @@ The trend reaches 1.79 MWh/t by the end of a 600 s run. What that costs the play
 
 | Plant state                 | Net MWh per tonne of raw coal | Trend reaches it at |
 | --------------------------- | ----------------------------: | ------------------: |
-| Starting Efficiency of 0.85 |                          1.79 |               10:00 |
-| Efficiency at its 0.95 cap  |                          2.30 |     after the timer |
+| Starting Efficiency of 0.70 |                          1.78 |                9:56 |
+| Efficiency at its 0.95 cap  |                          3.55 |     after the timer |
 
-Both figures are for a chain matched to the Turbine's steam draw, which is not what the starting Settings give — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain). Neither depends on `Capacity` or on storage: a capacity upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and storage buys headroom** — a plant that never touches Efficiency reaches break-even exactly as the timer expires, while one at `MaxEfficiency` still holds a 22% margin and is threatened only by a market spike near the clamp.
+Both figures are for a chain matched to the Turbine's steam draw, which is not what the starting Settings give — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain). Neither depends on `Capacity` or on storage: a capacity upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and storage buys headroom** — a plant that never touches Efficiency reaches break-even moments before the timer expires, while one at `MaxEfficiency` still holds a 50% margin and is threatened only by a market spike near the clamp.
 
-That band is only 1.29× wide, because `Efficiency` spans just 0.85 to 0.95. It is narrow enough that no exponential price curve can both spare a well-run plant and sharply punish a neglected one, so the market as tuned applies steady pressure rather than a deadline. Widening it means widening the `Efficiency` range, which would need the chain rebalanced around the new starting value — an open tuning question, not a settled one.
+That band is 1.99× wide, because `Efficiency` spans 0.70 to 0.95. The range used to be 0.85 to 0.95 and the band 1.29×, which was too narrow for any exponential price curve to both spare a well-run plant and sharply punish a neglected one: the market applied a steady tax rather than a deadline. Widening the range needed the chain rebalanced around the new starting value, and that is what `SteamYield` and the Turbine's `BaseConsumption` do. At 10 and 0.62 they hold the opening material flows, the matched ratio, and the starting net yield within a hair of where 8 and 0.75 put them at an `Efficiency` of 0.85 — only the ceiling moved.
+
+The widening also flattens the spread between market seeds without the market itself changing, because a plant running near break-even is enormously levered to the price. At a yield of 1.79 against a late-run price of 1.79, the ±12% the market swings is the difference between earning and not; at a yield of 3.55 the same swing moves income by a tenth. Efficiency is what buys out of that leverage, which is a second reason the track has to be worth buying.
 
 The rising price also sharpens the closing decision. Net income is `Throughput × (YieldPerTonne − CoalPrice)`, and the second factor shrinks all run no matter how large the plant grows, so there is a point past which no reinvestment can pay itself back and banking is the only correct move.
 
@@ -213,7 +215,7 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 | Type              | Parameter           | Unit  | Description / Formula                                                             | Value |
 | ----------------- | ------------------- | ----- | --------------------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity            | kg/s  | Maximum pulverized coal throughput                                                |     8 |
-| Player controlled | Efficiency          | %     | Electrical consumption performance                                                |  0.85 |
+| Player controlled | Efficiency          | %     | Electrical consumption performance                                                |  0.70 |
 | Player controlled | Setting             | ×     | Operating level, from 0 to MaxSetting                                             |   0.6 |
 | Constant          | MaxEfficiency       | %     | Highest Efficiency obtainable through upgrades                                    |  0.95 |
 | Constant          | BaseConsumption     | MJ/kg | Consumption required to move and crush coal                                       |   0.1 |
@@ -231,7 +233,7 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 | Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear)       |     0 |
 | Variable          | Output              | kg/s  | Capacity × Setting                                                                |  4.80 |
 | Variable          | RawCoalConsumption  | kg/s  | Output / PulverizedCoalYield                                                      |  5.05 |
-| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                               |  0.56 |
+| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                               |  0.69 |
 
 With the Silo below `BacklogThreshold` the Pulverizer runs clean up to a `Setting` of 0.667 and reaches `MaxTemperature` at `MaxSetting`. A run opens at 0.6, just inside that ceiling. As the Silo backs up that ceiling falls, reaching 0.296 with the Silo full — the Pulverizer's own oversupply is what cooks it. See [Buffers and strain](#buffers-and-strain).
 
@@ -248,16 +250,16 @@ The player can increase `Capacity` by purchasing a Silo capacity upgrade with en
 
 ### Boiler
 
-The Boiler burns pulverized coal supplied by the Silo to produce high-pressure steam stored in the Tank. At base conversion, one kg of pulverized coal produces eight kg of steam; Boiler efficiency reduces the fuel required to reach the requested output.
+The Boiler burns pulverized coal supplied by the Silo to produce high-pressure steam stored in the Tank. At base conversion, one kg of pulverized coal produces ten kg of steam; Boiler efficiency reduces the fuel required to reach the requested output.
 
 | Type              | Parameter           | Unit  | Description / Formula                                                       | Value |
 | ----------------- | ------------------- | ----- | --------------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity            | kg/s  | Maximum steam output                                                        |    50 |
-| Player controlled | Efficiency          | %     | Fuel and electrical consumption performance                                 |  0.85 |
+| Player controlled | Efficiency          | %     | Fuel and electrical consumption performance                                 |  0.70 |
 | Player controlled | Setting             | ×     | Operating level, from 0 to MaxSetting                                       |   0.6 |
 | Constant          | MaxEfficiency       | %     | Highest Efficiency obtainable through upgrades                              |  0.95 |
 | Constant          | BaseConsumption     | MJ/kg | Electrical consumption per kg of requested steam                            |   0.1 |
-| Constant          | SteamYield          | kg/kg | Base steam produced per kg of pulverized coal                               |     8 |
+| Constant          | SteamYield          | kg/kg | Base steam produced per kg of pulverized coal                               |    10 |
 | Constant          | BasePressure        | bar   | Minimum pressure                                                            |    20 |
 | Constant          | PressureRange       | bar   | Additional pressure the Boiler can generate as Setting rises                |   108 |
 | Constant          | SafePressure        | bar   | Pressure below which no wear accrues                                        |    95 |
@@ -270,8 +272,8 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 | Variable          | ExcessPressure      | %     | clamp((Pressure − SafePressure) / (MaxPressure − SafePressure), 0, 1)       |     0 |
 | Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
 | Variable          | Output              | kg/s  | Capacity × Setting                                                          | 30.00 |
-| Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                          |  4.41 |
-| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                         |  3.53 |
+| Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                          |  4.29 |
+| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                         |  4.29 |
 
 With the Tank below `BacklogThreshold` the Boiler runs clean up to a `Setting` of 0.694 and reaches `MaxPressure` at `MaxSetting`. As with the Pulverizer, a run opens at 0.6, just inside that ceiling. As the Tank backs up that ceiling falls, reaching 0.309 with the Tank full. See [Buffers and strain](#buffers-and-strain).
 
@@ -293,10 +295,10 @@ The Turbine converts high-pressure steam supplied by the Tank into electrical po
 | Type              | Parameter        | Unit    | Description / Formula                                                       | Value |
 | ----------------- | ---------------- | ------- | --------------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity         | MW      | Maximum output                                                              |    50 |
-| Player controlled | Efficiency       | %       | Steam consumption performance                                               |  0.85 |
+| Player controlled | Efficiency       | %       | Steam consumption performance                                               |  0.70 |
 | Player controlled | Setting          | ×       | Operating level, from 0 to MaxSetting                                       |   0.6 |
 | Constant          | MaxEfficiency    | %       | Highest Efficiency obtainable through upgrades                              |  0.95 |
-| Constant          | BaseConsumption  | kg/s/MW | Steam consumption per MW                                                    |  0.75 |
+| Constant          | BaseConsumption  | kg/s/MW | Steam consumption per MW                                                    |  0.62 |
 | Constant          | BaseVibration    | mm/s    | Minimum vibration                                                           |     1 |
 | Constant          | VibrationRange   | mm/s    | Additional vibration as Setting rises                                       |     6 |
 | Constant          | SafeVibration    | mm/s    | Vibration below which no wear accrues                                       |     6 |
@@ -309,11 +311,11 @@ The Turbine converts high-pressure steam supplied by the Tank into electrical po
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1)   |  0.44 |
 | Variable          | Wear             | %       | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
 | Variable          | Output           | MW      | Capacity × Setting                                                          | 30.00 |
-| Variable          | SteamConsumption | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                         | 26.47 |
+| Variable          | SteamConsumption | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                         | 26.57 |
 
 With the Tank above `StarveThreshold` the Turbine runs clean up to a `Setting` of 0.833 and reaches `MaxVibration` at `MaxSetting`. As the Tank runs dry that ceiling falls, reaching 0.370 with the Tank empty. See [Buffers and strain](#buffers-and-strain).
 
-A run therefore opens with the Turbine at full `Strain`, because the Tank starts empty: 9.1 mm/s against a `SafeVibration` of 6, well into the wear band. This is the run's first decision and it arrives before anything else. Left at 0.6 through the spin-up, the Turbine reaches **76% wear** before the Tank fills enough to relieve it — a gauge climbing toward a trip it never quite reaches. Dropping the `Setting` until steam has banked costs a little early output and clears the wear entirely.
+A run therefore opens with the Turbine at full `Strain`, because the Tank starts empty: 9.1 mm/s against a `SafeVibration` of 6, well into the wear band. This is the run's first decision and it arrives before anything else. Left at 0.6 through the spin-up, the Turbine reaches **79% wear** before the Tank fills enough to relieve it — a gauge climbing toward a trip it never quite reaches. Dropping the `Setting` until steam has banked costs a little early output and clears the wear entirely.
 
 Two things keep it from being a trap. `WearRate` scales with `RunRatio`, so a Turbine that has outrun its supply only wears at the fraction the Boiler is actually delivering. And the strain falls away on its own as the Tank fills, so the danger is bounded by the spin-up rather than lasting into the run.
 
@@ -327,7 +329,7 @@ The Battery stores electricity produced by the Turbine and supplies electricity 
 | Constant          | StartingCharge | MWh  | Electricity available at the start of a new run                              |     4 |
 | Variable          | Contents       | MWh  | Electricity currently stored; initially equal to StartingCharge              |     4 |
 | Variable          | MinimumReserve | MWh  | See [Spendable energy](#spendable-energy); upgrades cannot spend below this  |     1 |
-| Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 25.91 |
+| Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 25.03 |
 | Variable          | EnergyChange   | MWh  | NetFlow × DeltaTimeSeconds / 3,600                                           |     — |
 
 A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is 17.5 times the starting capacity, the Battery must be upgraded — eight times, to 256.3 MWh — before the run can be won.
@@ -386,7 +388,7 @@ The Turbine inverts because it is the only pure consumer. Its output store is th
 
 The measurement compares one policy against itself. Throttling against the strained ceiling, it reaches a median peak of 248 MWh and trips nothing. Throttling against the slack ceiling — the same play from someone who never looks at the gauge — it reaches 87 and trips a machine 2.7 times a run: a **65% penalty for ignoring strain**.
 
-That penalty is what sets the constant. Under a gain of about 1.0 it falls to somewhere between 15% and 35%, inconsistently — strain becomes a mild tax on every run rather than something worth steering around. Over about 1.4 the opening spin-up trips the Turbine on its own, before the player has touched a control. 1.25 sits between: neglect costs about two thirds of the run, and the opening reaches 76% Turbine wear — alarming on the gauge, short of a trip.
+That penalty is what sets the constant. Under a gain of about 1.0 it falls to somewhere between 15% and 35%, inconsistently — strain becomes a mild tax on every run rather than something worth steering around. Over about 1.4 the opening spin-up trips the Turbine on its own, before the player has touched a control. 1.25 sits between: neglect costs about two thirds of the run, and the opening reaches 79% Turbine wear — alarming on the gauge, short of a trip.
 
 **The stores become bands rather than tanks.** The Tank is squeezed from both ends: too full and the Boiler strains, too empty and the Turbine does. Neither end is a place to sit. The Silo has a wear penalty at one end only — full and the Pulverizer cooks, empty and the Boiler simply throttles, which costs output rather than damage. The Tank is the tighter rope, which is the second reason to buy its capacity before the Silo's.
 
@@ -394,7 +396,7 @@ That penalty is what sets the constant. Under a gain of about 1.0 it falls to so
 
 Because it is a fraction, a capacity upgrade moves the reading the instant it is bought. The same contents in a store 1.5× larger is a fill 1.5× lower, which relieves a backlog and deepens a starve at the same stroke. Buying Silo capacity is therefore an immediate reprieve for the Pulverizer, and buying Tank capacity relieves the Boiler while pushing the Turbine toward `StarveThreshold` until the extra steam is made. The Tank upgrade is the one that has to be timed rather than simply afforded — which is the same two-sided pressure the Tank already applies, now applied to the decision to enlarge it.
 
-Strain also propagates a trip into its neighbours. A 40 s Boiler trip drains the Tank by 1,059 kg at the opening Settings — 35% of Tank capacity — while the Pulverizer keeps running and adds 192 kg to the Silo, 38% of Silo capacity. One machine going down pushes the store above it toward backlog and the store below it toward starvation, so the repair that follows is rarely the only cost.
+Strain also propagates a trip into its neighbours. A 40 s Boiler trip drains the Tank by 1,063 kg at the opening Settings — 35% of Tank capacity — while the Pulverizer keeps running and adds 192 kg to the Silo, 38% of Silo capacity. One machine going down pushes the store above it toward backlog and the store below it toward starvation, so the repair that follows is rarely the only cost.
 
 ### Why it is shaped this way
 
@@ -406,21 +408,21 @@ Sitting at `MaxSetting` is worse than riding on all three, and far worse than pa
 
 #### Three machines, three problems
 
-In a chain matched to the Turbine's draw the three `Setting`s hold a fixed ratio of 0.811 : 0.882 : 1, so the player is really moving one throttle and the Turbine always sits highest. The wear constants are what stop that one throttle from being the whole game. Each machine's clean ceiling converts into a Turbine `Setting` below which it heals, and each sheds at its own rate once there; the figures below are for a matched chain with every store inside its thresholds, which is the only state in which strain is zero on all three at once.
+In a chain matched to the Turbine's draw the three `Setting`s hold a fixed ratio of 0.791 : 0.886 : 1, so the player is really moving one throttle and the Turbine always sits highest. The wear constants are what stop that one throttle from being the whole game. Each machine's clean ceiling converts into a Turbine `Setting` below which it heals, and each sheds at its own rate once there; the figures below are for a matched chain with every store inside its thresholds, which is the only state in which strain is zero on all three at once.
 
 | Machine    | Clean ceiling | Heals below Turbine | Loads at Turbine 1.45 | Clears from full | RepairSeconds |
 | ---------- | ------------: | ------------------: | --------------------: | ---------------: | ------------: |
-| Boiler     |         0.694 |               0.787 |            0.0080 / s |            250 s |            40 |
-| Pulverizer |         0.667 |               0.822 |            0.0146 / s |            125 s |             8 |
+| Boiler     |         0.694 |               0.784 |            0.0082 / s |            250 s |            40 |
+| Pulverizer |         0.667 |               0.843 |            0.0130 / s |            125 s |             8 |
 | Turbine    |         0.833 |               0.833 |            0.0187 / s |             50 s |            20 |
 
 Backing off is therefore cheap in depth and expensive in time. Dropping the Turbine from 1.45 to 0.78 heals all three at once and costs only 6% against the 0.833 the Turbine alone would need — but clearing the Turbine takes 50 s, the Pulverizer 125 s, and the Boiler 250 s. The question is never how far to back off. It is how long to stay there, and which machine you are willing to leave loaded.
 
 The **Turbine** is the only machine that truly duty-cycles. Ride at 1.45, drop back, repeat: it sheds fast enough to sustain that indefinitely, and a trip costs 20 s off the one output that counts.
 
-The **Pulverizer** loads fastest and forgives least. Left on the Turbine's own rhythm it reaches a trip after about 270 s of pushing, so it sets the first forced break. Its 8 s repair is misleading — it resumes at 94% wear and trips again almost at once unless the chain comes down properly. Its other cost is coal: pushing it past what the Boiler can consume fills the Silo, and the surplus is discarded after the player has already paid for it.
+The **Pulverizer** loads fastest and forgives least. Left on the Turbine's own rhythm it reaches a trip after about 350 s of pushing, so it sets the first forced break. Its 8 s repair is misleading — it resumes at 94% wear and trips again almost at once unless the chain comes down properly. Its other cost is coal: pushing it past what the Boiler can consume fills the Silo, and the surplus is discarded after the player has already paid for it.
 
-The **Boiler** is the long debt. It loads slowest, needs roughly 450 s of pushing to trip, and can be ignored for most of a run — but it clears at 250 s from full, and a 40 s trip is a fifteenth of the clock taken from the machine that feeds the Turbine, draining over a third of a full Tank at base capacity. Ignoring it is correct right up until it isn't. It is also the machine worth unbalancing on purpose: pushing it above the Turbine's draw banks steam in the Tank, which lets the Turbine keep earning at a high `Setting` while the Boiler sits low and heals. Tank capacity is what makes that window long enough to matter.
+The **Boiler** is the long debt. It loads slowest, needs roughly 440 s of pushing to trip, and can be ignored for most of a run — but it clears at 250 s from full, and a 40 s trip is a fifteenth of the clock taken from the machine that feeds the Turbine, draining over a third of a full Tank at base capacity. Ignoring it is correct right up until it isn't. It is also the machine worth unbalancing on purpose: pushing it above the Turbine's draw banks steam in the Tank, which lets the Turbine keep earning at a high `Setting` while the Boiler sits low and heals. Tank capacity is what makes that window long enough to matter.
 
 Tripping is what misjudging it costs, and it costs a different amount on each machine: 8 s, 20 s, and 40 s against a 600 s clock. A tripped machine also drains whatever storage sits downstream of it and backs up whatever sits upstream, which is the reason to buy Silo and Tank capacity as insurance and not only to hold more. The Tank is the more urgent of the two, because it stands between the longest repair and the only machine that generates.
 
@@ -430,11 +432,11 @@ Pushing the Turbine alone still does not work, and now it fails twice over. A hi
 
 ### Oversupply and the matched chain
 
-Output and every consumption rate are linear in `Setting`, so the ratios between machines never shift as the player pushes. At the starting Settings, and at any common multiple of them, no stage starves — but every stage is oversupplied. The Pulverizer makes 4.80 kg/s against the Boiler's 4.41 kg/s draw, and the Boiler makes 30.00 kg/s against the Turbine's 26.47 kg/s draw. Once the Silo and Tank fill, that surplus is discarded, and **19% of the raw coal bought is burned for output that is thrown away**.
+Output and every consumption rate are linear in `Setting`, so the ratios between machines never shift as the player pushes. At the starting Settings, and at any common multiple of them, no stage starves — but every stage is oversupplied. The Pulverizer makes 4.80 kg/s against the Boiler's 4.29 kg/s draw, and the Boiler makes 30.00 kg/s against the Turbine's 26.57 kg/s draw. Once the Silo and Tank fill, that surplus is discarded, and **21% of the raw coal bought is burned for output that is thrown away**.
 
 Filling them is also what strains the two machines that did it. A common multiple is not merely wasteful; held long enough it drives the Silo and Tank past `BacklogThreshold` and starts wearing the Pulverizer and Boiler with coal the player has already paid for.
 
-The efficient line is to match each machine to the draw below it rather than run them at a common multiple. At the starting capacities and Efficiencies that ratio is `Setting` 0.811 : 0.882 : 1 across Pulverizer, Boiler, and Turbine. It is fixed for a given set of capacities and Efficiencies, and it moves every time either is upgraded, so a matched chain has to be re-matched as the plant grows. The `Net MWh per tonne` figures under [The coal market](#the-coal-market) assume a matched chain; a player running a common multiple earns less than that table shows.
+The efficient line is to match each machine to the draw below it rather than run them at a common multiple. At the starting capacities and Efficiencies that ratio is `Setting` 0.791 : 0.886 : 1 across Pulverizer, Boiler, and Turbine. It is fixed for a given set of capacities and Efficiencies, and it moves every time either is upgraded, so a matched chain has to be re-matched as the plant grows. The `Net MWh per tonne` figures under [The coal market](#the-coal-market) assume a matched chain; a player running a common multiple earns less than that table shows.
 
 The ratio itself is still not surfaced. No card reports discarded output or names the matched Settings, and finding them is the reward for reading the numbers rather than a step the game walks the player through. What the UI does now report is the symptom: a Silo climbing toward its threshold says the Pulverizer is running ahead of the Boiler, and a Tank falling toward its own says the Turbine is running ahead of everything. The stores tell the player they are off the ratio; they never say what the ratio is. Running unmatched on purpose is still what refills a drained buffer after a trip — and now also what empties a backed-up one.
 

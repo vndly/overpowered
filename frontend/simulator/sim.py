@@ -21,13 +21,13 @@ MAX_SETTING = 2.0
 # wg/wr: WearGrowth, WearRecovery | rep: RepairSeconds
 P = dict(cap=8.0,  base=30.0, rng=60.0,  safe=70.0, mx=150.0, cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
 B = dict(cap=50.0, base=20.0, rng=108.0, safe=95.0, mx=236.0, cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
-T = dict(cap=50.0, base=1.0,  rng=6.0,   safe=6.0,  mx=13.0,  cons=0.75, wg=0.067, wr=0.020, rep=20.0)
+T = dict(cap=50.0, base=1.0,  rng=6.0,   safe=6.0,  mx=13.0,  cons=0.62, wg=0.067, wr=0.020, rep=20.0)
 
-PULV_YIELD, STEAM_YIELD = 0.95, 8.0
+PULV_YIELD, STEAM_YIELD = 0.95, 10.0
 MAX_EFF, UPGRADE_GAIN, CAPACITY_GROWTH = 0.95, 0.25, 1.5
 RESERVE_FRACTION, STARTUP_SECONDS, RESTART_MULTIPLE, STARTING_CHARGE = 0.10, 30.0, 2.0, 4.0
 START_PRICE, PRICE_GROWTH, MARKET_RANGE, VOLATILITY, REVERSION = 1.0, 1.06, 0.25, 0.03, 0.01
-START_SETTING = 0.6
+START_SETTING, START_EFFICIENCY = 0.6, 0.70
 
 # Strain: a machine out of step with the chain runs hotter than its Setting alone implies.
 # The Pulverizer and Boiler push into the store below them and strain when it backs up; the
@@ -69,7 +69,7 @@ class State:
         self.t = 0.0
         self.capP, self.capB, self.capT = P['cap'], B['cap'], T['cap']
         self.capStock, self.capSilo, self.capTank, self.capBatt = 1000.0, 500.0, 3000.0, 10.0
-        self.effP = self.effB = self.effT = 0.85
+        self.effP = self.effB = self.effT = START_EFFICIENCY
         self.stock = self.silo = self.tank = 0.0
         self.batt = STARTING_CHARGE
         self.wear = {'P': 0.0, 'B': 0.0, 'T': 0.0}

@@ -128,7 +128,7 @@ Example:
 
 ```text
 CAPACITY      50.0 MW
-EFFICIENCY     0.85
+EFFICIENCY     0.70
 SETTING        0.80
 OUTPUT         31.9 MW
 ```
