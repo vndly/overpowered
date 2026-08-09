@@ -3,10 +3,10 @@
 ## Production flow
 
 ```text
-Stockpile -> Pulverizer -> Silo -> Boiler -> Accumulator -> Turbine -> Battery
+Stockpile -> Pulverizer -> Silo -> Boiler -> Tank -> Turbine -> Battery
 ```
 
-The Stockpile, Silo, Accumulator, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity; resources are never silently discarded.
+The Stockpile, Silo, Tank, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity; resources are never silently discarded.
 
 Machines start enabled. They have an `Enabled` state controlled by the player and a derived `Running` state:
 
@@ -72,7 +72,7 @@ The Silo stores pulverized coal produced by the Pulverizer and supplies it to th
 
 ### Boiler
 
-The Boiler burns pulverized coal supplied by the Silo to produce high-pressure steam stored in the Accumulator. At base conversion, one kg of pulverized coal produces eight kg of steam; Boiler efficiency reduces the fuel required to reach the requested output.
+The Boiler burns pulverized coal supplied by the Silo to produce high-pressure steam stored in the Tank. At base conversion, one kg of pulverized coal produces eight kg of steam; Boiler efficiency reduces the fuel required to reach the requested output.
 
 | Type              | Parameter           | Unit  | Description / Formula                                                 | Value |
 | ----------------- | ------------------- | ----- | --------------------------------------------------------------------- | ----: |
@@ -93,9 +93,9 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 | Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                    |  5.79 |
 | Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                   |  4.71 |
 
-### Accumulator
+### Tank
 
-The Accumulator stores high-pressure steam produced by the Boiler and supplies it to the Turbine.
+The Tank stores high-pressure steam produced by the Boiler and supplies it to the Turbine.
 
 | Type              | Parameter | Unit | Description / Formula                          | Value |
 | ----------------- | --------- | ---- | ---------------------------------------------- | ----: |
@@ -104,7 +104,7 @@ The Accumulator stores high-pressure steam produced by the Boiler and supplies i
 
 ### Turbine
 
-The Turbine converts high-pressure steam supplied by the Accumulator into electrical power stored in the Battery.
+The Turbine converts high-pressure steam supplied by the Tank into electrical power stored in the Battery.
 
 | Type              | Parameter        | Unit    | Description / Formula                                                     | Value |
 | ----------------- | ---------------- | ------- | ------------------------------------------------------------------------- | ----: |
@@ -140,7 +140,7 @@ The starting charge can run the Pulverizer and Boiler at their initial settings 
 ## UI
 
 ```text
-[Stockpile] -> [Pulverizer] -> [Silo] -> [Boiler] -> [Accumulator] -> [Turbine] -> [Battery]
+[Stockpile] -> [Pulverizer] -> [Silo] -> [Boiler] -> [Tank] -> [Turbine] -> [Battery]
 ```
 
 Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost. The Stockpile also displays coal-purchase controls, the current price per kg, and the expensive price-upgrade cost.
@@ -158,7 +158,7 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 └──────────────────────────────────────┘
 
 ┌──────────────────────────────────────┐
-│ Silo / Accumulator / Battery         │
+│ Silo / Tank / Battery                │
 ├──────────────────────────────────────┤
 │ Stored       {amount} / {capacity}   │
 │ Fill         {percentage}%           │
