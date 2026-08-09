@@ -8,11 +8,11 @@ Stockpile -> Pulverizer -> Silo -> Boiler -> Tank -> Turbine -> Battery
 
 The Stockpile, Silo, Tank, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity. Output produced beyond the available storage capacity is silently discarded.
 
-Machines start enabled. They have an `Enabled` state controlled by the player and a derived `Running` state:
+Machines have no separate enable control. A machine is enabled when `Setting > 0` and off when `Setting = 0`. Its `Running` state is derived from its Setting and the availability of its required inputs:
 
-- When a machine's output storage is full, the machine continues running without pausing or turning off. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded. Its `Enabled` state is not changed.
-- When a machine's input storage is empty, the machine stops running but remains enabled. It resumes automatically as soon as input becomes available.
-- When the Battery is empty, electricity-consuming machines stop running but remain enabled. They resume automatically when electricity becomes available.
+- When a machine's output storage is full, the machine continues running without pausing or changing its Setting. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded.
+- When a machine's input storage is empty, the machine stops running but its Setting remains unchanged. It resumes automatically as soon as input becomes available.
+- When the Battery is empty, electricity-consuming machines stop running but their Settings remain unchanged. They resume automatically when electricity becomes available.
 - A machine only consumes resources while it is running. The rates in the component tables assume that input and electricity are available; output-storage capacity does not affect those rates.
 - During each simulation step, the amount added to output storage is `min(ProducedOutput, Capacity − Contents)`. The remaining `ProducedOutput` is discarded. This rule also applies to electricity produced while the Battery is full.
 
@@ -173,8 +173,7 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 │ Efficiency {value} [Upgrade: {cost}] │
 │ Control    {value} [Upgrade: {cost}] │
 │ Setting    [-]      {value}      [+] │
-│ Enabled    [On/Off]                  │
 └──────────────────────────────────────┘
 ```
 
-The player can decrease or increase `Setting` freely. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by purchasing an upgrade at the displayed `{cost}`.
+The player can decrease or increase `Setting` freely. Reducing it to zero turns the machine off; increasing it above zero enables the machine. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by purchasing an upgrade at the displayed `{cost}`.
