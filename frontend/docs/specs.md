@@ -6,7 +6,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 | Type     | Parameter    | Unit | Description                          | Value |
 | -------- | ------------ | ---- | ------------------------------------ | ----: |
-| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |   175 |
+| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |  1290 |
 | Constant | TimeLimit    | s    | Time available to reach TargetEnergy |   600 |
 
 - The win is checked against `Battery Contents` — energy that has been generated and then spent is not banked. Reaching the target requires a Battery `Capacity` of at least `TargetEnergy`.
@@ -16,15 +16,15 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 `TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
 
-The current value of 175 was measured with [`simulator/`](../simulator/), which implements this document. Run under a greedy reinvestment policy across 60 market seeds, it reaches a **median peak of about 248 MWh** — quartiles 184 and 302, individual runs from 123 to 357. A target of 175 is reached on 78% of seeds by one good line of play, and 82% when the line is chosen to suit the market.
+The current value of 1290 was measured with [`simulator/`](../simulator/), which implements this document. Run under a greedy reinvestment policy across 60 market seeds, it reaches a **median peak of about 1610 MWh** — quartiles 1337 and 1776, individual runs from 1127 to 1952. A target of 1290 is reached on 78% of seeds by one good line of play, and 95% when the line is chosen to suit the market.
 
-| TargetEnergy         | 125 | 150 | 175 | 185 | 200 | 225 | 250 |
-| -------------------- | --: | --: | --: | --: | --: | --: | --: |
-| Strong-play win rate | 98% | 90% | 78% | 73% | 70% | 58% | 50% |
+| TargetEnergy         | 805 | 965 | 1125 | 1210 | 1290 | 1450 | 1610 |
+| -------------------- | --: | --: | ---: | ---: | ---: | ---: | ---: |
+| Strong-play win rate | 100% | 100% | 100% | 90% | 78% | 65% | 50% |
 
-Three caveats attach to the number. A strict reading of the 80% rule would put the target at 200 rather than 175; 175 is 71% of the measured median, chosen because it holds the strong-play win rate above three quarters. The policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 248 and the target errs towards the generous either way. And the spread is wide — the market alone separates a 123 MWh run from a 357 MWh one — so no single target is equally fair on every seed.
+Two caveats attach to the number, one fewer than the version before it. 1290 is a strict 80% of the measured median and still holds the strong-play win rate above three quarters, so the target no longer has to be pulled below the rule to stay winnable. What remains is that the policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 1610 and the target errs towards the generous; and that seeds still differ, though far less than they did — the market now separates a 1127 MWh run from a 1952 one, a spread of 1.7× where it used to be 2.9×. That narrowing is the widened `Efficiency` band showing up in the distribution, for the reason given under [The coal market](#the-coal-market).
 
-The previous value of 80 is not comparable, and not only because the economy changed under it. It was measured with the policy's `buffer` knob pinned at 45 s rather than swept, which sizes every store far larger than a run wants and buys storage capacity that never pays for itself. Sweeping it moved the measured peak by more than the removal of the control tracks did. The lesson is in `measure.py`: a knob left out of the sweep silently caps the number the sweep reports, so the grid must bracket its winner on every axis rather than end at it.
+Neither of the previous values is comparable. The 175 that stood before the `Efficiency` band was widened was measured against a plant whose yield ceiling was 2.30 MWh/t rather than 3.55; the 80 before that was measured with the policy's `buffer` knob pinned at 45 s rather than swept, which sizes every store far larger than a run wants. Both times the lesson was the same one, and it is worth stating as a rule: **a grid must bracket its winner on every axis, not end at it.** Widening the band moved the winning policy on four axes at once, and the first attempt at rewidening the grid pushed its low ends out while letting `ride` 1.75 and `t_stop` 380 fall off the other ends — whereupon both promptly became the new winners. Extend an axis; never slide it.
 
 ### Stalling
 
@@ -145,13 +145,15 @@ The tracks are not priced at the same rate because they do not weaken at the sam
 
 Under a single growth rate that decay is what decides the game: capacity's gain per MWh stays almost flat while Efficiency's falls away, so capacity is the strongest buy at level zero and its lead only widens. Both tracks still get bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay narrows that gap without closing it: at a fixed price capacity still leads at every level, because 1.70 against a gain that never shrinks decays more slowly than 1.30 against a gain that loses a quarter each time. What the separate rates buy is a crossing that the price can reach inside a run.
 
-The coal market is what actually moves it. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs and turns negative once the price passes the yield. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Against a bare plant the two cross at a coal price of 1.45 MWh/t, which the trend reaches at 6:24; a plant three capacity rounds in crosses at 1.72, which it reaches at 9:17. Capacity is the early buy and Efficiency the late one, the turn comes somewhere in the back half of a run, and how far into it depends on both the build and how the market has behaved — see [The coal market](#the-coal-market).
+The coal market is what actually moves it. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs and turns negative once the price passes the yield. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Against a bare plant the two cross at a coal price of 1.45 MWh/t, which the trend reaches at 6:24; a plant three capacity rounds in crosses at 1.72, which it reaches at 9:17 — see [The coal market](#the-coal-market).
+
+That crossing governs when late capacity stops paying, not the order the two tracks are taken in, and it is the second of these that the widened band reversed. Efficiency is now the **early** buy: simulated strong play takes its Efficiency levels at a median of 37 s and has finished them by 260 s, while capacity runs at a median of 109 s and is still being bought at 429 s. Marginal income per MWh is the wrong lens on that order, because it prices the two tracks as though a run could only afford one of them. Per MWh spent capacity does still win at every level — but thirteen Efficiency levels cost about 4.9 MWh in total, against roughly 400 MWh for eighteen capacity levels on the Turbine alone. A track that cheap clears the payback gate from the first second of a run.
 
 Storage capacity is the third choice rather than an afterthought, because it is what buys wear headroom. A Silo or Tank held below its strain threshold keeps the machine beside it on its full clean ceiling, and a larger store is more seconds of mismatch before that threshold is reached.
 
 `CostGrowth` for storage stays at the base 1.55, which is the rate it was given when its only job was holding more. That reasoning no longer holds — the old note that storage "is already self-limiting, so it needs no extra brake" was written before strain existed, and a track that buys headroom as well as volume is plausibly underpriced at 1.55. It is left unchanged here deliberately: the right number is a measurement, not an estimate, and it should be set from a `measure.py` sweep rather than guessed.
 
-These crossover levels are estimates from the marginal-value arithmetic rather than measurements. Simulated strong play is roughly consistent with them. A winning run ends at about 14 capacity levels on each of the three machines, 10 `Efficiency` levels on the Boiler and Turbine, and under 3 on the Pulverizer — that machine's electrical draw is too small a share of the plant to be worth improving. Storage lands at 7 levels each on Silo and Tank, 5 on the Stockpile, and 9 on the Battery, which is one more than the eight the target requires.
+The crossing prices above are marginal-value arithmetic rather than measurements; the build is measured. A winning run ends at about 16, 17, and 18 capacity levels on the Pulverizer, Boiler, and Turbine, and 13 `Efficiency` levels each on the Boiler and Turbine. The Pulverizer takes 6 — its electrical draw is still the smallest share of the plant, but a starting `Efficiency` of 0.70 leaves enough to reclaim that the track is no longer an obvious skip. Storage lands at 7 levels on the Silo, 8 on the Tank, 5 on the Stockpile, and 13 on the Battery, which is one more than the twelve the target requires.
 
 The same run trips no machine at all. Strain is not avoided by never pushing — the winning line rides well above the clean ceiling — but by keeping the stores off their thresholds so the ceiling stays where the machine constants put it.
 
@@ -332,7 +334,7 @@ The Battery stores electricity produced by the Turbine and supplies electricity 
 | Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 25.03 |
 | Variable          | EnergyChange   | MWh  | NetFlow × DeltaTimeSeconds / 3,600                                           |     — |
 
-A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is 17.5 times the starting capacity, the Battery must be upgraded — eight times, to 256.3 MWh — before the run can be won.
+A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is 129 times the starting capacity, the Battery must be upgraded — twelve times, to 1,297.5 MWh — before the run can be won.
 
 `NetFlow` represents continuous generation and machine consumption. Coal purchases and upgrade costs are discrete expenses deducted directly from `Contents` when the player confirms them — upgrades limited by `SpendableEnergy`, coal by `StartupEnergy`.
 
@@ -384,11 +386,18 @@ Strain  = StrainGain × (Backlog for the Pulverizer and Boiler, Starve for the T
 
 The Turbine inverts because it is the only pure consumer. Its output store is the Battery, which is never full until the run is already won, so a backlog rule would give it nothing; an empty Tank is what a Turbine actually suffers from. `Fill` is `Contents / Capacity` read at the start of the step, like every other input to a step.
 
-`StrainGain` is measured rather than chosen, against two requirements: reading the gauge has to beat ignoring it by enough to be worth doing, and a run must not punish the player before they have done anything.
+`StrainGain` was measured rather than chosen, against two requirements: reading the gauge has to beat ignoring it by enough to be worth doing, and a run must not punish the player before they have done anything. It no longer satisfies the first, and the measurement below is what says so.
 
-The measurement compares one policy against itself. Throttling against the strained ceiling, it reaches a median peak of 248 MWh and trips nothing. Throttling against the slack ceiling — the same play from someone who never looks at the gauge — it reaches 87 and trips a machine 2.7 times a run: a **65% penalty for ignoring strain**.
+The measurement compares one policy against itself. Throttling against the strained ceiling, it reaches a median peak of 1610 MWh and trips nothing. Throttling against the slack ceiling — the same play from someone who never looks at the gauge — it reaches 1277 and trips a machine 0.95 times a run: a **21% penalty for ignoring strain**. Against `TargetEnergy` that is the difference between winning 78% of seeds and winning 50%.
 
-That penalty is what sets the constant. Under a gain of about 1.0 it falls to somewhere between 15% and 35%, inconsistently — strain becomes a mild tax on every run rather than something worth steering around. Over about 1.4 the opening spin-up trips the Turbine on its own, before the player has touched a control. 1.25 sits between: neglect costs about two thirds of the run, and the opening reaches 79% Turbine wear — alarming on the gauge, short of a trip.
+**This is the weakest part of the current tuning, and it is open.** 1.25 was set when the same comparison read 65%, and widening the `Efficiency` band closed the window between the two requirements above. A run that banks 1600 MWh absorbs a trip that a 248 MWh run could not, so the same constant now buys a fifth of the bite it used to — squarely in the 15% to 35% band that was previously rejected as a mild tax rather than something worth steering around. Raising the gain does not recover it:
+
+| `StrainGain`         |  1.25 |  1.40 |  1.55 |  1.70 |
+| -------------------- | ----: | ----: | ----: | ----: |
+| Penalty for ignoring |   21% |   57% |   55% |   63% |
+| Opening Turbine wear |   79% |  trip |  trip |  trip |
+
+At 1.25 there is too little bite; by 1.40 the opening spin-up trips the Turbine on its own, before the player has touched a control. The two requirements can no longer both be met by this constant alone, and the fix — if the 65% is worth recovering — has to come from something that decouples them, such as what the Turbine faces during spin-up. Re-matching the chain does not help: a variant holding the old 0.811 : 0.882 : 1 ratio exactly measures 15%, worse rather than better.
 
 **The stores become bands rather than tanks.** The Tank is squeezed from both ends: too full and the Boiler strains, too empty and the Turbine does. Neither end is a place to sit. The Silo has a wear penalty at one end only — full and the Pulverizer cooks, empty and the Boiler simply throttles, which costs output rather than damage. The Tank is the tighter rope, which is the second reason to buy its capacity before the Silo's.
 

@@ -35,10 +35,10 @@ SWEEP_GRID = dict(
 
 # best policies from the last full sweep; --quick starts here instead of re-sweeping
 KNOWN_BEST = [
-    dict(ride=1.75, backoff='all', slack=2.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
-    dict(ride=1.45, backoff='turbine', slack=1.30, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
-    dict(ride=1.45, backoff='all', slack=1.30, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
-    dict(ride=1.75, backoff='turbine', slack=2.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=3.0),
+    dict(ride=1.60, backoff='all', slack=2.50, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=1.0),
+    dict(ride=1.60, backoff='all', slack=2.50, t_stop=500.0, wear_hi=0.85, wear_lo=0.15, buffer=1.0),
+    dict(ride=1.60, backoff='all', slack=2.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=1.0),
+    dict(ride=1.60, backoff='all', slack=3.00, t_stop=440.0, wear_hi=0.85, wear_lo=0.15, buffer=1.0),
 ]
 
 SEEDS, DT = range(60), 0.1
