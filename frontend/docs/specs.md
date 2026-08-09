@@ -34,15 +34,15 @@ Energy stored in the Battery, measured in MWh, is the game's only currency. Ther
 
 The Stockpile stores raw coal purchased by the player. A purchase adds as much of the requested coal as will fit and as the player can afford, then deducts the resulting energy cost from the Battery.
 
-| Type              | Parameter        | Unit   | Description / Formula                                                    | Value |
-| ----------------- | ---------------- | ------ | ------------------------------------------------------------------------ | ----: |
-| Player controlled | Capacity         | kg     | Maximum raw coal that can be stored                                      | 1,000 |
-| Player controlled | CoalPrice        | MWh/kg | Current energy price                                                     | 0.001 |
-| Constant          | PriceReduction   | %      | CoalPrice reduction from each price upgrade                              |  0.10 |
-| Constant          | MinimumCoalPrice | MWh/kg | Lowest price obtainable through upgrades                                 | 0.00025 |
-| Variable          | Contents         | kg     | Raw coal currently stored                                                |     0 |
-| Variable          | PurchasedCoal    | kg     | min(RequestedCoal, Capacity − Contents, Battery Contents / CoalPrice)     |     — |
-| Variable          | PurchaseCost     | MWh    | PurchasedCoal × CoalPrice                                                |     — |
+| Type              | Parameter        | Unit   | Description / Formula                                                 |   Value |
+| ----------------- | ---------------- | ------ | --------------------------------------------------------------------- | ------: |
+| Player controlled | Capacity         | kg     | Maximum raw coal that can be stored                                   |   1,000 |
+| Player controlled | CoalPrice        | MWh/kg | Current energy price                                                  |   0.001 |
+| Constant          | PriceReduction   | %      | CoalPrice reduction from each price upgrade                           |    0.10 |
+| Constant          | MinimumCoalPrice | MWh/kg | Lowest price obtainable through upgrades                              | 0.00025 |
+| Variable          | Contents         | kg     | Raw coal currently stored                                             |       0 |
+| Variable          | PurchasedCoal    | kg     | min(RequestedCoal, Capacity − Contents, Battery Contents / CoalPrice) |       — |
+| Variable          | PurchaseCost     | MWh    | PurchasedCoal × CoalPrice                                             |       — |
 
 The player can buy any positive amount of raw coal. `Capacity` can be increased with a capacity upgrade. `CoalPrice` can be reduced with an expensive price upgrade:
 
