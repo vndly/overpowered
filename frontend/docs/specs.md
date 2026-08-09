@@ -1,23 +1,25 @@
 # Overpowered
 
-## Extractor
+## Pulverizer
 
-| Type              | Parameter       | Unit  | Description / Formula                                         | Value |
-| ----------------- | --------------- | ----- | ------------------------------------------------------------- | ----: |
-| Player controlled | Capacity        | kg/s  | Maximum output                                                |    50 |
-| Player controlled | Efficiency      | %     | Consumption performance                                       |  0.85 |
-| Player controlled | Resilience      | %     | Stress control                                                |   0.4 |
-| Player controlled | Setting         | %     | Operating level                                               |   0.8 |
-| Constant          | BaseConsumption | MJ/kg | The base consumption                                          |   0.1 |
-| Constant          | BaseStress      | %     | Minimum stress                                                |  0.05 |
-| Constant          | StressRange     | %     | Additional stress as Setting rises                            |  0.95 |
-| Constant          | SafeStress      | %     | Stress below which there is no penalty                        |   0.4 |
-| Constant          | MaxStress       | %     | Stress where penalty reaches maximum                          |     1 |
-| Constant          | StressPenalty   | %     | Maximum stress penalty                                        |  0.25 |
-| Variable          | Stress          | %     | BaseStress + StressRange × Setting × (1 − Resilience)         |  0.51 |
-| Variable          | ExcessStress    | %     | clamp((Stress − SafeStress) / (MaxStress − SafeStress), 0, 1) |  0.18 |
-| Variable          | Output          | kg/s  | Capacity × Setting × (1 − ExcessStress × StressPenalty)       | 38.23 |
-| Variable          | Consumption     | MW    | (Setting × Capacity × BaseConsumption) / Efficiency           |  4.71 |
+The pulverizer converts raw coal supplied from the plant's stockpile into pulverized coal for the boilers.
+
+| Type              | Parameter          | Unit  | Description / Formula                                                             | Value |
+| ----------------- | ------------------ | ----- | --------------------------------------------------------------------------------- | ----: |
+| Player controlled | Capacity           | kg/s  | Maximum raw coal throughput                                                       |    50 |
+| Player controlled | Efficiency         | %     | Electrical consumption performance                                                |  0.85 |
+| Player controlled | Cooling            | %     | Temperature control                                                               |   0.4 |
+| Player controlled | Setting            | %     | Operating level                                                                   |   0.8 |
+| Constant          | BaseConsumption    | MJ/kg | Consumption required to move and crush coal                                       |   0.1 |
+| Constant          | BaseTemperature    | °C    | Minimum temperature                                                               |    30 |
+| Constant          | TemperatureRange   | °C    | Additional temperature as Setting rises                                           |   100 |
+| Constant          | SafeTemperature    | °C    | Temperature below which there is no output penalty                                |    70 |
+| Constant          | MaxTemperature     | °C    | Temperature where the output penalty reaches its maximum                          |   100 |
+| Constant          | TemperaturePenalty | %     | Maximum temperature penalty                                                       |  0.25 |
+| Variable          | Temperature        | °C    | BaseTemperature + TemperatureRange × Setting × (1 − Cooling)                      |    78 |
+| Variable          | ExcessTemperature  | %     | clamp((Temperature − SafeTemperature) / (MaxTemperature − SafeTemperature), 0, 1) |  0.27 |
+| Variable          | Output             | kg/s  | Capacity × Setting × (1 − ExcessTemperature × TemperaturePenalty)                 | 37.33 |
+| Variable          | Consumption        | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                               |  4.71 |
 
 ## Boiler
 
