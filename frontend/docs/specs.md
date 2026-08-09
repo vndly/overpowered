@@ -54,5 +54,5 @@
 | Constant          | VibrationPenalty | %       | Maximum vibration penalty                                                 |  0.25 |
 | Variable          | Vibration        | °C      | BaseVibration + VibrationRange × Setting × (1 − Stability)                |   5.8 |
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1) |  0.16 |
-| Variable          | Output           | kg/s    | Capacity × Setting × (1 − ExcessVibration × VibrationPenalty)             |  38.4 |
-| Variable          | Consumption      | MW      | (Setting × Capacity × BaseConsumption) / Efficiency                       | 37.65 |
+| Variable          | Output           | MW      | Capacity × Setting × (1 − ExcessVibration × VibrationPenalty)             |  38.4 |
+| Variable          | Consumption      | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                       | 37.65 |
