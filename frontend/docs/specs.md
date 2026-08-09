@@ -165,7 +165,7 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 ┌──────────────────────────────────────┐
 │ Stockpile                            │
 ├──────────────────────────────────────┤
-│ Stored       0 / 1 t              0% │
+│ Stored       █░░░░░░░░░    1 t (10%) │
 │ Coal price   1 MWh/t                 │
 │ Buy coal     [-]       0.1 t     [+] │
 │              [Buy: 0.10 MWh]         │
