@@ -159,7 +159,7 @@ Before any purchases, the starting charge can run the Pulverizer and Boiler at t
 [Stockpile] -> [Pulverizer] -> [Silo] -> [Boiler] -> [Tank] -> [Turbine] -> [Battery]
 ```
 
-Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. Stored capacity is represented by a ten-character indicator that uses `█` for filled segments and `░` for empty segments. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and the expensive price-upgrade cost.
+Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and the expensive price-upgrade cost.
 
 ```text
 ┌───────────────────────────────────────────┐
@@ -186,7 +186,7 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 │ Capacity   {value} [Upgrade: {cost} MWh] │
 │ Efficiency {value} [Upgrade: {cost} MWh] │
 │ Control    {value} [Upgrade: {cost} MWh] │
-│ Setting    [-]      {value}      [+]     │
+│ Setting    [-] {value} [+]               │
 └──────────────────────────────────────────┘
 ```
 
