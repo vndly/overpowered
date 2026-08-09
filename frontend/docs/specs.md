@@ -14,7 +14,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 - On defeat the run ends and every component resets to its starting value. The highest stored energy reached is recorded as the player's best result.
 - Because upgrades compound, the central decision of a run is _when to stop reinvesting and start banking_: energy spent on upgrades is energy not counted toward the target, but an under-built plant cannot fill the Battery before the timer expires.
 
-`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned. **The current value of 40 predates the coal market and has not been re-measured against it** — it is a placeholder until the simulation exists and strong play can be sampled.
+`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned. **The current value of 40 predates both the coal market and the per-track `CostGrowth` rates, and has not been re-measured against either** — it is a placeholder until the simulation exists and strong play can be sampled. The steeper rate now carried by machine capacity makes a deep build roughly twice what it cost under a single 1.55 rate, so the measured peak is expected to come out lower than 40 rather than higher.
 
 ### Stalling
 
@@ -35,6 +35,7 @@ Machines have no separate enable control. A machine is enabled when `Setting > 0
 - When a machine's output storage is full, the machine continues running without pausing or changing its Setting. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded.
 - A machine only consumes resources while it is running. The rates in the component tables assume that input and electricity are available; output-storage capacity does not affect those rates.
 - During each simulation step, the amount added to output storage is `min(ProducedOutput, Capacity − Contents)`. The remaining `ProducedOutput` is discarded. This rule also applies to electricity produced while the Battery is full.
+- Discarded output is paid for. A machine running faster than the stage below it consumes coal, fuel, or electricity for output that never lands, and the starting Settings do exactly that — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain).
 - A machine tripped by wear runs at zero for `RepairSeconds` no matter what its `Setting` says, then resumes at that same Setting. See [Setting, stress, and wear](#setting-stress-and-wear).
 
 Storage capacities can only be increased by purchasing upgrades. All storage components start empty except the Battery, which starts with `StartingCharge`.
@@ -104,24 +105,35 @@ Every upgrade track is priced independently and grows geometrically with the num
 
 `UpgradeCost(n) = BaseCost × CostGrowth^n`
 
-where `n` is the number of upgrades already bought on that track, starting at zero.
+where `n` is the number of upgrades already bought on that track, starting at zero. `BaseCost` and `CostGrowth` are both properties of the track, not global constants.
 
 | Type     | Parameter      | Unit | Description                                                           | Value |
 | -------- | -------------- | ---- | --------------------------------------------------------------------- | ----: |
-| Constant | CostGrowth     | ×    | Cost multiplier per level, applied per track                          |  1.55 |
 | Constant | CapacityGrowth | ×    | Capacity multiplier per capacity upgrade                              |   1.5 |
 | Constant | UpgradeGain    | %    | Share of the remaining gap closed by an Efficiency or control upgrade |  0.25 |
 
-| Upgrade track                             | BaseCost (MWh) | Effect                                                   |
-| ----------------------------------------- | -------------: | -------------------------------------------------------- |
-| Capacity (Pulverizer, Boiler, Turbine)    |           0.02 | Capacity × CapacityGrowth                                |
-| Capacity (Stockpile, Silo, Tank, Battery) |           0.02 | Capacity × CapacityGrowth                                |
-| Efficiency (Pulverizer, Boiler, Turbine)  |           0.05 | Efficiency += (MaxEfficiency − Efficiency) × UpgradeGain |
-| Control (Cooling, Regulation, Stability)  |           0.05 | Control += (MaxControl − Control) × UpgradeGain          |
+| Upgrade track                             | BaseCost (MWh) | CostGrowth | Effect                                                   |
+| ----------------------------------------- | -------------: | ---------: | -------------------------------------------------------- |
+| Capacity (Pulverizer, Boiler, Turbine)    |           0.02 |       1.70 | Capacity × CapacityGrowth                                |
+| Capacity (Stockpile, Silo, Tank, Battery) |           0.02 |       1.55 | Capacity × CapacityGrowth                                |
+| Efficiency (Pulverizer, Boiler, Turbine)  |           0.05 |       1.30 | Efficiency += (MaxEfficiency − Efficiency) × UpgradeGain |
+| Control (Cooling, Regulation, Stability)  |           0.05 |       1.45 | Control += (MaxControl − Control) × UpgradeGain          |
 
 Capacity upgrades are multiplicative rather than additive. Coal cost and energy output both scale linearly with throughput, so additive upgrades would leave profit per unit of throughput constant and each upgrade would take longer to afford than the last. Multiplying capacity is what makes a run accelerate.
 
 Efficiency and the machine controls close a fixed share of the distance to their cap on each purchase, so they approach `MaxEfficiency` and `MaxControl` without ever exceeding them. `MaxEfficiency` is strictly below 1 — an Efficiency of 1 or greater would make the plant produce energy from nothing.
+
+#### Why the growth rates differ
+
+The tracks are not priced at the same rate because they do not weaken at the same rate. A machine capacity level always multiplies throughput by `CapacityGrowth`, so its gain never shrinks. An Efficiency level closes a quarter of the remaining gap to `MaxEfficiency`, so each one is worth about three quarters of the last. A control level lifts the wear-free ceiling by 17%, then 15%, then 13%, then 11%.
+
+Under a single growth rate those decay curves are what decides the game: capacity's gain per MWh stays almost flat while the other two fall away, so capacity is the strongest buy at level zero and its lead only widens. Every track still gets bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay puts the three on comparable footing — capacity is still the strongest opening buy, Stability is expected to overtake it after roughly two levels and Efficiency after roughly four, and those crossings are what the player is actually choosing between. Cooling and Regulation sit further back, because the Pulverizer and Boiler only enter their wear range when the chain is unbalanced on purpose; see [Three machines, three problems](#three-machines-three-problems).
+
+The coal market then moves the crossings during the run. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Capacity is the early buy and Efficiency the late one, and where the run turns over depends on how the market has behaved — see [The coal market](#the-coal-market).
+
+Storage capacity keeps the base rate. Its value is already self-limiting: a Silo larger than a trip can drain, or a Stockpile larger than the Pulverizer can eat, is worth nothing, so it needs no extra brake.
+
+These crossover levels are estimates from the marginal-value arithmetic, not measured from play. They must be re-checked alongside `TargetEnergy` once the simulation exists.
 
 ## Components
 
@@ -166,7 +178,7 @@ The trend reaches 1.79 MWh/t by the end of a 600 s run. What that costs the play
 | Starting Efficiency of 0.85 |                          1.79 |               10:00 |
 | Efficiency at its 0.95 cap  |                          2.30 |     after the timer |
 
-Both figures are for a chain matched to the Turbine's steam draw, and neither depends on `Capacity` or on the three controls: a capacity upgrade scales revenue and coal consumption by the same factor, and a control upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and control buys headroom** — a plant that never touches Efficiency reaches break-even exactly as the timer expires, while one at `MaxEfficiency` still holds a 22% margin and is threatened only by a market spike near the clamp.
+Both figures are for a chain matched to the Turbine's steam draw, which is not what the starting Settings give — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain). Neither depends on `Capacity` or on the three controls: a capacity upgrade scales revenue and coal consumption by the same factor, and a control upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and control buys headroom** — a plant that never touches Efficiency reaches break-even exactly as the timer expires, while one at `MaxEfficiency` still holds a 22% margin and is threatened only by a market spike near the clamp.
 
 That band is only 1.29× wide, because `Efficiency` spans just 0.85 to 0.95. It is narrow enough that no exponential price curve can both spare a well-run plant and sharply punish a neglected one, so the market as tuned applies steady pressure rather than a deadline. Widening it means widening the `Efficiency` range, which would need the chain rebalanced around the new starting value — an open tuning question, not a settled one.
 
@@ -192,6 +204,9 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 | Constant          | TemperatureRange    | °C    | Additional temperature as Setting rises                                           |   100 |
 | Constant          | SafeTemperature     | °C    | Temperature below which no wear accrues                                           |    80 |
 | Constant          | MaxTemperature      | °C    | Temperature at which wear accrues fastest                                         |   150 |
+| Constant          | WearGrowth          | 1/s   | Wear accrued per second at Excess = 1                                             | 0.100 |
+| Constant          | WearRecovery        | 1/s   | Wear shed per second while below SafeTemperature                                  | 0.050 |
+| Constant          | RepairSeconds       | s     | Time the machine stays offline after tripping                                     |     8 |
 | Variable          | Temperature         | °C    | BaseTemperature + TemperatureRange × Setting × (1 − Cooling)                      |    78 |
 | Variable          | ExcessTemperature   | %     | clamp((Temperature − SafeTemperature) / (MaxTemperature − SafeTemperature), 0, 1) |     0 |
 | Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear)       |     0 |
@@ -230,6 +245,9 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 | Constant          | PressureRange       | bar   | Additional pressure the Boiler can generate as Setting rises                |   180 |
 | Constant          | SafePressure        | bar   | Pressure below which no wear accrues                                        |   110 |
 | Constant          | MaxPressure         | bar   | Pressure at which wear accrues fastest                                      |   236 |
+| Constant          | WearGrowth          | 1/s   | Wear accrued per second at Excess = 1                                       | 0.040 |
+| Constant          | WearRecovery        | 1/s   | Wear shed per second while below SafePressure                               | 0.010 |
+| Constant          | RepairSeconds       | s     | Time the machine stays offline after tripping                               |    40 |
 | Variable          | Pressure            | bar   | BasePressure + PressureRange × Setting × (1 − Regulation)                   | 106.4 |
 | Variable          | ExcessPressure      | %     | clamp((Pressure − SafePressure) / (MaxPressure − SafePressure), 0, 1)       |     0 |
 | Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
@@ -267,6 +285,9 @@ The Turbine converts high-pressure steam supplied by the Tank into electrical po
 | Constant          | VibrationRange   | mm/s    | Additional vibration as Setting rises                                       |    10 |
 | Constant          | SafeVibration    | mm/s    | Vibration below which no wear accrues                                       |     6 |
 | Constant          | MaxVibration     | mm/s    | Vibration at which wear accrues fastest                                     |    13 |
+| Constant          | WearGrowth       | 1/s     | Wear accrued per second at Excess = 1                                       | 0.067 |
+| Constant          | WearRecovery     | 1/s     | Wear shed per second while below SafeVibration                              | 0.020 |
+| Constant          | RepairSeconds    | s       | Time the machine stays offline after tripping                               |    20 |
 | Variable          | Vibration        | mm/s    | BaseVibration + VibrationRange × Setting × (1 − Stability)                  |   5.8 |
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1)   |     0 |
 | Variable          | Wear             | %       | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
@@ -296,12 +317,11 @@ A run opens with 3 MWh of spendable energy above the reserve — enough for thre
 
 `Capacity` is a rating, not a ceiling. Every machine accepts a `Setting` up to `MaxSetting` — twice its rating — and `Output` is `Capacity × Setting` across that whole range. Pushing past the rating is not penalised in output. It damages the machine.
 
-| Type     | Parameter     | Unit | Description                                         | Value |
-| -------- | ------------- | ---- | --------------------------------------------------- | ----: |
-| Constant | MaxSetting    | ×    | Highest Setting any machine accepts                 |     2 |
-| Constant | WearGrowth    | 1/s  | Wear accrued per second at Excess = 1               | 0.067 |
-| Constant | WearRecovery  | 1/s  | Wear shed per second while below the safe threshold |  0.02 |
-| Constant | RepairSeconds | s    | Time a tripped machine stays offline                |    20 |
+| Type     | Parameter  | Unit | Description                         | Value |
+| -------- | ---------- | ---- | ----------------------------------- | ----: |
+| Constant | MaxSetting | ×    | Highest Setting any machine accepts |     2 |
+
+`MaxSetting` is the only part of this system every machine shares. `WearGrowth`, `WearRecovery`, and `RepairSeconds` are per-machine constants, listed in each machine's own table and compared under [Three machines, three problems](#three-machines-three-problems).
 
 Each machine converts its `Setting` into a stress value — Temperature, Pressure, or Vibration — that grows linearly with the Setting and is reduced by that machine's control:
 
@@ -317,13 +337,37 @@ When `Wear` reaches 1 the machine **trips**: it produces and consumes nothing fo
 
 Wear accrues quadratically in `Excess` and sheds at a flat, slower rate. That asymmetry is the whole mechanic: no `Setting` above the safe threshold is sustainable, so the only way to use the range above it is to alternate — push, then back off and let the machine recover.
 
-That duty cycle pays. At the starting control of 0.4 a machine is clean up to `Setting` 0.833. Riding around `Setting` 1.45 and dropping back to 0.833 to shed wear settles near half the time in each state and averages about 1.15 × `Capacity`, roughly 38% more than parking at the safe ceiling. Sitting at `MaxSetting` is worse than both: wear builds three times faster than it sheds, so the machine spends most of its life recovering. There is a best place to ride, it is well above the rating, and it is nowhere near the top.
+That duty cycle pays. At the starting control of 0.4 every machine is clean up to `Setting` 0.833, and for each of them the best place to ride sits well above the rating and nowhere near the top. How far above is set by the ratio of `WearGrowth` to `WearRecovery`: a machine that sheds quickly can be pushed harder, because it spends less of the cycle recovering. Sitting at `MaxSetting` is worse than riding on all three, and worse than parking at the safe ceiling: wear builds two to four times faster than it sheds, so the machine spends most of its life tripped or recovering. Averaged over that cycle it delivers 0.67, 0.46, and 0.40 × `Capacity` for Pulverizer, Turbine, and Boiler.
 
-Tripping is what misjudging it costs. `RepairSeconds` is dead time on a 600 s clock, and a tripped machine drains whatever storage sits downstream of it — which is the reason to buy Silo and Tank capacity as insurance, not only to hold more.
+#### Three machines, three problems
+
+The wear constants differ per machine, so the same `Setting` asks a different question of each. Riding means alternating between the best ride `Setting` and the clean ceiling; the figures below are for the starting control of 0.4, where that ceiling is 0.833.
+
+| Machine    | Growth ÷ Recovery | Best ride Setting | Average output  | Cycle period | RepairSeconds |
+| ---------- | ----------------: | ----------------: | --------------: | -----------: | ------------: |
+| Pulverizer |               2.0 |             ~1.65 | 1.25 × Capacity |        ~40 s |             8 |
+| Turbine    |              3.35 |             ~1.45 | 1.15 × Capacity |       ~100 s |            20 |
+| Boiler     |               4.0 |             ~1.40 | 1.12 × Capacity |       ~200 s |            40 |
+
+The **Pulverizer** is twitchy and cheap. It sheds as fast as it wears, so it can be pushed hardest, and an 8 s trip is nearly free against a Silo holding 85 s of the Boiler's fuel draw. Its cost is not downtime but coal: pushing it past what the Boiler can consume fills the Silo, and the surplus is discarded after the player has already paid for it.
+
+The **Turbine** is the earner and the one machine worth riding continuously. Its cycle is slow enough to manage without constant attention, and its 20 s repair falls directly on the only output that counts.
+
+The **Boiler** is heavy. It wears slowly enough to sit near its ceiling for most of a run, but it sheds just as slowly, and a 40 s trip is a fifteenth of the clock taken from the machine that feeds the Turbine — enough to drain nearly half a full Tank at base capacity. Riding it serves one purpose: banking steam before a Turbine push, which is the only way to run the Turbine above what the Boiler can sustain.
+
+In a chain matched to the Turbine's draw the three Settings hold a fixed ratio and only the Turbine crosses its ceiling at the ordinary riding range. The Pulverizer and Boiler do accrue wear there, but they shed more during the Turbine's recovery phase than they gain during its push, so neither trips on its own. They enter their wear range for real only when the player unbalances the chain deliberately — to refill a Silo after a trip, or to bank steam. That is the intent: one machine to manage continuously, and two whose redline is an occasional, deliberate move with a cost of its own.
+
+Tripping is what misjudging it costs, and it costs a different amount on each machine: 8 s, 20 s, and 40 s against a 600 s clock. A tripped machine also drains whatever storage sits downstream of it, which is the reason to buy Silo and Tank capacity as insurance and not only to hold more. The Tank is the more urgent of the two, because it stands between the longest repair and the only machine that generates.
 
 Control upgrades buy the range back. Each one flattens the stress curve and lifts the wear-free ceiling: 0.833 at the starting 0.4, then 0.98, 1.12, 1.26, 1.39 over the next four purchases. Because `UpgradeGain` closes a fixed share of the remaining gap, the control approaches `MaxControl` without reaching it, so the ceiling approaches `MaxSetting` without ever arriving — some redline range always remains, and control converts risk into free output without ever removing the decision.
 
-The chain stays balanced through all of this. Output and every consumption rate are now linear in `Setting`, so the ratios between machines do not shift as the player pushes: the Pulverizer's output covers the Boiler's fuel draw and the Boiler's output covers the Turbine's steam draw at the starting Settings and at any common multiple of them.
+### Oversupply and the matched chain
+
+Output and every consumption rate are linear in `Setting`, so the ratios between machines never shift as the player pushes. At the starting Settings, and at any common multiple of them, no stage starves — but every stage is oversupplied. The Pulverizer makes 6.40 kg/s against the Boiler's 5.88 kg/s draw, and the Boiler makes 40.00 kg/s against the Turbine's 35.29 kg/s draw. Once the Silo and Tank fill, that surplus is discarded, and **19% of the raw coal bought is burned for output that is thrown away**.
+
+The efficient line is to match each machine to the draw below it rather than run them at a common multiple. At the starting capacities and Efficiencies that ratio is `Setting` 0.811 : 0.882 : 1 across Pulverizer, Boiler, and Turbine. It is fixed for a given set of capacities and Efficiencies, and it moves every time either is upgraded, so a matched chain has to be re-matched as the plant grows. The `Net MWh per tonne` figures under [The coal market](#the-coal-market) assume a matched chain; a player running a common multiple earns less than that table shows.
+
+None of this is surfaced in the UI. The cards show contents, rates, and stress, and no card reports discarded output or names the matched ratio. Finding it is the reward for reading the numbers rather than a step the game walks the player through, and running unmatched on purpose is what refills a drained buffer after a trip.
 
 ## UI
 
