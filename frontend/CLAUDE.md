@@ -8,6 +8,7 @@ The frontend of Overpowered (Vite + Vue 3, TypeScript, Composition API with `<sc
 
 - `docs/specs.md` — the game design: objective, production chain, simulation rules, economy, component parameters, and UI. The source of truth for all gameplay values.
 - `docs/ui_ux.md` — the interface design: CRT terminal visual direction, typography, color system, layout, per-card specs, interaction timing, and accessibility. The source of truth for all UI decisions. Read when building or changing UI.
+- `docs/mockup.png` — a rendered prototype mockup of the interface. A reference for the intended feel, not a target: it is not pixel-authoritative and diverges from the spec in known places. See [Reference Mockup](docs/ui_ux.md#reference-mockup) before using it.
 - `docs/typescript.md` — style, naming, imports. Read when editing TypeScript files.
 - `simulator/` — a Python reference implementation of `docs/specs.md`, used to measure `TargetEnergy`. A design tool, not application code: no dependencies, and nothing the frontend builds, lints, or ships. See `simulator/README.md`.
 

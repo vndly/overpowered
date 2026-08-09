@@ -10,6 +10,34 @@ This document is **not** a gameplay, economy, balance, or simulation specificati
 
 ---
 
+## Reference Mockup
+
+`docs/mockup.png` is a rendered prototype mockup of the interface.
+
+**It is a reference, not a target.** It is an image made to communicate the intended feel, not a screenshot of a correct implementation, and it is not pixel-authoritative. Take from it what makes sense; where it and this document disagree, **this document wins**, and where this document is silent but `docs/specs.md` is not, `docs/specs.md` wins.
+
+What the mockup gets right and should be followed:
+
+- the overall composition — header, one-row production chain, four-panel lower dashboard
+- the seven cards in one row with arrows between them, storage cards narrower than machine cards
+- the internal card order: title, icon, divider, values, controls, divider, upgrades
+- the inline `[-] value [+]` stepper, the outlined buttons, the horizontal `SAFE`/`MAX` stress gauge
+- the primitive instrumentation look of the net-flow graph
+- black background, monochrome green, thin borders, no second color
+
+Known places where it diverges and should **not** be copied:
+
+- Silo and Tank fill bars carry no strain marks. They are required — see [Strain markers](#strain-markers).
+- Machine cards show a third parameter row (`COOLING`, `REGULATION`, `STABILITY`). No such parameter exists; machines have `Capacity` and `Efficiency` only.
+- `CLEAN TO` is missing and the penalty is folded into the stress row. Follow [Machine Cards](#12-machine-cards).
+- There is no wear gauge or trip countdown. Follow `docs/specs.md`.
+- The `RESERVES` panel offers a reserve stepper and a manual/auto mode. `MinimumReserve` is derived, not player-set.
+- Letterforms are inconsistently cased (`StoreD`, `CAPAcity`, `SETTIng`) and the outer frame is slightly rounded. Both are artifacts of how the image was produced. Casing follows [Typography Rules](#3-typography-rules); corners are square everywhere.
+
+Treat anything else in the mockup that contradicts a rule below the same way: the rule is the specification, the mockup is a sketch of it.
+
+---
+
 # 1. Visual Direction
 
 OVERPOWERED should look like an **old industrial power-plant operator interface** displayed on a monochrome CRT terminal.
