@@ -6,7 +6,7 @@ The frontend of Overpowered (Vite + Vue 3, TypeScript, Composition API with `<sc
 
 ## Reference Docs
 
-- `docs/specs.md` — TODO.
+- `docs/specs.md` — the game design: objective, production chain, simulation rules, economy, component parameters, and UI. The source of truth for all gameplay values.
 - `docs/typescript.md` — style, naming, imports. Read when editing TypeScript files.
 
 ## Rules
