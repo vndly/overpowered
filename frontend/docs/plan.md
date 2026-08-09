@@ -10,6 +10,25 @@ number), [`docs/ui_ux.md`](docs/ui_ux.md) (interface), [`docs/typescript.md`](do
 
 ---
 
+## Progress
+
+Tick a box only when the stage's acceptance criteria hold and its
+[Per-stage commands](#per-stage-commands) have passed.
+
+- [ ] [Stage 1 — Foundations: font, tokens, character grid, terminal primitives](#stage-1--foundations-font-tokens-character-grid-terminal-primitives)
+- [ ] [Stage 2 — The engine](#stage-2--the-engine) — not tickable on its own; Stage 3 is its proof
+- [ ] [Stage 3 — Verification screen](#stage-3--verification-screen)
+- [ ] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
+- [ ] [Stage 5 — Storage cards](#stage-5--storage-cards)
+- [ ] [Stage 6 — Machine cards](#stage-6--machine-cards)
+- [ ] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
+- [ ] [Stage 8 — SVG icons](#stage-8--svg-icons)
+- [ ] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
+- [ ] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
+- [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out
+
+---
+
 ## How to use this plan
 
 - Stages are ordered. Do not start a stage until the previous one meets its acceptance criteria.
@@ -59,22 +78,22 @@ every file:
 These apply across stages. Every one of them is a decision this plan makes because the specs do
 not.
 
-| Name                | Value                    | Note                                                                      |
-| ------------------- | ------------------------ | ------------------------------------------------------------------------- |
-| `DeltaTimeSeconds`  | `0.05`                   | `specs.md` never fixes it. At 0.05 the spec's per-step market and `sim.py`'s fixed `MARKET_DT` grid coincide, so the simulator's "one deliberate deviation" disappears. |
-| Catch-up clamp      | `0.25 s`                 | Maximum accumulated time processed in one frame (5 steps). Prevents a spiral after a stall. |
-| Tab hidden          | Run pauses               | `document.visibilitychange`. An unattended tab must not burn the 600 s clock. |
-| Setting granularity | `0.1`, range `0.0–2.0`   | Stored as an integer step count `0–20`, exposed as `steps / 10`. Never accumulate floats. |
-| Coal purchase step  | `0.1 t` (100 kg)         | Plus a `FILL` button, see Stage 5.                                        |
-| Internal mass unit  | kilograms                | All storage contents and capacities in kg. Tonnes exist only in the view model and the coal price. |
-| Internal energy     | MWh; power in MW         | As `specs.md`.                                                            |
-| Body font size      | `16px`                   | PxPlus IBM VGA8 is an 8×16 bitmap. Only integer multiples stay crisp, so the type scale is 16px body / 32px app title, and hierarchy otherwise comes from uppercase, borders and inversion — exactly what `ui_ux.md` §2 says to do when weights are unavailable. |
-| Character cell      | `--cell-width: 8px`, `--cell-height: 16px` | Every width, gap and padding is a whole multiple of these. |
-| Storage card width  | 24 cells (192px) content | Plus 8px padding each side.                                               |
-| Machine card width  | 30 cells (240px) content | Plus 8px padding each side.                                               |
-| Chain spacing       | 24px arrow column, no additional gap | The arrow column *is* the gap. Chain totals `4 × 208 + 3 × 256 + 6 × 24 = 1744px`, inside the 1920px reference. |
-| Best result storage | `localStorage`, key `overpowered.best_result`, a number in MWh | `specs.md` says "recorded", not where. |
-| Run seed            | `Math.floor(Math.random() * 2 ** 32)` at run start | Not surfaced in the UI. Fixed seeds only in the verification screen. |
+| Name                | Value                                                          | Note                                                                                                                                                                                                                                                             |
+| ------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DeltaTimeSeconds`  | `0.05`                                                         | `specs.md` never fixes it. At 0.05 the spec's per-step market and `sim.py`'s fixed `MARKET_DT` grid coincide, so the simulator's "one deliberate deviation" disappears.                                                                                          |
+| Catch-up clamp      | `0.25 s`                                                       | Maximum accumulated time processed in one frame (5 steps). Prevents a spiral after a stall.                                                                                                                                                                      |
+| Tab hidden          | Run pauses                                                     | `document.visibilitychange`. An unattended tab must not burn the 600 s clock.                                                                                                                                                                                    |
+| Setting granularity | `0.1`, range `0.0–2.0`                                         | Stored as an integer step count `0–20`, exposed as `steps / 10`. Never accumulate floats.                                                                                                                                                                        |
+| Coal purchase step  | `0.1 t` (100 kg)                                               | Plus a `FILL` button, see Stage 5.                                                                                                                                                                                                                               |
+| Internal mass unit  | kilograms                                                      | All storage contents and capacities in kg. Tonnes exist only in the view model and the coal price.                                                                                                                                                               |
+| Internal energy     | MWh; power in MW                                               | As `specs.md`.                                                                                                                                                                                                                                                   |
+| Body font size      | `16px`                                                         | PxPlus IBM VGA8 is an 8×16 bitmap. Only integer multiples stay crisp, so the type scale is 16px body / 32px app title, and hierarchy otherwise comes from uppercase, borders and inversion — exactly what `ui_ux.md` §2 says to do when weights are unavailable. |
+| Character cell      | `--cell-width: 8px`, `--cell-height: 16px`                     | Every width, gap and padding is a whole multiple of these.                                                                                                                                                                                                       |
+| Storage card width  | 24 cells (192px) content                                       | Plus 8px padding each side.                                                                                                                                                                                                                                      |
+| Machine card width  | 30 cells (240px) content                                       | Plus 8px padding each side.                                                                                                                                                                                                                                      |
+| Chain spacing       | 24px arrow column, no additional gap                           | The arrow column _is_ the gap. Chain totals `4 × 208 + 3 × 256 + 6 × 24 = 1744px`, inside the 1920px reference.                                                                                                                                                  |
+| Best result storage | `localStorage`, key `overpowered.best_result`, a number in MWh | `specs.md` says "recorded", not where.                                                                                                                                                                                                                           |
+| Run seed            | `Math.floor(Math.random() * 2 ** 32)` at run start             | Not surfaced in the UI. Fixed seeds only in the verification screen.                                                                                                                                                                                             |
 
 ### Two `ui_ux.md` rows that contradict `specs.md`
 
@@ -96,7 +115,8 @@ npm run lint:fix     # then fix anything left by hand
 npm run build        # vue-tsc --build && vite build; must exit 0
 ```
 
-Then run `/delta-review` before reporting the stage complete, per `CLAUDE.md`.
+Then run `/delta-review` before reporting the stage complete, per `CLAUDE.md`. Once it is
+complete, tick the stage's box under [Progress](#progress).
 
 ---
 
@@ -173,15 +193,15 @@ more. Keep the title and description.
 All are presentational, take props, own no state beyond focus, and emit events. All use `<script
 setup lang="ts">` with `defineProps<...>()` / `defineEmits<...>()` type-only declarations.
 
-| Component          | Props                                                                               | Behaviour                                                                                                                              |
-| ------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `terminal_panel`   | `title: string`, `widthCells: number`                                               | 1px `var(--fg)` border, `border-radius: 0`, black background, 8px padding, `width: calc(widthCells * var(--cell-width) + 16px)`. Title centred, uppercase. A `<slot>` for the body. `ui_ux.md` §8. |
-| `section_divider`  | `dashed?: boolean`                                                                  | A 1px full-width rule in `var(--fg-faint)`; dashed variant per §8.                                                                       |
-| `value_row`        | `label: string`, `value: string`, `dim?: boolean`                                   | Label left, value right-aligned, both on one 16px line. This is the only way a label/value pair is ever rendered — `ui_ux.md` §3 wants numeric columns to line up. |
-| `terminal_button`  | `label: string`, `disabled?: boolean`, `widthCells?: number`                        | A real `<button>`. States per `ui_ux.md` §21: normal green-on-black outline, hover brighter, `:active` and `[aria-pressed="true"]` inverted, disabled `var(--fg-disabled)` with `aria-disabled`. Transitions 0–80 ms (§22). Emits `press`. |
-| `fill_bar`         | `fraction: number`, `cells?: number` (default 10), `marks?: {fraction, glyph}[]`     | Renders `cells` characters: `█` for each whole filled cell, `▓` if the remainder ≥ 0.5, `░` for the rest. When `marks` is non-empty, renders a second 16px line beneath, `cells` characters wide, with each mark's glyph placed at index `Math.round(fraction * cells)` clamped to `cells - 1`, spaces elsewhere. The marker line uses `var(--fg-dim)`. |
-| `numeric_stepper`  | `value: string`, `disabledDown?`, `disabledUp?`                                     | `[-] value [+]` on one line using two `terminal_button`s. Emits `step` with `-1` or `+1`. Hold-to-repeat: after 400 ms, repeat every 80 ms while held (`pointerdown`/`pointerup`/`pointercancel`/`blur`). |
-| `flow_arrow`       | none                                                                                | A 24px-wide column containing `→`, vertically centred, `var(--fg-dim)`.                                                                  |
+| Component         | Props                                                                            | Behaviour                                                                                                                                                                                                                                                                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `terminal_panel`  | `title: string`, `widthCells: number`                                            | 1px `var(--fg)` border, `border-radius: 0`, black background, 8px padding, `width: calc(widthCells * var(--cell-width) + 16px)`. Title centred, uppercase. A `<slot>` for the body. `ui_ux.md` §8.                                                                                                                                                      |
+| `section_divider` | `dashed?: boolean`                                                               | A 1px full-width rule in `var(--fg-faint)`; dashed variant per §8.                                                                                                                                                                                                                                                                                      |
+| `value_row`       | `label: string`, `value: string`, `dim?: boolean`                                | Label left, value right-aligned, both on one 16px line. This is the only way a label/value pair is ever rendered — `ui_ux.md` §3 wants numeric columns to line up.                                                                                                                                                                                      |
+| `terminal_button` | `label: string`, `disabled?: boolean`, `widthCells?: number`                     | A real `<button>`. States per `ui_ux.md` §21: normal green-on-black outline, hover brighter, `:active` and `[aria-pressed="true"]` inverted, disabled `var(--fg-disabled)` with `aria-disabled`. Transitions 0–80 ms (§22). Emits `press`.                                                                                                              |
+| `fill_bar`        | `fraction: number`, `cells?: number` (default 10), `marks?: {fraction, glyph}[]` | Renders `cells` characters: `█` for each whole filled cell, `▓` if the remainder ≥ 0.5, `░` for the rest. When `marks` is non-empty, renders a second 16px line beneath, `cells` characters wide, with each mark's glyph placed at index `Math.round(fraction * cells)` clamped to `cells - 1`, spaces elsewhere. The marker line uses `var(--fg-dim)`. |
+| `numeric_stepper` | `value: string`, `disabledDown?`, `disabledUp?`                                  | `[-] value [+]` on one line using two `terminal_button`s. Emits `step` with `-1` or `+1`. Hold-to-repeat: after 400 ms, repeat every 80 ms while held (`pointerdown`/`pointerup`/`pointercancel`/`blur`).                                                                                                                                               |
+| `flow_arrow`      | none                                                                             | A 24px-wide column containing `→`, vertically centred, `var(--fg-dim)`.                                                                                                                                                                                                                                                                                 |
 
 `fill_bar`'s mark row is the mechanism `ui_ux.md` §10 requires for the Silo and Tank strain
 markers. §10 sketches the marks both inline and beneath the bar; **use the row beneath** — an
@@ -234,7 +254,7 @@ prose leaves open. Read it before writing anything.
 including the wear loop and the stall check; `market_path`.
 
 **What NOT to port:** `settings`, `purchase`, `buy_coal`, `band`, `deliverable`, `income`,
-`clone_with`, `sweep`. These are the greedy *policy* — a design tool for measuring
+`clone_with`, `sweep`. These are the greedy _policy_ — a design tool for measuring
 `TargetEnergy`, not game rules. The player is the policy.
 
 **One trap:** `sim.py`'s `buy_coal` applies a policy-specific floor (`s.reserve()` when the
@@ -246,20 +266,20 @@ rule. The rule is in `specs.md` §Spendable energy: a coal purchase is limited b
 
 All created, all under `src/game/`:
 
-| File               | Contents                                                                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `constants.ts`     | Every constant from `specs.md`'s tables as one `as const` export per group: `TARGET_ENERGY`, `TIME_LIMIT`, `MAX_SETTING`, `STRAIN_GAIN`, `BACKLOG_THRESHOLD`, `STARVE_THRESHOLD`, `CAPACITY_GROWTH`, `UPGRADE_GAIN`, `MAX_EFFICIENCY`, `RESERVE_FRACTION`, `STARTUP_SECONDS`, `RESTART_MULTIPLE`, `STARTING_CHARGE`, the market group, the three machine groups, the four starting storage capacities, and the upgrade cost table. Each group carries a comment naming its `specs.md` section. Storage capacities in **kg** (Stockpile 1000, Silo 500, Tank 3000) and the Battery in MWh (10). |
-| `types.ts`         | `MachineId = 'pulverizer' \| 'boiler' \| 'turbine'`; `StorageId = 'stockpile' \| 'silo' \| 'tank' \| 'battery'`; `UpgradeTrackId` (ten members: `${MachineId}_capacity`, `${MachineId}_efficiency`, `${StorageId}_capacity`); `RunOutcome = 'idle' \| 'running' \| 'won' \| 'timeout' \| 'stalled'`; `StressKind = 'temperature' \| 'pressure' \| 'vibration'`. No classes. |
-| `random.ts`        | `class Random` — mulberry32, seeded in the constructor. `next(): number` in `[0, 1)`, `uniform(minimum, maximum): number`. No dependency. |
-| `upgrade_track.ts` | `class UpgradeTrack` — constructed with `baseCost` and `costGrowth`; fields `level`; getter `cost` per `specs.md` §Upgrade costs; `purchase(): void` increments `level`. |
-| `storage.ts`       | `class Storage` — `contents`, `capacity`, a `UpgradeTrack`; getter `fill` (`contents / capacity`, `0` when capacity ≤ 0); `add(amount)` applying the `min(produced, capacity − contents)` clamp of `specs.md` §Production flow and returning the discarded remainder; `remove(amount)` clamped at 0; `upgradeCapacity()` multiplying by `CAPACITY_GROWTH`. |
+| File               | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `constants.ts`     | Every constant from `specs.md`'s tables as one `as const` export per group: `TARGET_ENERGY`, `TIME_LIMIT`, `MAX_SETTING`, `STRAIN_GAIN`, `BACKLOG_THRESHOLD`, `STARVE_THRESHOLD`, `CAPACITY_GROWTH`, `UPGRADE_GAIN`, `MAX_EFFICIENCY`, `RESERVE_FRACTION`, `STARTUP_SECONDS`, `RESTART_MULTIPLE`, `STARTING_CHARGE`, the market group, the three machine groups, the four starting storage capacities, and the upgrade cost table. Each group carries a comment naming its `specs.md` section. Storage capacities in **kg** (Stockpile 1000, Silo 500, Tank 3000) and the Battery in MWh (10).                                                                                                                          |
+| `types.ts`         | `MachineId = 'pulverizer' \| 'boiler' \| 'turbine'`; `StorageId = 'stockpile' \| 'silo' \| 'tank' \| 'battery'`; `UpgradeTrackId` (ten members: `${MachineId}_capacity`, `${MachineId}_efficiency`, `${StorageId}_capacity`); `RunOutcome = 'idle' \| 'running' \| 'won' \| 'timeout' \| 'stalled'`; `StressKind = 'temperature' \| 'pressure' \| 'vibration'`. No classes.                                                                                                                                                                                                                                                                                                                                             |
+| `random.ts`        | `class Random` — mulberry32, seeded in the constructor. `next(): number` in `[0, 1)`, `uniform(minimum, maximum): number`. No dependency.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `upgrade_track.ts` | `class UpgradeTrack` — constructed with `baseCost` and `costGrowth`; fields `level`; getter `cost` per `specs.md` §Upgrade costs; `purchase(): void` increments `level`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `storage.ts`       | `class Storage` — `contents`, `capacity`, a `UpgradeTrack`; getter `fill` (`contents / capacity`, `0` when capacity ≤ 0); `add(amount)` applying the `min(produced, capacity − contents)` clamp of `specs.md` §Production flow and returning the discarded remainder; `remove(amount)` clamped at 0; `upgradeCapacity()` multiplying by `CAPACITY_GROWTH`.                                                                                                                                                                                                                                                                                                                                                              |
 | `machine.ts`       | `abstract class Machine` — `capacity`, `efficiency`, `settingSteps` (integer 0–20), `wear`, `repairRemaining`, `tripCount`, and its capacity + efficiency `UpgradeTrack`s. Getters: `setting` (`settingSteps / 10`), `isTripped`, `output` (`capacity * setting`), `electricConsumption` (0 for the Turbine). Methods taking `strain`: `stress(strain)`, `excess(strain)`, `cleanCeiling(strain)`, `advanceWear(strain, runRatio, deltaSeconds)`. Stress constants (`baseStress`, `stressRange`, `safeStress`, `maxStress`) and wear constants (`wearGrowth`, `wearRecovery`, `repairSeconds`) are `abstract readonly` and supplied by subclasses from `constants.ts`. Formulas: `specs.md` §Setting, stress, and wear. |
-| `pulverizer.ts`    | `class Pulverizer extends Machine` — getters `rawCoalConsumption`, `pulverizedOutput`.                                                                        |
-| `boiler.ts`        | `class Boiler extends Machine` — getters `fuelConsumption`, `steamOutput`.                                                                                    |
-| `turbine.ts`       | `class Turbine extends Machine` — getters `steamConsumption`, `powerOutput`; `electricConsumption` returns 0.                                                 |
-| `coal_market.ts`   | `class CoalMarket` — constructed with a seed; holds `market` and `elapsedSeconds`; getters `trend`, `price` (MWh per tonne) and `pricePerKilogram` (`price / 1000`); `step(deltaSeconds)` advancing drift, noise and the clamp per `specs.md` §The coal market; a `priceHistory` ring buffer of the last 60 one-second samples for the Stockpile card. |
-| `energy_ledger.ts` | `class EnergyLedger` — running totals `generated`, `discarded`, `machineUse`, `coalCost`, `upgradeSpend`, plus `peakContents`, and rolling series for the Power Summary: `netFlowHistory` (60 one-second samples), `averageNetFlow`, `peakNetFlow`. Exists so Stage 3 can assert conservation and Stage 9 can render §18 and §19 without recomputation. |
-| `game_engine.ts`   | `class GameEngine` — everything below.                                                                                                                       |
+| `pulverizer.ts`    | `class Pulverizer extends Machine` — getters `rawCoalConsumption`, `pulverizedOutput`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `boiler.ts`        | `class Boiler extends Machine` — getters `fuelConsumption`, `steamOutput`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `turbine.ts`       | `class Turbine extends Machine` — getters `steamConsumption`, `powerOutput`; `electricConsumption` returns 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `coal_market.ts`   | `class CoalMarket` — constructed with a seed; holds `market` and `elapsedSeconds`; getters `trend`, `price` (MWh per tonne) and `pricePerKilogram` (`price / 1000`); `step(deltaSeconds)` advancing drift, noise and the clamp per `specs.md` §The coal market; a `priceHistory` ring buffer of the last 60 one-second samples for the Stockpile card.                                                                                                                                                                                                                                                                                                                                                                  |
+| `energy_ledger.ts` | `class EnergyLedger` — running totals `generated`, `discarded`, `machineUse`, `coalCost`, `upgradeSpend`, plus `peakContents`, and rolling series for the Power Summary: `netFlowHistory` (60 one-second samples), `averageNetFlow`, `peakNetFlow`. Exists so Stage 3 can assert conservation and Stage 9 can render §18 and §19 without recomputation.                                                                                                                                                                                                                                                                                                                                                                 |
+| `game_engine.ts`   | `class GameEngine` — everything below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### `GameEngine` public surface
 
@@ -267,43 +287,43 @@ Implement exactly this. Later stages depend on these names.
 
 ```ts
 class GameEngine {
-  constructor(seed: number)
+  constructor(seed: number);
 
   // state, all readonly to callers
-  get elapsedSeconds(): number
-  get remainingSeconds(): number
-  get outcome(): RunOutcome
-  readonly stockpile: Storage
-  readonly silo: Storage
-  readonly tank: Storage
-  readonly battery: Storage
-  readonly pulverizer: Pulverizer
-  readonly boiler: Boiler
-  readonly turbine: Turbine
-  readonly market: CoalMarket
-  readonly ledger: EnergyLedger
+  get elapsedSeconds(): number;
+  get remainingSeconds(): number;
+  get outcome(): RunOutcome;
+  readonly stockpile: Storage;
+  readonly silo: Storage;
+  readonly tank: Storage;
+  readonly battery: Storage;
+  readonly pulverizer: Pulverizer;
+  readonly boiler: Boiler;
+  readonly turbine: Turbine;
+  readonly market: CoalMarket;
+  readonly ledger: EnergyLedger;
 
   // derived, per specs.md §Spendable energy
-  get startupEnergy(): number
-  get minimumReserve(): number
-  get spendableEnergy(): number
-  get coalBudget(): number          // max(0, battery.contents - startupEnergy)
+  get startupEnergy(): number;
+  get minimumReserve(): number;
+  get spendableEnergy(): number;
+  get coalBudget(): number; // max(0, battery.contents - startupEnergy)
 
   // strain, per specs.md §Buffers and strain
-  get pulverizerStrain(): number
-  get boilerStrain(): number
-  get turbineStrain(): number
+  get pulverizerStrain(): number;
+  get boilerStrain(): number;
+  get turbineStrain(): number;
 
   // simulation
-  start(): void                     // idle -> running
-  step(deltaSeconds: number): void  // no-op unless running
+  start(): void; // idle -> running
+  step(deltaSeconds: number): void; // no-op unless running
 
   // player actions
-  setSettingSteps(machine: MachineId, steps: number): void   // clamped 0..20
-  buyCoal(kilograms: number): number                         // returns kg actually bought
-  upgradeCost(track: UpgradeTrackId): number
-  canAfford(track: UpgradeTrackId): boolean
-  purchaseUpgrade(track: UpgradeTrackId): boolean
+  setSettingSteps(machine: MachineId, steps: number): void; // clamped 0..20
+  buyCoal(kilograms: number): number; // returns kg actually bought
+  upgradeCost(track: UpgradeTrackId): number;
+  canAfford(track: UpgradeTrackId): boolean;
+  purchaseUpgrade(track: UpgradeTrackId): boolean;
 }
 ```
 
@@ -360,7 +380,7 @@ Extend the **Economy changes** rule so the new constants file is kept in sync:
 of [`simulator/verify.py`](simulator/verify.py).
 
 `verify.py`'s checks 4, 5 and 6 are driven by its greedy policy. Those three properties belong to
-the **engine**, not to any policy — energy must be conserved under *any* input sequence — so here
+the **engine**, not to any policy — energy must be conserved under _any_ input sequence — so here
 they are driven by a fixed deterministic script instead. The policy is not ported.
 
 ### Files
@@ -372,12 +392,12 @@ Modified: `src/router.ts`.
 
 ```ts
 interface ScriptedRunResult {
-  engine: GameEngine
-  residual: number          // conservation residual, must be 0
-  worstReserveGap: number   // max(startupEnergy - minimumReserve) seen, must be <= 0
+  engine: GameEngine;
+  residual: number; // conservation residual, must be 0
+  worstReserveGap: number; // max(startupEnergy - minimumReserve) seen, must be <= 0
 }
 
-function runScript(seed: number, deltaSeconds: number): ScriptedRunResult
+function runScript(seed: number, deltaSeconds: number): ScriptedRunResult;
 ```
 
 The script is fixed, deterministic and exercises every subsystem. Once per simulated second, in
@@ -401,16 +421,16 @@ Renders a `<pre>`-style report in the terminal font: one line per check,
 `ok  <name>  got <value>  spec <value>`, `FAIL` where it does not hold, and a final
 `ALL CHECKS PASSED` or `FAILED: <names>`. Runs synchronously on mount. Checks, in order:
 
-| Group                | Checks                                                                                                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Opening state        | The 15 rows of `verify.py`'s `SPEC_OPENING`, at the starting Setting of 0.6, tolerance `max(0.005, 0.002 × expected)`. Take the expected values from the tables in `specs.md`, not from this plan. |
-| Clean ceilings       | The 3 machines × {slack store, fully strained}, tolerance 0.002. Build one state per machine as `verify.py`'s `at()` does — no single state strains all three.                     |
-| Max stress           | Each machine's stress at `MaxSetting` with a slack store equals its `MaxTemperature` / `MaxPressure` / `MaxVibration`, tolerance 0.05.                                             |
-| Energy balance       | `runScript(1, 0.1).residual` is 0 within `1e-6`.                                                                                                                                  |
-| Step convergence     | `runScript` over seeds 0–15 at `dt ∈ {0.2, 0.1, 0.05}`: the relative spread of the median peak is ≤ 0.06 and of total upgrade levels ≤ 0.02. Report `dt = 0.4` for contrast without asserting on it. |
-| Restart floor        | `worstReserveGap ≤ 0` across seeds 0–11 at `dt = 0.1`. This is `specs.md`'s guarantee that `MinimumReserve` never sinks below a restart.                                            |
-| Stall                | A purpose-built run — all machines at 0.6 with the Turbine at 0 and no coal purchased — reaches `outcome === 'stalled'` before the timer.                                          |
-| Market bounds        | Over a 600 s walk, `Market` never leaves `[1 − MarketRange, 1 + MarketRange]`, and its mean over 32 seeds is within 2% of 1.                                                        |
+| Group            | Checks                                                                                                                                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Opening state    | The 15 rows of `verify.py`'s `SPEC_OPENING`, at the starting Setting of 0.6, tolerance `max(0.005, 0.002 × expected)`. Take the expected values from the tables in `specs.md`, not from this plan.   |
+| Clean ceilings   | The 3 machines × {slack store, fully strained}, tolerance 0.002. Build one state per machine as `verify.py`'s `at()` does — no single state strains all three.                                       |
+| Max stress       | Each machine's stress at `MaxSetting` with a slack store equals its `MaxTemperature` / `MaxPressure` / `MaxVibration`, tolerance 0.05.                                                               |
+| Energy balance   | `runScript(1, 0.1).residual` is 0 within `1e-6`.                                                                                                                                                     |
+| Step convergence | `runScript` over seeds 0–15 at `dt ∈ {0.2, 0.1, 0.05}`: the relative spread of the median peak is ≤ 0.06 and of total upgrade levels ≤ 0.02. Report `dt = 0.4` for contrast without asserting on it. |
+| Restart floor    | `worstReserveGap ≤ 0` across seeds 0–11 at `dt = 0.1`. This is `specs.md`'s guarantee that `MinimumReserve` never sinks below a restart.                                                             |
+| Stall            | A purpose-built run — all machines at 0.6 with the Turbine at 0 and no coal purchased — reaches `outcome === 'stalled'` before the timer.                                                            |
+| Market bounds    | Over a 600 s walk, `Market` never leaves `[1 − MarketRange, 1 + MarketRange]`, and its mean over 32 seeds is within 2% of 1.                                                                         |
 
 ### Routing
 
@@ -418,7 +438,11 @@ Add the route only in development, so it cannot ship:
 
 ```ts
 if (import.meta.env.DEV) {
-  router.addRoute({path: '/verify', name: 'verify', component: () => import('@/components/screens/verify_screen.vue')})
+  router.addRoute({
+    path: "/verify",
+    name: "verify",
+    component: () => import("@/components/screens/verify_screen.vue"),
+  });
 }
 ```
 
@@ -449,18 +473,18 @@ Modified: `src/components/screens/home_screen.vue`.
 Pure functions, no state. Values are right-aligned by the consuming component; these produce the
 text only.
 
-| Function                       | Rule                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `formatTime(seconds)`          | `MM:SS`, zero-padded.                                                    |
-| `formatEnergy(mwh)`            | 2 decimals below 10, otherwise 1.                                        |
-| `formatPower(mw, signed?)`     | 2 decimals below 10, otherwise 1. `signed` prefixes `+` when positive.   |
-| `formatMass(kilograms)`        | Converts to tonnes: 2 decimals below 10 t, otherwise 1.                  |
+| Function                         | Rule                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `formatTime(seconds)`            | `MM:SS`, zero-padded.                                                  |
+| `formatEnergy(mwh)`              | 2 decimals below 10, otherwise 1.                                      |
+| `formatPower(mw, signed?)`       | 2 decimals below 10, otherwise 1. `signed` prefixes `+` when positive. |
+| `formatMass(kilograms)`          | Converts to tonnes: 2 decimals below 10 t, otherwise 1.                |
 | `formatRate(kilogramsPerSecond)` | 2 decimals.                                                            |
-| `formatPrice(mwhPerTonne)`     | 2 decimals.                                                             |
-| `formatSetting(setting)`       | 1 decimal.                                                              |
-| `formatEfficiency(efficiency)` | 2 decimals.                                                             |
-| `formatPercent(fraction)`      | Rounded integer, no `%` sign (the caller adds it).                      |
-| `formatSeconds(seconds)`       | Rounded integer.                                                        |
+| `formatPrice(mwhPerTonne)`       | 2 decimals.                                                            |
+| `formatSetting(setting)`         | 1 decimal.                                                             |
+| `formatEfficiency(efficiency)`   | 2 decimals.                                                            |
+| `formatPercent(fraction)`        | Rounded integer, no `%` sign (the caller adds it).                     |
+| `formatSeconds(seconds)`         | Rounded integer.                                                       |
 
 ### `view_model.ts`
 
@@ -474,84 +498,84 @@ where a component needs to compute geometry such as a bar width):
 
 ```ts
 interface GameView {
-  outcome: RunOutcome
-  elapsedSeconds: number
-  timeText: string                 // MM:SS remaining
-  target: {storedText: string, targetText: string, fraction: number}
-  bestResultText: string | null
-  stockpile: StockpileView
-  silo: BufferView
-  tank: BufferView
-  battery: BatteryView
-  pulverizer: MachineView
-  boiler: MachineView
-  turbine: MachineView
-  power: PowerView
-  alerts: AlertView[]
+  outcome: RunOutcome;
+  elapsedSeconds: number;
+  timeText: string; // MM:SS remaining
+  target: { storedText: string; targetText: string; fraction: number };
+  bestResultText: string | null;
+  stockpile: StockpileView;
+  silo: BufferView;
+  tank: BufferView;
+  battery: BatteryView;
+  pulverizer: MachineView;
+  boiler: MachineView;
+  turbine: MachineView;
+  power: PowerView;
+  alerts: AlertView[];
 }
 
 interface StorageViewBase {
-  title: string
-  storedText: string               // "0.70 / 1.00 t"
-  fraction: number
-  fillPercentText: string
-  upgradeCostText: string
-  upgradeAffordable: boolean
+  title: string;
+  storedText: string; // "0.70 / 1.00 t"
+  fraction: number;
+  fillPercentText: string;
+  upgradeCostText: string;
+  upgradeAffordable: boolean;
 }
 
 interface StockpileView extends StorageViewBase {
-  priceText: string
-  priceHistory: number[]           // last 60 one-second samples
-  purchaseKilograms: number        // the stepper's current amount, owned by use_game
-  purchaseAmountText: string
-  purchaseCostText: string
-  purchaseAffordable: boolean
+  priceText: string;
+  priceHistory: number[]; // last 60 one-second samples
+  purchaseKilograms: number; // the stepper's current amount, owned by use_game
+  purchaseAmountText: string;
+  purchaseCostText: string;
+  purchaseAffordable: boolean;
 }
 
 interface BufferView extends StorageViewBase {
-  marks: {fraction: number, glyph: string}[]   // Silo: backlog. Tank: starve + backlog.
+  marks: { fraction: number; glyph: string }[]; // Silo: backlog. Tank: starve + backlog.
 }
 
 interface BatteryView extends StorageViewBase {
-  spendableText: string
-  reservedText: string
-  netFlowText: string
+  spendableText: string;
+  reservedText: string;
+  netFlowText: string;
 }
 
 interface MachineView {
-  title: string
-  capacityText: string
-  efficiencyText: string
-  settingText: string
-  settingSteps: number
-  stressLabel: string              // TEMP | PRESSURE | VIBRATION
-  stressText: string               // value with unit
-  stressFraction: number           // clamp(stress / maxStress, 0, 1)
-  safeFraction: number             // safeStress / maxStress
-  cleanToText: string              // live, including strain
-  wearFraction: number
-  wearPercentText: string
-  wearNoteText: string             // "TRIPS IN 12S" | "CLEARS IN 40S" | "CLEAN"
-  outputText: string
-  repairText: string | null        // "REPAIR 34S" while tripped; replaces the output row
-  capacityUpgradeCostText: string
-  capacityUpgradeAffordable: boolean
-  efficiencyUpgradeCostText: string
-  efficiencyUpgradeAffordable: boolean
+  title: string;
+  capacityText: string;
+  efficiencyText: string;
+  settingText: string;
+  settingSteps: number;
+  stressLabel: string; // TEMP | PRESSURE | VIBRATION
+  stressText: string; // value with unit
+  stressFraction: number; // clamp(stress / maxStress, 0, 1)
+  safeFraction: number; // safeStress / maxStress
+  cleanToText: string; // live, including strain
+  wearFraction: number;
+  wearPercentText: string;
+  wearNoteText: string; // "TRIPS IN 12S" | "CLEARS IN 40S" | "CLEAN"
+  outputText: string;
+  repairText: string | null; // "REPAIR 34S" while tripped; replaces the output row
+  capacityUpgradeCostText: string;
+  capacityUpgradeAffordable: boolean;
+  efficiencyUpgradeCostText: string;
+  efficiencyUpgradeAffordable: boolean;
 }
 
 interface PowerView {
-  generationText: string
-  consumptionText: string
-  netFlowText: string
-  averageText: string
-  peakText: string
-  netFlowHistory: number[]
+  generationText: string;
+  consumptionText: string;
+  netFlowText: string;
+  averageText: string;
+  peakText: string;
+  netFlowHistory: number[];
 }
 
 interface AlertView {
-  text: string
-  urgent: boolean
+  text: string;
+  urgent: boolean;
 }
 ```
 
@@ -586,12 +610,12 @@ The loop must stop scheduling frames once `outcome` is not `'running'`.
 
 A centred `terminal_panel` over a dimmed chain, driven by `outcome`:
 
-| `outcome`   | Title            | Body                                                                | Button      |
-| ----------- | ---------------- | -------------------------------------------------------------------- | ----------- |
-| `idle`      | `OVERPOWERED`    | Objective line, the target, the time limit, and the best result.     | `START RUN` |
-| `won`       | `TARGET REACHED` | Time taken, peak stored energy, best result.                         | `NEW RUN`   |
-| `timeout`   | `TIME EXPIRED`   | Peak stored energy, best result.                                     | `NEW RUN`   |
-| `stalled`   | `PLANT STALLED`  | A line naming why (`specs.md` §Stalling), peak, best result.         | `NEW RUN`   |
+| `outcome` | Title            | Body                                                             | Button      |
+| --------- | ---------------- | ---------------------------------------------------------------- | ----------- |
+| `idle`    | `OVERPOWERED`    | Objective line, the target, the time limit, and the best result. | `START RUN` |
+| `won`     | `TARGET REACHED` | Time taken, peak stored energy, best result.                     | `NEW RUN`   |
+| `timeout` | `TIME EXPIRED`   | Peak stored energy, best result.                                 | `NEW RUN`   |
+| `stalled` | `PLANT STALLED`  | A line naming why (`specs.md` §Stalling), peak, best result.     | `NEW RUN`   |
 
 Not shown while `running`. The button is auto-focused so Enter works immediately.
 
@@ -880,7 +904,7 @@ grid, no area fill, no gradient, square corners, axis labels in the bitmap font.
 
 **A deliberate departure:** §19 sketches the graph in box-drawing characters. A real-time ASCII
 line chart quantises to whole cells and jitters badly at this update rate. The SVG satisfies every
-*rule* §19 states (green line, faint grid, no fill, minimal labels, instrument-like) while staying
+_rule_ §19 states (green line, faint grid, no fill, minimal labels, instrument-like) while staying
 readable. If a character-cell chart is preferred, this is the one component to change.
 
 Y-axis auto-scales to the window's min and max with zero always included, so the sign of net flow
@@ -891,17 +915,17 @@ is always visible.
 `ui_ux.md` §20. `NO ALERTS` when the list is empty. Built in `view_model.ts` in this priority
 order; `urgent` alerts blink or invert (never a new colour, §20):
 
-| Condition                                        | Text                    | Urgent |
-| ------------------------------------------------ | ----------------------- | ------ |
-| Machine tripped                                  | `<MACHINE> TRIPPED`     | yes    |
-| Battery contents ≤ `MinimumReserve`              | `LOW BATTERY`           | yes    |
-| `Excess > 0` on the Pulverizer                   | `HIGH TEMPERATURE`      | no     |
-| `Excess > 0` on the Boiler                       | `HIGH PRESSURE`         | no     |
-| `Excess > 0` on the Turbine                      | `HIGH VIBRATION`        | no     |
-| Tank fill ≤ `StarveThreshold`                    | `TANK LOW`              | no     |
-| Tank fill ≥ `BacklogThreshold`                   | `TANK FULL`             | no     |
-| Silo fill ≥ `BacklogThreshold`                   | `SILO FULL`             | no     |
-| Stockpile contents = 0                           | `STOCKPILE EMPTY`       | no     |
+| Condition                           | Text                | Urgent |
+| ----------------------------------- | ------------------- | ------ |
+| Machine tripped                     | `<MACHINE> TRIPPED` | yes    |
+| Battery contents ≤ `MinimumReserve` | `LOW BATTERY`       | yes    |
+| `Excess > 0` on the Pulverizer      | `HIGH TEMPERATURE`  | no     |
+| `Excess > 0` on the Boiler          | `HIGH PRESSURE`     | no     |
+| `Excess > 0` on the Turbine         | `HIGH VIBRATION`    | no     |
+| Tank fill ≤ `StarveThreshold`       | `TANK LOW`          | no     |
+| Tank fill ≥ `BacklogThreshold`      | `TANK FULL`         | no     |
+| Silo fill ≥ `BacklogThreshold`      | `SILO FULL`         | no     |
+| Stockpile contents = 0              | `STOCKPILE EMPTY`   | no     |
 
 `SILO FULL`, `TANK FULL` and `TANK LOW` fire on the **strain thresholds**, not on the store
 actually reaching an end — `ui_ux.md` §20 is explicit that this is the point at which they start
@@ -937,7 +961,7 @@ Modified: the terminal primitives, `machine_card.vue`, `stockpile_card.vue`, `ru
 - Disabled buttons carry `aria-disabled="true"` and dim green text, **and** their label reads
   `CAPACITY: 0.03` unchanged, so a player can see the price they cannot pay rather than a
   greyed-out mystery.
-- The tripped state is signalled by an inverted border *and* the `REPAIR {n}S` text, never by
+- The tripped state is signalled by an inverted border _and_ the `REPAIR {n}S` text, never by
   brightness alone.
 - Each card is a `<section>` with an `aria-label`; the chain is a `<nav>`-free plain region with
   an `aria-label` of `PRODUCTION CHAIN`.
@@ -988,14 +1012,14 @@ Modified: `src/assets/styles.css`, `src/components/screens/home_screen.vue`.
 
 Do these in the stage that causes them, not at the end:
 
-| Document        | Change                                                                                  | Stage |
-| --------------- | ----------------------------------------------------------------------------------------- | ----- |
-| `CLAUDE.md`     | Font rule amended to permit the self-hosted PxPlus IBM VGA8.                             | 1     |
-| `CLAUDE.md`     | Economy rule extended to include `src/game/constants.ts`.                                | 2     |
+| Document        | Change                                                                                                                                  | Stage                            |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `CLAUDE.md`     | Font rule amended to permit the self-hosted PxPlus IBM VGA8.                                                                            | 1                                |
+| `CLAUDE.md`     | Economy rule extended to include `src/game/constants.ts`.                                                                               | 2                                |
 | `CLAUDE.md`     | Project section rewritten — `src/` is no longer a blank slate. Describe `game/`, `view/`, `components/`, and the dev-only verify route. | 11 (or the last stage completed) |
-| `docs/ui_ux.md` | §11: drop the `[COAL PRICE]` upgrade.                                                    | 5     |
-| `docs/ui_ux.md` | §12 and §14: drop the `PENALTY` row.                                                     | 6     |
-| `docs/ui_ux.md` | §19: note that the net-flow graph ships as SVG rather than character cells, and why.     | 9     |
+| `docs/ui_ux.md` | §11: drop the `[COAL PRICE]` upgrade.                                                                                                   | 5                                |
+| `docs/ui_ux.md` | §12 and §14: drop the `PENALTY` row.                                                                                                    | 6                                |
+| `docs/ui_ux.md` | §19: note that the net-flow graph ships as SVG rather than character cells, and why.                                                    | 9                                |
 
 `docs/specs.md` is **not** modified by this plan — no gameplay constant changes, so `simulator/`
 is untouched too.
