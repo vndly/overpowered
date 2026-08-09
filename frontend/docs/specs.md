@@ -6,7 +6,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 | Type     | Parameter    | Unit | Description                          | Value |
 | -------- | ------------ | ---- | ------------------------------------ | ----: |
-| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |    40 |
+| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |    80 |
 | Constant | TimeLimit    | s    | Time available to reach TargetEnergy |   600 |
 
 - The win is checked against `Battery Contents` — energy that has been generated and then spent is not banked. Reaching the target requires a Battery `Capacity` of at least `TargetEnergy`.
@@ -14,7 +14,15 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 - On defeat the run ends and every component resets to its starting value. The highest stored energy reached is recorded as the player's best result.
 - Because upgrades compound, the central decision of a run is _when to stop reinvesting and start banking_: energy spent on upgrades is energy not counted toward the target, but an under-built plant cannot fill the Battery before the timer expires.
 
-`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned. **The current value of 40 predates both the coal market and the per-track `CostGrowth` rates, and has not been re-measured against either** — it is a placeholder until the simulation exists and strong play can be sampled. The steeper rate now carried by machine capacity makes a deep build roughly twice what it cost under a single 1.55 rate, so the measured peak is expected to come out lower than 40 rather than higher.
+`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
+
+The current value of 80 was measured against the economy as it now stands. A simulator built to this document, run under a greedy reinvestment policy across 60 market seeds, reaches a **median peak of about 103 MWh** — quartiles 86 and 125, individual runs from 27 to 192. A target of 80 is reached on 82% of seeds by one good line of play, and 87% when the line is chosen to suit the market. The previous value of 40 predated the coal market and was reached on every seed; it had stopped being a target at all.
+
+| TargetEnergy         |  60 |  70 |  75 |  80 |  85 |  90 | 100 |
+| -------------------- | --: | --: | --: | --: | --: | --: | --: |
+| Strong-play win rate | 93% | 90% | 87% | 82% | 75% | 70% | 57% |
+
+Two caveats attach to the number. The policy measured is a strong heuristic, not proven-optimal play, so the true peak sits at or above 103 and 80 errs towards the generous. And the spread is wide — the market alone separates a 27 MWh run from a 192 MWh one — so no single target is equally fair on every seed.
 
 ### Stalling
 
@@ -77,23 +85,28 @@ Energy stored in the Battery, measured in MWh, is the game's only currency. Ther
 
 Spending is floored twice, because upgrades and coal need different protections.
 
-| Type     | Parameter       | Unit | Description / Formula                                              |  Value |
-| -------- | --------------- | ---- | ------------------------------------------------------------------ | -----: |
-| Constant | ReserveFraction | %    | Share of Battery Capacity held back from upgrade spending          |   0.10 |
-| Constant | StartupSeconds  | s    | Machine runtime the restart floor must cover                       |     30 |
-| Variable | MinimumReserve  | MWh  | Battery Capacity × ReserveFraction                                 |      1 |
-| Variable | SpendableEnergy | MWh  | max(0, Battery Contents − MinimumReserve)                          |      3 |
-| Variable | StartupEnergy   | MWh  | (Pulverizer + Boiler ElectricConsumption) × StartupSeconds / 3,600 | 0.0341 |
+| Type     | Parameter       | Unit | Description / Formula                                                    |  Value |
+| -------- | --------------- | ---- | ------------------------------------------------------------------------ | -----: |
+| Constant | ReserveFraction | %    | Share of Battery Capacity held back from upgrade spending                |   0.10 |
+| Constant | StartupSeconds  | s    | Machine runtime the restart floor must cover                             |     30 |
+| Constant | RestartMultiple | ×    | Restarts the upgrade floor must leave affordable                         |      2 |
+| Variable | StartupEnergy   | MWh  | (Pulverizer + Boiler ElectricConsumption) × StartupSeconds / 3,600       | 0.0341 |
+| Variable | MinimumReserve  | MWh  | max(Battery Capacity × ReserveFraction, StartupEnergy × RestartMultiple) |      1 |
+| Variable | SpendableEnergy | MWh  | max(0, Battery Contents − MinimumReserve)                                |      3 |
 
 **Upgrades** are limited by `SpendableEnergy`. This is the floor the player sees and plans around: it stops a run from being wrecked by one over-ambitious purchase, and because it is a share of Battery `Capacity` it keeps scaling as the plant grows.
+
+`MinimumReserve` takes the larger of the two terms because they scale with different things, and the share-of-Capacity term alone is not always the larger. It tracks the **Battery**, while `StartupEnergy` tracks **machine** consumption. A player who pours everything into throughput and leaves the Battery behind drives `StartupEnergy` past `Capacity × ReserveFraction` — at base Settings that happens once machine capacity reaches about 29× with the Battery unupgraded, a little over eight capacity levels. Past that crossover the upgrade floor sits *below* the coal floor, so spending upgrades down to the reserve leaves `max(0, Contents − StartupEnergy)` at exactly zero: no coal is purchasable at any price, the chain starves, and nothing can restart it. It is not even a quick loss, because the Battery is still above zero and [Stalling](#stalling) does not fire until the machines have drained it. Holding the reserve at `RestartMultiple` startups keeps a restart affordable at every scale, and costs nothing at base, where `StartupEnergy × 2` is 0.068 MWh against a 1 MWh reserve.
+
+Because `StartupEnergy` is computed from current consumption, `MinimumReserve` moves with the `Setting`s once that term dominates. The Battery card displays the reserve, so the player sees it move.
 
 **Coal purchases** are limited by `max(0, Contents − StartupEnergy)` instead. Coal is the only purchase that can restart a stalled chain, so it must remain affordable even at the reserve — a player sitting at `MinimumReserve` with an empty Stockpile would otherwise be unable to act at all. `StartupEnergy` is the residue that stops the opposite trap: spending the last of the Battery on coal that there is then no electricity left to pulverize.
 
 **Machines** draw from the full `Contents` and may take it below both floors. The floors restrict discrete spending only; they are not brownout thresholds.
 
-Together these cover every recoverable case. `StartupEnergy` always covers the Pulverizer and Boiler for `StartupSeconds`, and because a machine throttles instead of stopping, the Turbine begins returning energy as soon as the first steam reaches the Tank — well inside that window. `StartupEnergy` is derived from current consumption, so it scales with every capacity upgrade. From a Battery sitting at `MinimumReserve` with the whole chain empty, one coal purchase restarts production and the Battery recovers without ever reaching zero.
+Together these cover every recoverable case, at every scale. `StartupEnergy` always covers the Pulverizer and Boiler for `StartupSeconds`, and because a machine throttles instead of stopping, the Turbine begins returning energy as soon as the first steam reaches the Tank — well inside that window. Both `StartupEnergy` and `MinimumReserve` are derived from current consumption once the plant is large, so they scale with every capacity upgrade together rather than drifting apart. From a Battery sitting at `MinimumReserve` with the whole chain empty, one coal purchase restarts production and the Battery recovers without ever reaching zero.
 
-Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. At base capacities a restart from `MinimumReserve` buys 966 kg of raw coal at the opening price and 540 kg at the end-of-run trend — 191 s and 107 s of Pulverizer runtime at its 5.05 kg/s raw draw, against the few seconds the Turbine needs before it starts returning energy. Both sides of that comparison scale with capacity — the reserve with the Battery's, the coal draw with the Pulverizer's — so a player who lets the Battery fall far behind the rest of the plant narrows the margin.
+Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. At base capacities a restart from `MinimumReserve` buys 966 kg of raw coal at the opening price and 540 kg at the end-of-run trend — 191 s and 107 s of Pulverizer runtime at its 5.05 kg/s raw draw, against the few seconds the Turbine needs before it starts returning energy. Both sides of that comparison scale with capacity — the reserve with the Battery's until the startup term takes over, the coal draw with the Pulverizer's — so the margin narrows as the plant grows but never closes.
 
 The floors cannot cover every case, because the player can always choose a configuration that consumes energy without producing any — running the Pulverizer and Boiler with the Turbine's `Setting` at zero drains the Battery no matter what the floors are. That is handled as a loss condition rather than a spending rule; see [Stalling](#stalling).
 
@@ -133,7 +146,7 @@ The coal market then moves the crossings during the run. A capacity level multip
 
 Storage capacity keeps the base rate. Its value is already self-limiting: a Silo larger than a trip can drain, or a Stockpile larger than the Pulverizer can eat, is worth nothing, so it needs no extra brake.
 
-These crossover levels are estimates from the marginal-value arithmetic, not measured from play. They must be re-checked alongside `TargetEnergy` once the simulation exists.
+These crossover levels are estimates from the marginal-value arithmetic rather than measurements. Simulated strong play is roughly consistent with them: a winning run ends with capacity and control bought to comparable depth on every machine, Boiler and Turbine `Efficiency` a few levels behind, and Pulverizer `Efficiency` never bought at all, because that machine's electrical draw is too small a share of the plant to be worth improving.
 
 ## Components
 
@@ -305,11 +318,11 @@ The Battery stores electricity produced by the Turbine and supplies electricity 
 | Player controlled | Capacity       | MWh  | Maximum electricity that can be stored                                       |    10 |
 | Constant          | StartingCharge | MWh  | Electricity available at the start of a new run                              |     4 |
 | Variable          | Contents       | MWh  | Electricity currently stored; initially equal to StartingCharge              |     4 |
-| Variable          | MinimumReserve | MWh  | Capacity × ReserveFraction; upgrades cannot spend below this                 |     1 |
+| Variable          | MinimumReserve | MWh  | See [Spendable energy](#spendable-energy); upgrades cannot spend below this  |     1 |
 | Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 25.91 |
 | Variable          | EnergyChange   | MWh  | NetFlow × DeltaTimeSeconds / 3,600                                           |     — |
 
-A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is four times the starting capacity, the Battery must be upgraded before the run can be won.
+A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is eight times the starting capacity, the Battery must be upgraded — six times, to 113.9 MWh — before the run can be won.
 
 `NetFlow` represents continuous generation and machine consumption. Coal purchases and upgrade costs are discrete expenses deducted directly from `Contents` when the player confirms them — upgrades limited by `SpendableEnergy`, coal by `StartupEnergy`.
 
