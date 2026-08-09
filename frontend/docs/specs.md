@@ -20,7 +20,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 A run is lost immediately, without waiting for the timer, when the Battery, Stockpile, Silo, and Tank are all empty at the same time. In that state nothing can produce and nothing can be bought, so the run cannot be recovered.
 
-This is reachable only through a configuration that spends energy without generating any — most simply, running the Pulverizer and Boiler with the Turbine's `Setting` at zero until the Battery drains. Ending the run at once states the outcome plainly instead of leaving the player watching a dead plant until the clock expires.
+This is reachable through any configuration that spends energy without generating any — most simply, running the Pulverizer and Boiler with the Turbine's `Setting` at zero until the Battery drains, or leaving them running while the Turbine sits tripped. Ending the run at once states the outcome plainly instead of leaving the player watching a dead plant until the clock expires.
 
 ## Production flow
 
@@ -35,6 +35,7 @@ Machines have no separate enable control. A machine is enabled when `Setting > 0
 - When a machine's output storage is full, the machine continues running without pausing or changing its Setting. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded.
 - A machine only consumes resources while it is running. The rates in the component tables assume that input and electricity are available; output-storage capacity does not affect those rates.
 - During each simulation step, the amount added to output storage is `min(ProducedOutput, Capacity − Contents)`. The remaining `ProducedOutput` is discarded. This rule also applies to electricity produced while the Battery is full.
+- A machine tripped by wear runs at zero for `RepairSeconds` no matter what its `Setting` says, then resumes at that same Setting. See [Setting, stress, and wear](#setting-stress-and-wear).
 
 Storage capacities can only be increased by purchasing upgrades. All storage components start empty except the Battery, which starts with `StartingCharge`.
 
@@ -54,6 +55,8 @@ RunRatio         = min(InputRatio, ElectricityRatio)
 `RequestedInput` is in kg/s and `RequestedEnergy` in MWh, so both ratios are dimensionless. `TotalRequestedEnergy` is the sum across every electricity-consuming machine, which is what makes the electricity share proportional.
 
 Every rate in the machine's table — output, input consumption, and electrical consumption — is multiplied by `RunRatio` for that step. A machine with `RunRatio = 0` is stopped; its `Setting` is unchanged and it resumes automatically once inputs return.
+
+A machine tripped by wear is held at `RunRatio = 0` for the whole of its repair: it requests nothing, produces nothing, and its `Setting` is left untouched. Each machine's `Wear` and the coal market are advanced once per step, alongside the storage writes.
 
 When the Battery cannot meet the total demand of the Pulverizer and the Boiler, the available energy is divided between them in proportion to their demand, so both run at the same reduced `ElectricityRatio`. No machine has priority over the other.
 
@@ -158,12 +161,14 @@ CoalPrice  = Trend × Market
 
 The trend reaches 1.79 MWh/t by the end of a 600 s run. What that costs the player depends on how much energy the plant extracts from a tonne of raw coal:
 
-| Plant state                           | Net MWh per tonne of raw coal | Trend reaches it at |
-| ------------------------------------- | ----------------------------: | ------------------: |
-| Starting Efficiency and controls      |                          1.17 |                2:42 |
-| Efficiency and controls at their caps |                          2.30 |     after the timer |
+| Plant state                 | Net MWh per tonne of raw coal | Trend reaches it at |
+| --------------------------- | ----------------------------: | ------------------: |
+| Starting Efficiency of 0.85 |                          1.79 |               10:00 |
+| Efficiency at its 0.95 cap  |                          2.30 |     after the timer |
 
-Both figures are for a chain matched to the Turbine's steam draw, and neither depends on `Capacity`: a capacity upgrade scales revenue and coal consumption by the same factor, so it cannot move this number. Only Efficiency and the three controls can. Against a rising price, **Capacity buys speed and Efficiency buys survival** — a plant that upgrades neither is cash-negative by 2:42, sooner if the market is running above the trend, while one that reaches both caps still holds a 22% margin at the buzzer and is threatened only by a spike near the clamp. How much of the early run to spend on each is the trade the market exists to pose.
+Both figures are for a chain matched to the Turbine's steam draw, and neither depends on `Capacity` or on the three controls: a capacity upgrade scales revenue and coal consumption by the same factor, and a control upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and control buys headroom** — a plant that never touches Efficiency reaches break-even exactly as the timer expires, while one at `MaxEfficiency` still holds a 22% margin and is threatened only by a market spike near the clamp.
+
+That band is only 1.29× wide, because `Efficiency` spans just 0.85 to 0.95. It is narrow enough that no exponential price curve can both spare a well-run plant and sharply punish a neglected one, so the market as tuned applies steady pressure rather than a deadline. Widening it means widening the `Efficiency` range, which would need the chain rebalanced around the new starting value — an open tuning question, not a settled one.
 
 The rising price also sharpens the closing decision. Net income is `Throughput × (YieldPerTonne − CoalPrice)`, and the second factor shrinks all run no matter how large the plant grows, so there is a point past which no reinvestment can pay itself back and banking is the only correct move.
 
@@ -178,23 +183,23 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 | Player controlled | Capacity            | kg/s  | Maximum pulverized coal throughput                                                |     8 |
 | Player controlled | Efficiency          | %     | Electrical consumption performance                                                |  0.85 |
 | Player controlled | Cooling             | %     | Temperature control                                                               |   0.4 |
-| Player controlled | Setting             | %     | Operating level                                                                   |   0.8 |
+| Player controlled | Setting             | ×     | Operating level, from 0 to MaxSetting                                             |   0.8 |
 | Constant          | MaxEfficiency       | %     | Highest Efficiency obtainable through upgrades                                    |  0.95 |
 | Constant          | MaxCooling          | %     | Highest Cooling obtainable through upgrades                                       |  0.75 |
 | Constant          | BaseConsumption     | MJ/kg | Consumption required to move and crush coal                                       |   0.1 |
 | Constant          | PulverizedCoalYield | kg/kg | Pulverized coal produced per kg of raw coal                                       |  0.95 |
 | Constant          | BaseTemperature     | °C    | Minimum temperature                                                               |    30 |
 | Constant          | TemperatureRange    | °C    | Additional temperature as Setting rises                                           |   100 |
-| Constant          | SafeTemperature     | °C    | Temperature below which there is no output penalty                                |    70 |
-| Constant          | MaxTemperature      | °C    | Temperature where the output penalty reaches its maximum                          |   100 |
-| Constant          | TemperaturePenalty  | %     | Maximum temperature penalty                                                       |     1 |
+| Constant          | SafeTemperature     | °C    | Temperature below which no wear accrues                                           |    80 |
+| Constant          | MaxTemperature      | °C    | Temperature at which wear accrues fastest                                         |   150 |
 | Variable          | Temperature         | °C    | BaseTemperature + TemperatureRange × Setting × (1 − Cooling)                      |    78 |
-| Variable          | ExcessTemperature   | %     | clamp((Temperature − SafeTemperature) / (MaxTemperature − SafeTemperature), 0, 1) | 0.267 |
-| Variable          | Output              | kg/s  | Capacity × Setting × (1 − ExcessTemperature² × TemperaturePenalty)                |  5.94 |
-| Variable          | RawCoalConsumption  | kg/s  | Output / PulverizedCoalYield                                                      |  6.26 |
+| Variable          | ExcessTemperature   | %     | clamp((Temperature − SafeTemperature) / (MaxTemperature − SafeTemperature), 0, 1) |     0 |
+| Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear)       |     0 |
+| Variable          | Output              | kg/s  | Capacity × Setting                                                                |  6.40 |
+| Variable          | RawCoalConsumption  | kg/s  | Output / PulverizedCoalYield                                                      |  6.74 |
 | Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                               |  0.75 |
 
-At the starting `Cooling` of 0.4 the Pulverizer's most productive `Setting` is 0.81; at `MaxCooling` it is 1.
+At the starting `Cooling` of 0.4 the Pulverizer runs clean up to a `Setting` of 0.833 and reaches `MaxTemperature` at `MaxSetting`. Cooling upgrades raise that clean ceiling — see [Setting, stress, and wear](#setting-stress-and-wear).
 
 ### Silo
 
@@ -211,28 +216,28 @@ The player can increase `Capacity` by purchasing a Silo capacity upgrade with en
 
 The Boiler burns pulverized coal supplied by the Silo to produce high-pressure steam stored in the Tank. At base conversion, one kg of pulverized coal produces eight kg of steam; Boiler efficiency reduces the fuel required to reach the requested output.
 
-| Type              | Parameter           | Unit  | Description / Formula                                                 | Value |
-| ----------------- | ------------------- | ----- | --------------------------------------------------------------------- | ----: |
-| Player controlled | Capacity            | kg/s  | Maximum steam output                                                  |    50 |
-| Player controlled | Efficiency          | %     | Fuel and electrical consumption performance                           |  0.85 |
-| Player controlled | Regulation          | %     | Pressure control                                                      |   0.4 |
-| Player controlled | Setting             | %     | Operating level                                                       |   0.8 |
-| Constant          | MaxEfficiency       | %     | Highest Efficiency obtainable through upgrades                        |  0.95 |
-| Constant          | MaxRegulation       | %     | Highest Regulation obtainable through upgrades                        |  0.75 |
-| Constant          | BaseConsumption     | MJ/kg | Electrical consumption per kg of requested steam                      |   0.1 |
-| Constant          | SteamYield          | kg/kg | Base steam produced per kg of pulverized coal                         |     8 |
-| Constant          | BasePressure        | bar   | Minimum pressure                                                      |    20 |
-| Constant          | PressureRange       | bar   | Additional pressure the Boiler can generate as Setting rises          |   180 |
-| Constant          | SafePressure        | bar   | Pressure below which the Boiler operates without an output penalty    |    80 |
-| Constant          | MaxPressure         | bar   | Pressure at which the pressure penalty reaches its maximum            |   160 |
-| Constant          | PressurePenalty     | %     | Maximum pressure penalty                                              |     1 |
-| Variable          | Pressure            | bar   | BasePressure + PressureRange × Setting × (1 − Regulation)             | 106.4 |
-| Variable          | ExcessPressure      | %     | clamp((Pressure − SafePressure) / (MaxPressure − SafePressure), 0, 1) | 0.330 |
-| Variable          | Output              | kg/s  | Capacity × Setting × (1 − ExcessPressure² × PressurePenalty)          | 35.64 |
-| Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                    |  5.24 |
-| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                   |  4.71 |
+| Type              | Parameter           | Unit  | Description / Formula                                                       | Value |
+| ----------------- | ------------------- | ----- | --------------------------------------------------------------------------- | ----: |
+| Player controlled | Capacity            | kg/s  | Maximum steam output                                                        |    50 |
+| Player controlled | Efficiency          | %     | Fuel and electrical consumption performance                                 |  0.85 |
+| Player controlled | Regulation          | %     | Pressure control                                                            |   0.4 |
+| Player controlled | Setting             | ×     | Operating level, from 0 to MaxSetting                                       |   0.8 |
+| Constant          | MaxEfficiency       | %     | Highest Efficiency obtainable through upgrades                              |  0.95 |
+| Constant          | MaxRegulation       | %     | Highest Regulation obtainable through upgrades                              |  0.75 |
+| Constant          | BaseConsumption     | MJ/kg | Electrical consumption per kg of requested steam                            |   0.1 |
+| Constant          | SteamYield          | kg/kg | Base steam produced per kg of pulverized coal                               |     8 |
+| Constant          | BasePressure        | bar   | Minimum pressure                                                            |    20 |
+| Constant          | PressureRange       | bar   | Additional pressure the Boiler can generate as Setting rises                |   180 |
+| Constant          | SafePressure        | bar   | Pressure below which no wear accrues                                        |   110 |
+| Constant          | MaxPressure         | bar   | Pressure at which wear accrues fastest                                      |   236 |
+| Variable          | Pressure            | bar   | BasePressure + PressureRange × Setting × (1 − Regulation)                   | 106.4 |
+| Variable          | ExcessPressure      | %     | clamp((Pressure − SafePressure) / (MaxPressure − SafePressure), 0, 1)       |     0 |
+| Variable          | Wear                | %     | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
+| Variable          | Output              | kg/s  | Capacity × Setting                                                          | 40.00 |
+| Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                          |  5.88 |
+| Variable          | ElectricConsumption | MW    | (Setting × Capacity × BaseConsumption) / Efficiency                         |  4.71 |
 
-At the starting `Regulation` of 0.4 the Boiler's most productive `Setting` is 0.84; at `MaxRegulation` it is 1.
+At the starting `Regulation` of 0.4 the Boiler runs clean up to a `Setting` of 0.833 and reaches `MaxPressure` at `MaxSetting`. Regulation upgrades raise that clean ceiling — see [Setting, stress, and wear](#setting-stress-and-wear).
 
 ### Tank
 
@@ -249,26 +254,26 @@ The player can increase `Capacity` by purchasing a Tank capacity upgrade with en
 
 The Turbine converts high-pressure steam supplied by the Tank into electrical power stored in the Battery.
 
-| Type              | Parameter        | Unit    | Description / Formula                                                     | Value |
-| ----------------- | ---------------- | ------- | ------------------------------------------------------------------------- | ----: |
-| Player controlled | Capacity         | MW      | Maximum output                                                            |    50 |
-| Player controlled | Efficiency       | %       | Steam consumption performance                                             |  0.85 |
-| Player controlled | Stability        | %       | Vibration control                                                         |   0.4 |
-| Player controlled | Setting          | %       | Operating level                                                           |   0.8 |
-| Constant          | MaxEfficiency    | %       | Highest Efficiency obtainable through upgrades                            |  0.95 |
-| Constant          | MaxStability     | %       | Highest Stability obtainable through upgrades                             |  0.75 |
-| Constant          | BaseConsumption  | kg/s/MW | Steam consumption per MW                                                  |  0.75 |
-| Constant          | BaseVibration    | mm/s    | Minimum vibration                                                         |     1 |
-| Constant          | VibrationRange   | mm/s    | Additional vibration as Setting rises                                     |    10 |
-| Constant          | SafeVibration    | mm/s    | Vibration below which there is no penalty                                 |     4 |
-| Constant          | MaxVibration     | mm/s    | Vibration where penalty reaches maximum                                   |     8 |
-| Constant          | VibrationPenalty | %       | Maximum vibration penalty                                                 |     1 |
-| Variable          | Vibration        | mm/s    | BaseVibration + VibrationRange × Setting × (1 − Stability)                |   5.8 |
-| Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1) |  0.45 |
-| Variable          | Output           | MW      | Capacity × Setting × (1 − ExcessVibration² × VibrationPenalty)            | 31.90 |
-| Variable          | SteamConsumption | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                       | 35.29 |
+| Type              | Parameter        | Unit    | Description / Formula                                                       | Value |
+| ----------------- | ---------------- | ------- | --------------------------------------------------------------------------- | ----: |
+| Player controlled | Capacity         | MW      | Maximum output                                                              |    50 |
+| Player controlled | Efficiency       | %       | Steam consumption performance                                               |  0.85 |
+| Player controlled | Stability        | %       | Vibration control                                                           |   0.4 |
+| Player controlled | Setting          | ×       | Operating level, from 0 to MaxSetting                                       |   0.8 |
+| Constant          | MaxEfficiency    | %       | Highest Efficiency obtainable through upgrades                              |  0.95 |
+| Constant          | MaxStability     | %       | Highest Stability obtainable through upgrades                               |  0.75 |
+| Constant          | BaseConsumption  | kg/s/MW | Steam consumption per MW                                                    |  0.75 |
+| Constant          | BaseVibration    | mm/s    | Minimum vibration                                                           |     1 |
+| Constant          | VibrationRange   | mm/s    | Additional vibration as Setting rises                                       |    10 |
+| Constant          | SafeVibration    | mm/s    | Vibration below which no wear accrues                                       |     6 |
+| Constant          | MaxVibration     | mm/s    | Vibration at which wear accrues fastest                                     |    13 |
+| Variable          | Vibration        | mm/s    | BaseVibration + VibrationRange × Setting × (1 − Stability)                  |   5.8 |
+| Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1)   |     0 |
+| Variable          | Wear             | %       | Overdrive damage; see [Setting, stress, and wear](#setting-stress-and-wear) |     0 |
+| Variable          | Output           | MW      | Capacity × Setting                                                          | 40.00 |
+| Variable          | SteamConsumption | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                         | 35.29 |
 
-At the starting `Stability` of 0.4 the Turbine's most productive `Setting` is 0.76; at `MaxStability` it is 1.
+At the starting `Stability` of 0.4 the Turbine runs clean up to a `Setting` of 0.833 and reaches `MaxVibration` at `MaxSetting`. Stability upgrades raise that clean ceiling — see [Setting, stress, and wear](#setting-stress-and-wear).
 
 ### Battery
 
@@ -280,29 +285,45 @@ The Battery stores electricity produced by the Turbine and supplies electricity 
 | Constant          | StartingCharge | MWh  | Electricity available at the start of a new run                              |     4 |
 | Variable          | Contents       | MWh  | Electricity currently stored; initially equal to StartingCharge              |     4 |
 | Variable          | MinimumReserve | MWh  | Capacity × ReserveFraction; upgrades cannot spend below this                 |     1 |
-| Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 26.44 |
+| Variable          | NetFlow        | MW   | Turbine Output − Pulverizer ElectricConsumption − Boiler ElectricConsumption | 34.54 |
 | Variable          | EnergyChange   | MWh  | NetFlow × DeltaTimeSeconds / 3,600                                           |     — |
 
 A run opens with 3 MWh of spendable energy above the reserve — enough for three full Stockpiles of coal at the starting price, or for a first round of upgrades. Because the Battery starts at 40% of capacity and `TargetEnergy` is four times the starting capacity, the Battery must be upgraded before the run can be won.
 
 `NetFlow` represents continuous generation and machine consumption. Coal purchases and upgrade costs are discrete expenses deducted directly from `Contents` when the player confirms them — upgrades limited by `SpendableEnergy`, coal by `StartupEnergy`.
 
-## Setting and the stress curve
+## Setting, stress, and wear
 
-Each machine converts its `Setting` into a stress value — Temperature, Pressure, or Vibration — that grows linearly with the Setting and is reduced by that machine's control. Stress above the machine's safe threshold cuts output:
+`Capacity` is a rating, not a ceiling. Every machine accepts a `Setting` up to `MaxSetting` — twice its rating — and `Output` is `Capacity × Setting` across that whole range. Pushing past the rating is not penalised in output. It damages the machine.
+
+| Type     | Parameter     | Unit | Description                                         | Value |
+| -------- | ------------- | ---- | --------------------------------------------------- | ----: |
+| Constant | MaxSetting    | ×    | Highest Setting any machine accepts                 |     2 |
+| Constant | WearGrowth    | 1/s  | Wear accrued per second at Excess = 1               | 0.067 |
+| Constant | WearRecovery  | 1/s  | Wear shed per second while below the safe threshold |  0.02 |
+| Constant | RepairSeconds | s    | Time a tripped machine stays offline                |    20 |
+
+Each machine converts its `Setting` into a stress value — Temperature, Pressure, or Vibration — that grows linearly with the Setting and is reduced by that machine's control:
 
 ```text
-Excess  = clamp((Stress − SafeStress) / (MaxStress − SafeStress), 0, 1)
-Output  = Capacity × Setting × (1 − Excess² × MaxPenalty)
+Excess   = clamp((Stress − SafeStress) / (MaxStress − SafeStress), 0, 1)
+WearRate = Excess > 0 ? WearGrowth × Excess² × RunRatio : −WearRecovery
+NextWear = clamp(Wear + WearRate × DeltaTimeSeconds, 0, 1)
 ```
 
-The penalty is quadratic in `Excess` and reaches a full 100% at `MaxStress`. Both properties are required for the Setting to be a real decision. Output rises linearly with `Setting` while the penalty rises faster, so each machine has a most productive Setting strictly below its maximum, and pushing past that point produces _less_, not more.
+When `Wear` reaches 1 the machine **trips**: it produces and consumes nothing for `RepairSeconds`, whatever its `Setting` says. The `Setting` is remembered and the machine resumes at it once the repair completes, and wear sheds throughout, so a machine comes back with room to push again. Wear is scaled by `RunRatio` because a machine starved of input is not doing the work that damages it.
 
-A linear penalty capped below 100% cannot do this: the Setting term would outgrow the penalty term at every point, making maximum Setting unconditionally optimal.
+### Why it is shaped this way
 
-Raising a machine's control flattens its stress curve and moves its most productive Setting upward, until at the control's cap the machine can run at `Setting = 1` with no penalty. Control upgrades are therefore bought to unlock output the machine already has, not to add new capacity.
+Wear accrues quadratically in `Excess` and sheds at a flat, slower rate. That asymmetry is the whole mechanic: no `Setting` above the safe threshold is sustainable, so the only way to use the range above it is to alternate — push, then back off and let the machine recover.
 
-At the starting control value of 0.4, the three machines peak at Settings of 0.81, 0.84, and 0.76 — close to, but not exactly, the 0.8 they start at. The chain is close to balanced both at the starting Settings and at the optimal ones: the Pulverizer's output covers the Boiler's fuel draw, and the Boiler's output covers the Turbine's steam draw, with a small surplus in each case.
+That duty cycle pays. At the starting control of 0.4 a machine is clean up to `Setting` 0.833. Riding around `Setting` 1.45 and dropping back to 0.833 to shed wear settles near half the time in each state and averages about 1.15 × `Capacity`, roughly 38% more than parking at the safe ceiling. Sitting at `MaxSetting` is worse than both: wear builds three times faster than it sheds, so the machine spends most of its life recovering. There is a best place to ride, it is well above the rating, and it is nowhere near the top.
+
+Tripping is what misjudging it costs. `RepairSeconds` is dead time on a 600 s clock, and a tripped machine drains whatever storage sits downstream of it — which is the reason to buy Silo and Tank capacity as insurance, not only to hold more.
+
+Control upgrades buy the range back. Each one flattens the stress curve and lifts the wear-free ceiling: 0.833 at the starting 0.4, then 0.98, 1.12, 1.26, 1.39 over the next four purchases. Because `UpgradeGain` closes a fixed share of the remaining gap, the control approaches `MaxControl` without reaching it, so the ceiling approaches `MaxSetting` without ever arriving — some redline range always remains, and control converts risk into free output without ever removing the decision.
+
+The chain stays balanced through all of this. Output and every consumption rate are now linear in `Setting`, so the ratios between machines do not shift as the player pushes: the Pulverizer's output covers the Boiler's fuel draw and the Boiler's output covers the Turbine's steam draw at the starting Settings and at any common multiple of them.
 
 ## UI
 
@@ -355,13 +376,14 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 │ Efficiency {value} [Upgrade: {cost} MWh] │
 │ Control    {value} [Upgrade: {cost} MWh] │
 │ Setting    [-] {value} [+]               │
-│ {Stress}   {value} ░░░█░░ (−{penalty}%)  │
+│ {Stress}   {value} ░░░█░░ clean to {max} │
+│ Wear       ███████░░░ {n}% trips in {t}s │
 │ Output     {value}                       │
 └──────────────────────────────────────────┘
 ```
 
-The player can decrease or increase `Setting` freely. Reducing it to zero turns the machine off; increasing it above zero enables the machine. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by spending the displayed energy cost.
+The player can move `Setting` freely between zero and `MaxSetting`. Reducing it to zero turns the machine off; increasing it above zero enables the machine. Settings above the machine's clean ceiling are allowed and accrue wear. `Capacity`, `Efficiency`, and the component-specific control (`Cooling`, `Regulation`, or `Stability`) can only be increased by spending the displayed energy cost.
 
-Each machine card shows its stress value against its safe and maximum thresholds, and the output penalty currently being applied. Without that readout the player cannot see why raising the Setting stopped helping, and the central mechanic of the game is invisible. The most productive Setting is never labelled — finding it is the decision the machine card exists to pose.
+Each machine card shows its stress against the safe and maximum thresholds, the `Setting` at which stress would cross the safe threshold, and a `Wear` gauge carrying the time left before a trip at the current rate. Together those answer the only question the card has to answer: how long can I hold this. A tripped machine shows its repair countdown in place of its output. The best `Setting` to ride is never labelled — judging it against the clock is the decision the card exists to pose.
 
 An upgrade button is disabled whenever its cost exceeds `SpendableEnergy`.
