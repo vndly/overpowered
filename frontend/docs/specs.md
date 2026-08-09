@@ -49,12 +49,12 @@ The pulverizer converts raw coal supplied from the plant's stockpile into pulver
 | Player controlled | Stability        | %       | Vibration control                                                         |   0.4 |
 | Player controlled | Setting          | %       | Operating level                                                           |   0.8 |
 | Constant          | BaseConsumption  | kg/s/MW | The base consumption                                                      |   0.8 |
-| Constant          | BaseVibration    | °C      | Minimum vibration                                                         |     1 |
-| Constant          | VibrationRange   | °C      | Additional vibration as Setting rises                                     |    10 |
-| Constant          | SafeVibration    | °C      | Vibration below which there is no penalty                                 |     5 |
-| Constant          | MaxVibration     | °C      | Vibration where penalty reaches maximum                                   |    10 |
+| Constant          | BaseVibration    | mm/s    | Minimum vibration                                                         |     1 |
+| Constant          | VibrationRange   | mm/s    | Additional vibration as Setting rises                                     |    10 |
+| Constant          | SafeVibration    | mm/s    | Vibration below which there is no penalty                                 |     5 |
+| Constant          | MaxVibration     | mm/s    | Vibration where penalty reaches maximum                                   |    10 |
 | Constant          | VibrationPenalty | %       | Maximum vibration penalty                                                 |  0.25 |
-| Variable          | Vibration        | °C      | BaseVibration + VibrationRange × Setting × (1 − Stability)                |   5.8 |
+| Variable          | Vibration        | mm/s    | BaseVibration + VibrationRange × Setting × (1 − Stability)                |   5.8 |
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1) |  0.16 |
 | Variable          | Output           | MW      | Capacity × Setting × (1 − ExcessVibration × VibrationPenalty)             |  38.4 |
 | Variable          | Consumption      | kg/s    | (Setting × Capacity × BaseConsumption) / Efficiency                       | 37.65 |
