@@ -383,6 +383,12 @@ of [`simulator/verify.py`](simulator/verify.py).
 the **engine**, not to any policy — energy must be conserved under _any_ input sequence — so here
 they are driven by a fixed deterministic script instead. The policy is not ported.
 
+The stall check is asserted against the rule rather than played out. An earlier version of this
+plan reached for a scenario — machines at 0.6, Turbine at 0, no coal — which cannot stall: a
+machine with no input runs at `RunRatio = 0` and therefore draws no electricity, so the Battery
+never falls and the run simply times out. Reaching the all-empty state through play is a knife
+edge, and the property under test is the rule, not its reachability.
+
 ### Files
 
 Created: `src/game/scripted_run.ts`, `src/components/screens/verify_screen.vue`.
@@ -429,7 +435,7 @@ Renders a `<pre>`-style report in the terminal font: one line per check,
 | Energy balance   | `runScript(1, 0.1).residual` is 0 within `1e-6`.                                                                                                                                                     |
 | Step convergence | `runScript` over seeds 0–15 at `dt ∈ {0.2, 0.1, 0.05}`: the relative spread of the median peak is ≤ 0.06 and of total upgrade levels ≤ 0.02. Report `dt = 0.4` for contrast without asserting on it. |
 | Restart floor    | `worstReserveGap ≤ 0` across seeds 0–11 at `dt = 0.1`. This is `specs.md`'s guarantee that `MinimumReserve` never sinks below a restart.                                                             |
-| Stall            | A purpose-built run — all machines at 0.6 with the Turbine at 0 and no coal purchased — reaches `outcome === 'stalled'` before the timer.                                                            |
+| Stall            | The rule asserted directly: an engine whose Battery, Stockpile, Silo and Tank are all empty reports `outcome === 'stalled'` after one step, and one holding a kilogram of steam does not.            |
 | Market bounds    | Over a 600 s walk, `Market` never leaves `[1 − MarketRange, 1 + MarketRange]`, and its mean over 32 seeds is within 2% of 1.                                                                         |
 
 ### Routing
