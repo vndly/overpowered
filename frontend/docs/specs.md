@@ -14,7 +14,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 - On defeat the run ends and every component resets to its starting value. The highest stored energy reached is recorded as the player's best result.
 - Because upgrades compound, the central decision of a run is _when to stop reinvesting and start banking_: energy spent on upgrades is energy not counted toward the target, but an under-built plant cannot fill the Battery before the timer expires.
 
-`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
+`TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned. **The current value of 40 predates the coal market and has not been re-measured against it** — it is a placeholder until the simulation exists and strong play can be sampled.
 
 ### Stalling
 
@@ -89,6 +89,8 @@ Spending is floored twice, because upgrades and coal need different protections.
 
 Together these cover every recoverable case. `StartupEnergy` always covers the Pulverizer and Boiler for `StartupSeconds`, and because a machine throttles instead of stopping, the Turbine begins returning energy as soon as the first steam reaches the Tank — well inside that window. `StartupEnergy` is derived from current consumption, so it scales with every capacity upgrade. From a Battery sitting at `MinimumReserve` with the whole chain empty, one coal purchase restarts production and the Battery recovers without ever reaching zero.
 
+Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. At base capacities a restart from `MinimumReserve` buys 954 kg of raw coal at the opening price and 533 kg at the end-of-run trend: 85 s of Pulverizer runtime against the few seconds the Turbine needs before it starts returning energy. Both sides of that comparison scale with capacity — the reserve with the Battery's, the coal draw with the Pulverizer's — so a player who lets the Battery fall far behind the rest of the plant narrows the margin.
+
 The floors cannot cover every case, because the player can always choose a configuration that consumes energy without producing any — running the Pulverizer and Boiler with the Turbine's `Setting` at zero drains the Battery no matter what the floors are. That is handled as a loss condition rather than a spending rule; see [Stalling](#stalling).
 
 `StartingCharge` must exceed `MinimumReserve`, otherwise no upgrade is affordable at the start of a run.
@@ -113,7 +115,6 @@ where `n` is the number of upgrades already bought on that track, starting at ze
 | Capacity (Stockpile, Silo, Tank, Battery) |           0.02 | Capacity × CapacityGrowth                                |
 | Efficiency (Pulverizer, Boiler, Turbine)  |           0.05 | Efficiency += (MaxEfficiency − Efficiency) × UpgradeGain |
 | Control (Cooling, Regulation, Stability)  |           0.05 | Control += (MaxControl − Control) × UpgradeGain          |
-| CoalPrice                                 |           0.10 | CoalPrice × (1 − PriceReduction), floored                |
 
 Capacity upgrades are multiplicative rather than additive. Coal cost and energy output both scale linearly with throughput, so additive upgrades would leave profit per unit of throughput constant and each upgrade would take longer to afford than the last. Multiplying capacity is what makes a run accelerate.
 
@@ -128,18 +129,45 @@ The Stockpile stores raw coal purchased by the player. A purchase adds as much o
 | Type              | Parameter        | Unit  | Description / Formula                                                                         | Value |
 | ----------------- | ---------------- | ----- | --------------------------------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity         | t     | Maximum raw coal that can be stored                                                           |     1 |
-| Player controlled | CoalPrice        | MWh/t | Current energy price                                                                          |     1 |
-| Constant          | PriceReduction   | %     | CoalPrice reduction from each price upgrade                                                   |  0.20 |
-| Constant          | MinimumCoalPrice | MWh/t | Lowest price obtainable through upgrades                                                      |  0.20 |
+| Constant          | StartPrice       | MWh/t | Coal price at the start of a run                                                              |     1 |
+| Constant          | PriceGrowth      | ×/min | Trend multiplier applied to the price each minute                                             |  1.06 |
+| Constant          | MarketRange      | %     | Largest deviation from the trend the market can reach                                         |  0.25 |
+| Constant          | MarketVolatility | 1/√s  | Half-width of each random market step                                                         |  0.03 |
+| Constant          | MarketReversion  | 1/s   | Rate at which the market is pulled back towards the trend                                     |  0.01 |
+| Variable          | Trend            | MWh/t | StartPrice × PriceGrowth^(ElapsedSeconds / 60)                                                |     1 |
+| Variable          | Market           | ×     | Deviation from the trend, updated every step                                                  |     1 |
+| Variable          | CoalPrice        | MWh/t | Trend × Market                                                                                |     1 |
 | Variable          | Contents         | t     | Raw coal currently stored                                                                     |     0 |
 | Variable          | PurchasedCoal    | t     | min(RequestedCoal, Capacity − Contents, max(0, Battery Contents − StartupEnergy) / CoalPrice) |     — |
 | Variable          | PurchaseCost     | MWh   | PurchasedCoal × CoalPrice                                                                     |     — |
 
-The player can buy any positive amount of raw coal. `Capacity` can be increased with a capacity upgrade. `CoalPrice` can be reduced with an expensive price upgrade:
+The player can buy any positive amount of raw coal, and `Capacity` can be increased with a capacity upgrade. The price itself cannot be upgraded — it is set by the market, and it rises for the whole run.
 
-`NextCoalPrice = max(MinimumCoalPrice, CoalPrice × (1 − PriceReduction))`
+#### The coal market
 
-At the starting price, coal consumes roughly 71% of the Turbine's gross output; at `MinimumCoalPrice` it consumes roughly 14%. Net income after coal therefore rises from 3.9 MWh/h to 21.9 MWh/h — a 5.6× multiplier — without any throughput upgrade at all. Cutting the coal price is the highest-leverage purchase in the game, and eight price upgrades take it from the starting value to the floor.
+Coal grows more expensive as a run progresses, following a compounding trend with a random deviation on top:
+
+```text
+Trend      = StartPrice × PriceGrowth^(ElapsedSeconds / 60)
+Drift      = (1 − Market) × MarketReversion × DeltaTimeSeconds
+NextMarket = clamp(Market + Drift + Noise × √DeltaTimeSeconds, 1 − MarketRange, 1 + MarketRange)
+CoalPrice  = Trend × Market
+```
+
+`Noise` is drawn uniformly from `[−MarketVolatility, +MarketVolatility]` on every step, from a seeded generator, so a run replays identically and two runs sharing a seed face the same market. `Market` starts at 1 and settles around ±12% of the trend, touching the ±`MarketRange` clamp only occasionally.
+
+The trend reaches 1.79 MWh/t by the end of a 600 s run. What that costs the player depends on how much energy the plant extracts from a tonne of raw coal:
+
+| Plant state                           | Net MWh per tonne of raw coal | Trend reaches it at |
+| ------------------------------------- | ----------------------------: | ------------------: |
+| Starting Efficiency and controls      |                          1.17 |                2:42 |
+| Efficiency and controls at their caps |                          2.30 |     after the timer |
+
+Both figures are for a chain matched to the Turbine's steam draw, and neither depends on `Capacity`: a capacity upgrade scales revenue and coal consumption by the same factor, so it cannot move this number. Only Efficiency and the three controls can. Against a rising price, **Capacity buys speed and Efficiency buys survival** — a plant that upgrades neither is cash-negative by 2:42, sooner if the market is running above the trend, while one that reaches both caps still holds a 22% margin at the buzzer and is threatened only by a spike near the clamp. How much of the early run to spend on each is the trade the market exists to pose.
+
+The rising price also sharpens the closing decision. Net income is `Throughput × (YieldPerTonne − CoalPrice)`, and the second factor shrinks all run no matter how large the plant grows, so there is a point past which no reinvestment can pay itself back and banking is the only correct move.
+
+Because the price only ever trends upward, a full Stockpile is worth more than the energy that bought it, and the decision in a coal purchase is timing: buying into a spike wastes energy, but waiting out a dip starves the Pulverizer. Stockpile `Capacity` is what buys the ability to wait, which is the reason it is an upgrade worth considering against throughput.
 
 ### Pulverizer
 
@@ -290,18 +318,17 @@ A persistent run header shows the remaining time and progress toward `TargetEner
 └────────────────────────────────────────────────────┘
 ```
 
-Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and the expensive price-upgrade cost. The Battery additionally displays its reserve, so the player can see why part of its contents is unspendable.
+Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and a short history of that price — without it the player cannot tell a dip worth waiting out from the trend, and the timing decision is invisible. The Battery additionally displays its reserve, so the player can see why part of its contents is unspendable.
 
 ```text
 ┌───────────────────────────────────────────┐
 │ Stockpile                                 │
 ├───────────────────────────────────────────┤
 │ Stored       █░░░░░░░░░ {value} ({fill}%) │
-│ Coal price   1 MWh/t                      │
+│ Coal price   {value} MWh/t  ▁▂▄▃▅▇▆ ▲     │
 │ Buy coal     [-] {value} t [+]            │
 │              [Buy: {cost} MWh]            │
 │ Capacity     [Upgrade: {cost} MWh]        │
-│ Coal price   [Upgrade: {cost} MWh]        │
 └───────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────┐
