@@ -127,7 +127,7 @@ Efficiency and the machine controls close a fixed share of the distance to their
 
 The tracks are not priced at the same rate because they do not weaken at the same rate. A machine capacity level always multiplies throughput by `CapacityGrowth`, so its gain never shrinks. An Efficiency level closes a quarter of the remaining gap to `MaxEfficiency`, so each one is worth about three quarters of the last. A control level lifts the wear-free ceiling by 17%, then 15%, then 13%, then 11%.
 
-Under a single growth rate those decay curves are what decides the game: capacity's gain per MWh stays almost flat while the other two fall away, so capacity is the strongest buy at level zero and its lead only widens. Every track still gets bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay puts the three on comparable footing — capacity is still the strongest opening buy, Stability is expected to overtake it after roughly two levels and Efficiency after roughly four, and those crossings are what the player is actually choosing between. Cooling and Regulation sit further back, because the Pulverizer and Boiler only enter their wear range when the chain is unbalanced on purpose; see [Three machines, three problems](#three-machines-three-problems).
+Under a single growth rate those decay curves are what decides the game: capacity's gain per MWh stays almost flat while the other two fall away, so capacity is the strongest buy at level zero and its lead only widens. Every track still gets bought, but in a fixed order that never depends on the state of the run. Pricing each track against its own decay puts the three on comparable footing — capacity is still the strongest opening buy, Stability is expected to overtake it after roughly two levels and Efficiency after roughly four, and those crossings are what the player is actually choosing between. Cooling and Regulation sit further back, because at the Turbine's ordinary riding range neither the Pulverizer nor the Boiler ever reaches a trip; see [Three machines, three problems](#three-machines-three-problems).
 
 The coal market then moves the crossings during the run. A capacity level multiplies income by `CapacityGrowth`, and income is `Throughput × (YieldPerTonne − CoalPrice)`, so its value shrinks as the price climbs. An Efficiency level adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds. Capacity is the early buy and Efficiency the late one, and where the run turns over depends on how the market has behaved — see [The coal market](#the-coal-market).
 
@@ -327,9 +327,11 @@ Each machine converts its `Setting` into a stress value — Temperature, Pressur
 
 ```text
 Excess   = clamp((Stress − SafeStress) / (MaxStress − SafeStress), 0, 1)
-WearRate = Excess > 0 ? WearGrowth × Excess² × RunRatio : −WearRecovery
+WearRate = Tripped or Excess = 0 ? −WearRecovery : WearGrowth × Excess² × RunRatio
 NextWear = clamp(Wear + WearRate × DeltaTimeSeconds, 0, 1)
 ```
+
+A tripped machine sheds at `WearRecovery` for the whole repair even though its `Setting` still puts it above the safe threshold; without that it would come back at `Wear = 1` and trip again on the next step. A machine that is merely starved is different: it holds its wear rather than shedding it, because `RunRatio = 0` zeroes the growth term without selecting the recovery branch. Each machine's `RepairSeconds × WearRecovery` is 0.4, so all three return from a trip at 60% wear.
 
 When `Wear` reaches 1 the machine **trips**: it produces and consumes nothing for `RepairSeconds`, whatever its `Setting` says. The `Setting` is remembered and the machine resumes at it once the repair completes, and wear sheds throughout, so a machine comes back with room to push again. Wear is scaled by `RunRatio` because a machine starved of input is not doing the work that damages it.
 
@@ -343,11 +345,11 @@ That duty cycle pays. At the starting control of 0.4 every machine is clean up t
 
 The wear constants differ per machine, so the same `Setting` asks a different question of each. Riding means alternating between the best ride `Setting` and the clean ceiling; the figures below are for the starting control of 0.4, where that ceiling is 0.833.
 
-| Machine    | Growth ÷ Recovery | Best ride Setting | Average output  | Cycle period | RepairSeconds |
-| ---------- | ----------------: | ----------------: | --------------: | -----------: | ------------: |
-| Pulverizer |               2.0 |             ~1.65 | 1.25 × Capacity |        ~40 s |             8 |
-| Turbine    |              3.35 |             ~1.45 | 1.15 × Capacity |       ~100 s |            20 |
-| Boiler     |               4.0 |             ~1.40 | 1.12 × Capacity |       ~200 s |            40 |
+| Machine    | Growth ÷ Recovery | Best ride Setting |  Average output | Gain over the ceiling | Cycle period | RepairSeconds |
+| ---------- | ----------------: | ----------------: | --------------: | --------------------: | -----------: | ------------: |
+| Pulverizer |               2.0 |             ~1.65 | 1.25 × Capacity |                  +50% |        ~40 s |             8 |
+| Turbine    |              3.35 |             ~1.45 | 1.15 × Capacity |                  +38% |       ~100 s |            20 |
+| Boiler     |               4.0 |             ~1.40 | 1.12 × Capacity |                  +35% |       ~200 s |            40 |
 
 The **Pulverizer** is twitchy and cheap. It sheds as fast as it wears, so it can be pushed hardest, and an 8 s trip is nearly free against a Silo holding 85 s of the Boiler's fuel draw. Its cost is not downtime but coal: pushing it past what the Boiler can consume fills the Silo, and the surplus is discarded after the player has already paid for it.
 
