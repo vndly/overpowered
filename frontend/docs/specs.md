@@ -73,12 +73,14 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 
 ### Silo
 
-The Silo stores pulverized coal produced by the Pulverizer and supplies it to the Boiler.
+The Silo stores pulverized coal produced by the Pulverizer and supplies it to the Boiler. Its contents and capacity are displayed in metric tonnes, while production and consumption rates continue to use kg/s internally.
 
 | Type              | Parameter | Unit | Description / Formula                      | Value |
 | ----------------- | --------- | ---- | ------------------------------------------ | ----: |
-| Player controlled | Capacity  | kg   | Maximum pulverized coal that can be stored |   500 |
-| Variable          | Contents  | kg   | Pulverized coal currently stored           |     0 |
+| Player controlled | Capacity  | t    | Maximum pulverized coal that can be stored |   0.5 |
+| Variable          | Contents  | t    | Pulverized coal currently stored           |     0 |
+
+The player can increase `Capacity` by purchasing a Silo capacity upgrade with energy stored in the Battery. The upgrade is unavailable when the Battery does not contain the displayed energy cost.
 
 ### Boiler
 
