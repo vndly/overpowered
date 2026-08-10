@@ -3,7 +3,10 @@
      progress, over a scrim that dims the chain behind it.
 
      It claims to be modal and it is: home_screen makes the chain behind it inert
-     while it is up, so the one button it offers is the only thing Tab can reach. -->
+     while it is up, so its two buttons are the only things Tab can reach.
+
+     The display options hang off this panel rather than off the chain, because
+     between runs is the only time changing them costs a player nothing. -->
 <template>
   <div class="run-overlay" role="dialog" aria-modal="true" :aria-label="panel.title">
     <TerminalPanel :title="panel.title" :width-cells="PANEL_CELLS">
@@ -11,8 +14,9 @@
       <SectionDivider />
       <ValueRow v-for="row in panel.rows" :key="row.label" :label="row.label" :value="row.value" />
       <SectionDivider dashed />
-      <div ref="actions">
-        <TerminalButton :label="panel.buttonLabel" @press="emit('advance')" />
+      <div ref="actions" class="run-overlay__actions">
+        <TerminalButton :label="panel.buttonLabel" :width-cells="ADVANCE_CELLS" @press="emit('advance')" />
+        <TerminalButton label="OPTIONS" :width-cells="OPTIONS_CELLS" @press="emit('options')" />
       </div>
     </TerminalPanel>
   </div>
@@ -29,6 +33,12 @@ import type {GameView} from '@/view/view_model'
 
 const PANEL_CELLS = 40
 const NO_BEST_RESULT = 'NONE'
+
+// The two buttons fill the panel body exactly: 27 and 8 cells are 234px and 82px once
+// each has its padding and border, and the 4px between them makes the body's 320. The
+// difference in width is what says which of the two the panel is for.
+const ADVANCE_CELLS = 27
+const OPTIONS_CELLS = 8
 
 /** One statement of where the run stands, and the one thing the player can do next. */
 interface OverlayPanel {
@@ -47,6 +57,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   advance: []
+  options: []
 }>()
 
 const actions = useTemplateRef<HTMLElement>('actions')
@@ -141,5 +152,11 @@ onMounted(() => {
 /* The only wrapped text in the interface, still on the 16px character grid */
 .run-overlay__message {
     line-height: var(--cell-height);
+}
+
+/* One row of soft keys along the foot of the panel, as an operator console has */
+.run-overlay__actions {
+    display: flex;
+    gap: var(--space-1);
 }
 </style>

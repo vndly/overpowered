@@ -80,3 +80,29 @@ body {
     outline: 2px solid var(--fg);
     outline-offset: 0;
 }
+
+/* ============================================
+   Display layer
+   ============================================ */
+
+/* Switched by the options panel, through the attributes home_screen sets on itself
+   (src/view/use_options.ts). The scanlines are an element of their own; these two are
+   states of everything on the screen at once, so they are set here rather than in the
+   cards they would otherwise have to be repeated across. */
+
+/* ui_ux.md §24's glow, at the radius it names. It inherits, so it reaches every card
+   and both overlays without any of them knowing it exists. */
+[data-glow='on'] {
+    text-shadow: 0 0 2px currentColor;
+}
+
+/* The instruction prefers-reduced-motion carries, given by hand instead: nothing on the
+   screen moves. Every animation it stops is declared in a scoped component style, which
+   would otherwise win this on order alone, so each one has to be overridden outright. */
+[data-animation='reduced'],
+[data-animation='reduced'] *,
+[data-animation='reduced'] *::before,
+[data-animation='reduced'] *::after {
+    animation: none !important;
+    transition: none !important;
+}

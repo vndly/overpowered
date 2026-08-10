@@ -25,7 +25,7 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — done in Stages 5 and 6; the Battery card's drawing came with Stage 7
 - [x] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
 - [x] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
-- [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out
+- [x] [Stage 11 — Optional polish](#stage-11--optional-polish) — built; sound stayed out of scope
 
 ---
 
@@ -1020,7 +1020,14 @@ skipped** — the game is complete without it, and §33 is explicit that CRT eff
 
 Created: `src/components/game/crt_overlay.vue`, `src/components/game/options_panel.vue`,
 `src/view/use_options.ts`.
-Modified: `src/assets/styles.css`, `src/components/screens/home_screen.vue`.
+Modified: `src/assets/styles.css`, `src/components/screens/home_screen.vue`,
+`src/components/game/run_overlay.vue`, `CLAUDE.md`.
+
+`run_overlay.vue` was not on this list, but the panel has to be toggled from somewhere and
+this stage says the run overlay: it gains a second, narrower `OPTIONS` button beside its
+primary one and an `options` event. `home_screen.vue` mounts one dialog or the other,
+never both — so there is only ever one modal, and closing the options puts the focus back
+on the run's own button.
 
 ### Work
 
@@ -1030,6 +1037,17 @@ Modified: `src/assets/styles.css`, `src/components/screens/home_screen.vue`.
 - `options_panel.vue`: a small panel toggled from the run overlay, with CRT effects on/off,
   glow on/off, and reduced animation. Persisted in `localStorage` under
   `overpowered.options`. Defaults: CRT on, glow on, animation normal.
+- The glow is **part of** the CRT layer rather than a peer of it, because this stage's
+  first acceptance criterion is that switching CRT effects off leaves flat green on black.
+  So `GLOW` is indented beneath `CRT EFFECTS` in the panel, and goes disabled and reads
+  `OFF` while that layer is off; the player's own setting returns when it comes back.
+- The scanlines are a component, mounted only when CRT is on. The glow and the stillness
+  are states of the whole screen, so `home_screen.vue` carries them as `data-glow` and
+  `data-animation` and `styles.css` keys off those. Reduced animation is the instruction
+  `prefers-reduced-motion` carries, given by hand: it stops every animation and transition
+  on the page, which takes `!important` because each one is declared in a scoped component
+  style. The media query in `alert_message.vue` still applies on its own, so the system
+  preference can stop the blink whatever the option says, and never start it.
 - Sound is **out of scope**. If it is added later, generate it with the Web Audio API — short
   square-wave blips for button presses and a lower tone for a trip. No audio files: the repo has
   no asset pipeline and `CLAUDE.md` has no rule permitting one.
@@ -1050,7 +1068,7 @@ Do these in the stage that causes them, not at the end:
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `CLAUDE.md`     | Font rule amended to permit the self-hosted PxPlus IBM VGA8.                                                                            | 1                                |
 | `CLAUDE.md`     | Economy rule extended to include `src/game/constants.ts`.                                                                               | 2                                |
-| `CLAUDE.md`     | Project section rewritten — `src/` is no longer a blank slate. Describe `game/`, `view/`, `components/`, and the dev-only verify route. | 11 (or the last stage completed) |
+| `CLAUDE.md`     | Project section rewritten — `src/` is no longer a blank slate. Describe `game/`, `view/`, `components/`, and the dev-only verify route. | 11                               |
 | `docs/ui_ux.md` | §11: drop the `[COAL PRICE]` upgrade.                                                                                                   | 5                                |
 | `docs/ui_ux.md` | §8: the upgrade section is opened by a blank line, not a rule, and each upgrade is a gain row above a price button.                     | 5                                |
 | `docs/ui_ux.md` | §9: the equipment icons ship as the supplied PNG line drawings rather than as SVG.                                                       | 5                                |

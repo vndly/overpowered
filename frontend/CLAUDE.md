@@ -2,7 +2,15 @@
 
 The frontend of Overpowered (Vite + Vue 3, TypeScript, Composition API with `<script setup>`, ESLint + @stylistic + type-aware typescript-eslint via @vue/eslint-config-typescript).
 
-`src/` is a blank slate — the application code was removed and not yet rewritten. What remains is scaffolding: `main.ts` mounts `app.vue`, `router.ts` serves one empty screen (`components/screens/home_screen.vue`) at `/`, and `assets/styles.css` holds the reset plus two neutral tokens.
+`src/` is layered, and the layers only ever talk downwards (`docs/ui_ux.md` §29):
+
+- `game/` — the simulation. Framework-free TypeScript that owns all state and every rule in `docs/specs.md`, and imports nothing from Vue. `game_engine.ts` is the whole public surface; `constants.ts` holds every number the spec fixes.
+- `view/` — the seam. `use_game.ts` drives the engine with a fixed-step accumulator off `requestAnimationFrame` and publishes an immutable view model (`view_model.ts`, formatted by `formatting.ts`) into a `shallowRef` once per frame. `use_options.ts` owns the display options, which are not part of a run.
+- `components/terminal/` — presentational primitives: panel, button, divider, value row, fill bar, stepper, stress gauge, alert line, arrow. They take props and emit intent.
+- `components/game/` — the cards built from those primitives, plus the run header, the lower dashboard, and the two overlays. No component computes a gameplay rule.
+- `components/screens/` — `home_screen.vue`, the only screen. `verify_screen.vue` is a development tool that asserts the engine against `docs/specs.md`; `router.ts` adds its `/verify` route under `import.meta.env.DEV` only, behind a dynamic import, so it never reaches the bundle.
+
+`docs/plan.md` is the staged build order this implementation followed, and records the decisions the two specs left open.
 
 ## Reference Docs
 
