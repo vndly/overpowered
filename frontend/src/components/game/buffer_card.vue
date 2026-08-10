@@ -10,7 +10,7 @@
          worse than silence, and the thresholds announce themselves in the alerts panel -->
     <p v-if="legend.length > 0" class="buffer-card__legend" aria-hidden="true">{{ legend }}</p>
     <div class="buffer-card__upgrades">
-      <p class="buffer-card__section">UPGRADES</p>
+      <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
@@ -27,6 +27,7 @@ import {computed} from 'vue'
 import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
+import SectionLabel from '@/components/terminal/section_label.vue'
 import TerminalButton from '@/components/terminal/terminal_button.vue'
 import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import ValueRow from '@/components/terminal/value_row.vue'
@@ -63,11 +64,6 @@ const legend = computed(() => props.view.marks
     flex: none;
     height: var(--cell-height);
     color: var(--fg-dim);
-    line-height: var(--cell-height);
-}
-
-.buffer-card__section {
-    height: var(--cell-height);
     line-height: var(--cell-height);
 }
 

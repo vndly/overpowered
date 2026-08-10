@@ -149,8 +149,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* A black scrim rather than a dimmer green: the chain stays legible underneath
-   without introducing a second colour (ui_ux.md §4) */
+/* A black scrim rather than a dimmed wash of the foreground: the chain stays legible
+   underneath without introducing another colour (ui_ux.md §4) */
 .run-overlay {
     position: fixed;
     display: flex;

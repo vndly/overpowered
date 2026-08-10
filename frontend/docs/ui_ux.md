@@ -23,7 +23,7 @@ What the mockup gets right and should be followed:
 - the internal card order: title, icon, divider, values, controls, divider, upgrades
 - the inline `[-] value [+]` stepper, the outlined buttons, the horizontal `SAFE`/`MAX` stress gauge
 - the primitive instrumentation look of the net-flow graph
-- black background, monochrome green, thin borders, no second color
+- black background, thin borders, and a palette held to the minimum — though the mockup's single green is now split by [Color System](#4-color-system)
 
 Known places where it diverges and should **not** be copied:
 
@@ -45,7 +45,7 @@ OVERPOWERED should look like an **old industrial power-plant operator interface*
 The target visual language is:
 
 - black background
-- bright green foreground
+- phosphor white foreground, with green kept for the readings ([Color System](#4-color-system))
 - monochrome presentation
 - IBM PC / DOS terminal influence
 - old industrial operator console / SCADA influence
@@ -222,7 +222,7 @@ What shipped: the same two-value monochrome, with the two values split by role r
 }
 ```
 
-This is still one accent on black, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no third color, no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. Where a section below names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
+This is still one accent on black, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no third color, no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. Where any other section of this document names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
 
 Yellow and red are reserved for a later pass on values and indicators, and are not in the interface yet.
 
@@ -373,14 +373,14 @@ or
 dashed green line
 ```
 
-The upgrade section at the foot of a card is the exception: a blank line opens it, not a rule. The section title and the buttons' own borders already carry the break, and a second rule crowds a card this compact.
+The upgrade section at the foot of a card is the exception: a blank line opens it, not a rule of its own. Its title carries the rule instead — centred on its line with a hairline running out to either edge, drawn by `components/terminal/section_label.vue`. It comes to two character cells: the title's own line, with half a cell of air above and below so the break reads as a break rather than as one more row. The title is turned down a step so it reads as quieter than the readings above it. A separate rule as well would crowd a card this compact.
 
 Inside that section each upgrade is a value row naming what it buys, and a button carrying only the price:
 
 ```text
-UPGRADES
-CAPACITY         +0.50 t
-[      0.02 MWh       ]
+───── UPGRADES ─────
+CAPACITY     +0.50 t
+[    0.02 MWh      ]
 ```
 
 The gain is right-aligned into the same numeric column as every other reading on the card, and neither figure is a constant — a capacity upgrade multiplies capacity, so its gain grows with each level bought, and an efficiency upgrade closes a share of the remaining gap, so its gain shrinks. Both are read live from the view model. Name and gain will not fit beside the price on a storage card, which is why the price stands alone.
@@ -411,7 +411,7 @@ The seven equipment illustrations ship as **PNG line drawings**, one per compone
 
 What the raster form costs, and how each cost is paid:
 
-- **They cannot follow `currentColor`.** The drawings are green on transparent, which is what a card wants everywhere except the inverted border of a tripped machine. There, the card blacks the strokes out with `filter: brightness(0)` rather than recolouring them — the alpha channel keeps the silhouette, so the icon reads black on green with no second copy of the art.
+- **They cannot follow `currentColor`.** The drawings are green on transparent, and green now belongs to the readings ([Color System](#4-color-system)) — a drawing is not one. The card recolours them with a filter rather than re-cutting the art: `brightness(0) invert(1) brightness(var(--fg-level))` flattens the strokes and brings them back up to `--fg`, and the alpha channel keeps the silhouette, so one copy of each drawing serves every state.
 - **They cannot be scaled up.** Each drawing is 56–190 px wide, and the icon band is six character cells (96 px) tall so every one renders at or near its native size. Do not enlarge them.
 
 One component, `components/game/equipment_icon.vue`, picks the drawing for a component id; there is no component per icon.
@@ -455,7 +455,7 @@ Avoid:
 
 Icons should remain understandable at relatively small sizes.
 
-Use `currentColor` so any SVG inherits the UI green.
+Use `currentColor` so any SVG inherits the colour of what it sits in — the console colour unless it is drawing a reading ([Color System](#4-color-system)).
 
 ---
 
@@ -984,7 +984,7 @@ CRT styling is optional and must remain subtle.
 Possible effects:
 
 - very light scanlines
-- tiny green glow
+- tiny glow, in the text's own colour
 - minimal screen flicker
 - subtle pixel texture
 
@@ -1102,7 +1102,7 @@ Do not rely on browser-default blue focus outlines if they break the monochrome 
 
 Maintain accessibility semantics.
 
-What shipped: a 2px solid green outline on every focusable element, and a stepper that steps from either of its buttons — `ArrowUp` / `ArrowRight` / `+` up, `ArrowDown` / `ArrowLeft` / `-` down, with the key claimed so an arrow never scrolls the chain out from under the control. A modified press is left to the browser, so `Ctrl` and the sign keys still zoom. `Escape` is unclaimed and stays that way until there is a menu to close.
+What shipped: a 2px solid outline in the console colour on every focusable element, and a stepper that steps from either of its buttons — `ArrowUp` / `ArrowRight` / `+` up, `ArrowDown` / `ArrowLeft` / `-` down, with the key claimed so an arrow never scrolls the chain out from under the control. A modified press is left to the browser, so `Ctrl` and the sign keys still zoom. `Escape` is unclaimed and stays that way until there is a menu to close.
 
 The run overlay makes the chain and the dashboard behind it inert while it is up, so the only things `Tab` can reach are its own button and the header's settings control. That one exception is why it is a plain `role="dialog"` rather than `aria-modal`: the settings have to be reachable before a first run has ever been started. The settings panel itself is `aria-modal`, and is one in fact — the header goes inert behind it too.
 
@@ -1295,7 +1295,7 @@ Implement visual elements in this order:
 
 ```text
 CP437 font
-black/green theme
+black/white/green theme
 header
 production-chain grid
 cards
@@ -1359,7 +1359,7 @@ The implementation is visually successful if:
 
 - the entire interface uses a **Code Page 437 / IBM VGA-style bitmap font**
 - the background is black
-- the foreground is monochrome green
+- the foreground follows [Color System](#4-color-system): phosphor white, with green kept for the readings
 - cards use thin square borders
 - the production chain is immediately understandable left-to-right
 - all equipment icons are vector/SVG line drawings

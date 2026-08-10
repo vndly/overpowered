@@ -16,7 +16,7 @@
     <SectionDivider />
     <ValueRow label="NET FLOW" :value="view.netFlowText" />
     <div class="battery-card__upgrades">
-      <p class="battery-card__section">UPGRADES</p>
+      <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
@@ -32,6 +32,7 @@
 import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
+import SectionLabel from '@/components/terminal/section_label.vue'
 import TerminalButton from '@/components/terminal/terminal_button.vue'
 import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import ValueRow from '@/components/terminal/value_row.vue'
@@ -50,11 +51,6 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-.battery-card__section {
-    height: var(--cell-height);
-    line-height: var(--cell-height);
-}
-
 /* The upgrade section sits at the foot of the card, so the buttons line up across
    the chain however tall a card's readings make it (ui_ux.md §25). A blank line
    opens it rather than a rule (ui_ux.md §8) */

@@ -29,7 +29,7 @@
       @press="emit('buy')"
     />
     <div class="stockpile-card__upgrades">
-      <p class="stockpile-card__section">UPGRADES</p>
+      <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
@@ -46,6 +46,7 @@ import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import NumericStepper from '@/components/terminal/numeric_stepper.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
+import SectionLabel from '@/components/terminal/section_label.vue'
 import TerminalButton from '@/components/terminal/terminal_button.vue'
 import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import ValueRow from '@/components/terminal/value_row.vue'
@@ -83,11 +84,6 @@ const emit = defineEmits<{
 
 .stockpile-card__amount {
     flex: 1;
-}
-
-.stockpile-card__section {
-    height: var(--cell-height);
-    line-height: var(--cell-height);
 }
 
 /* The upgrade section sits at the foot of the card, so the buttons line up across

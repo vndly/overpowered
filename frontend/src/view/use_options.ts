@@ -78,7 +78,7 @@ function readOptions(): DisplayOptions {
 
 /**
  * The glow belongs to the CRT layer rather than beside it, so switching that layer off
- * takes the glow with it and leaves flat green on black.
+ * takes the glow with it and leaves the screen flat on black.
  * @param options - The current options
  * @returns Whether the text glow is drawn
  */

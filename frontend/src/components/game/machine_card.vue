@@ -42,7 +42,7 @@
     <ValueRow v-if="view.repairText === null" label="OUTPUT" :value="view.outputText" />
     <p v-else class="machine-card__repair">{{ view.repairText }}</p>
     <div class="machine-card__upgrades">
-      <p class="machine-card__section">UPGRADES</p>
+      <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.capacityUpgradeGainText" />
       <TerminalButton
         :label="view.capacityUpgradeCostText"
@@ -66,6 +66,7 @@ import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import NumericStepper from '@/components/terminal/numeric_stepper.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
+import SectionLabel from '@/components/terminal/section_label.vue'
 import StressGauge from '@/components/terminal/stress_gauge.vue'
 import TerminalButton from '@/components/terminal/terminal_button.vue'
 import TerminalPanel from '@/components/terminal/terminal_panel.vue'
@@ -149,11 +150,6 @@ const emit = defineEmits<{
     color: var(--bg);
     line-height: var(--cell-height);
     text-align: center;
-}
-
-.machine-card__section {
-    height: var(--cell-height);
-    line-height: var(--cell-height);
 }
 
 /* The upgrade section sits at the foot of the card, so the buttons line up across
