@@ -18,11 +18,11 @@ import type {GameView} from '@/view/view_model'
 
 // The row ends where the chain ends, so the two share an edge. A panel is 8px per cell
 // plus 18px of padding and border, the two gaps are the chain's arrow column, and the
-// chain is 4 x 210 + 3 x 258 + 6 x 24 = 1758px — which leaves the three panels 207
-// cells between them. The graph takes what the readings do not need: it is the one
-// panel that says more the wider it is.
+// chain is 7 x 242 + 6 x 32 = 1886px — which leaves the three panels 223 cells between
+// them. The graph takes what the readings do not need: it is the one panel that says
+// more the wider it is, so it absorbs any change to the card or arrow width above.
 const SUMMARY_CELLS = 26
-const GRAPH_CELLS = 155
+const GRAPH_CELLS = 171
 const ALERTS_CELLS = 26
 
 defineProps<{

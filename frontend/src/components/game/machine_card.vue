@@ -75,7 +75,7 @@ import {MAX_SETTING_STEPS} from '@/game/constants'
 import type {MachineId} from '@/game/types'
 import type {MachineView} from '@/view/view_model'
 
-const CARD_CELLS = 30 // Machine card width (docs/plan.md)
+const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
 const WEAR_BAR_CELLS = 10 // One cell per 10% of a trip
 
 defineProps<{

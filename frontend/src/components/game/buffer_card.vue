@@ -33,7 +33,7 @@ import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import ValueRow from '@/components/terminal/value_row.vue'
 import type {BufferView} from '@/view/view_model'
 
-const CARD_CELLS = 24 // Storage card width (docs/plan.md)
+const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
 const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity, so both marks land exactly
 
 // What each mark on the bar means. The marks are a scale rather than an alarm

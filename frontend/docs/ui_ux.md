@@ -19,7 +19,7 @@ This document is **not** a gameplay, economy, balance, or simulation specificati
 What the mockup gets right and should be followed:
 
 - the overall composition — header, one-row production chain, four-panel lower dashboard
-- the seven cards in one row with arrows between them, storage cards narrower than machine cards
+- the seven cards in one row with arrows between them — though they now all take the same width, rather than the mockup's narrower storage cards (see [General Layout](#5-general-layout))
 - the internal card order: title, icon, divider, values, controls, divider, upgrades
 - the inline `[-] value [+]` stepper, the outlined buttons, the horizontal `SAFE`/`MAX` stress gauge
 - the primitive instrumentation look of the net-flow graph
@@ -338,6 +338,12 @@ Use simple green arrows between cards.
 All cards should align vertically and use the same border style.
 
 Storage cards may be narrower than machine cards, but the overall row should feel balanced.
+
+What shipped: one width for all seven, 28 character cells (242px with padding and border). 28 is the widest that holds — machine cards need 21 cells at their busiest, so the two cells they give up cost nothing, and the storage cards gain four.
+
+The arrow column between them takes the width the cards cannot. A card grows only in whole cells, and at 29 cells seven of them overflow the 1920px reference, so the row would always have ended short of the screen. Four cells of arrow closes it instead: `7 × 242 + 6 × 32 = 1886px` against the 1888px that reference leaves once the screen's own padding is taken. Every gap stays a whole multiple of the character cell, which is what keeps each card's left edge — and so the bitmap text inside it — on a whole pixel.
+
+Two things follow from this and have to move with it. The lower dashboard's three panels are sized to end on the chain's edge (`components/game/secondary_dashboard.vue`). And the fit is now exact to 2px, so anything that eats horizontal room at 1920 — a vertical scrollbar, a zoom step — puts the chain into the scroll §26 asks for rather than overflowing the screen.
 
 Each card consists of:
 

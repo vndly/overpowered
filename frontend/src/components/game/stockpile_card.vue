@@ -52,7 +52,7 @@ import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import ValueRow from '@/components/terminal/value_row.vue'
 import type {StockpileView} from '@/view/view_model'
 
-const CARD_CELLS = 24 // Storage card width (docs/plan.md)
+const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
 const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity
 const MAX_BUTTON_CELLS = 3 // The label's width; the button adds its own padding
 
