@@ -59,10 +59,7 @@ export const STARTING_CHARGE = 4 // MWh the Battery holds at the start of a run
 // The coal market — specs.md §The coal market
 export const MARKET = {
   startPrice: 1, // MWh/t at the start of a run
-  priceGrowth: 1.06, // Trend multiplier applied to the price each minute
-  range: 0.25, // Largest deviation from the trend the market can reach
-  volatility: 0.03, // Half-width of each random market step, 1/√s
-  reversion: 0.01, // Rate the market is pulled back towards the trend, 1/s
+  priceGrowth: 1.06, // Multiplier applied to the price each minute
 } as const
 
 // Starting storage capacities — specs.md §Stockpile, §Silo, §Tank, §Battery.

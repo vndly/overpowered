@@ -71,7 +71,6 @@ export interface StorageViewBase {
 /** The Stockpile, which is also where coal is bought. */
 export interface StockpileView extends StorageViewBase {
   priceText: string
-  priceHistory: number[] // Last 60 one-second samples
   purchaseKilograms: number // The stepper's current amount
   purchaseAmountText: string
   purchaseCostText: string
@@ -245,7 +244,6 @@ function buildStockpileView(engine: GameEngine, purchaseKilograms: number): Stoc
   return {
     ...buildStorageView('STOCKPILE', engine.stockpile, 't', formatMass, engine.spendableEnergy),
     priceText: `${formatPrice(engine.market.price)} MWh/t`,
-    priceHistory: [...engine.market.priceHistory],
     purchaseKilograms: purchaseKilograms,
     purchaseAmountText: `${formatMass(purchaseKilograms)} t`,
     purchaseCostText: `${formatEnergy(cost)} MWh`,

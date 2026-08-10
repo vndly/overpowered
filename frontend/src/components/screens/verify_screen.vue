@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import {CoalMarket} from '@/game/coal_market'
-import {DELTA_TIME_SECONDS, MARKET, MAX_SETTING_STEPS, STARTING_CHARGE, TIME_LIMIT} from '@/game/constants'
+import {DELTA_TIME_SECONDS, MARKET, MAX_SETTING_STEPS, SECONDS_PER_MINUTE, STARTING_CHARGE, TIME_LIMIT} from '@/game/constants'
 import {GameEngine} from '@/game/game_engine'
 import type {ScriptedRunResult} from '@/game/scripted_run'
 import {runScript} from '@/game/scripted_run'
@@ -39,14 +39,11 @@ const MAX_STRESS_TOLERANCE = 0.05
 const RESIDUAL_TOLERANCE = 1e-6
 const CONVERGENCE_TOLERANCE = 0.06
 
-// The market mean is a statistical check rather than an exact one. A single 600 s walk
-// averages about 5% away from the trend, so 32 of them put the standard error near 0.012
-// against this 0.02 budget, and the figure currently reads 0.989. Should it ever fail,
-// raise the seed count before suspecting the engine: a mean that misses by a few
-// thousandths is the sample talking, not the rule.
-const MARKET_MEAN_TOLERANCE = 0.02
+// The closing price is reached by 600 s of compounding steps rather than by one
+// exponent, so it is only as exact as the accumulated floating point allows.
+const PRICE_TOLERANCE = 1e-6
 
-const STATIC_SEED = 0 // The static checks read a state, never a market
+const STATIC_SEED = 0 // The static checks read a state, never a run
 const SLACK_FILL = 0.5 // A store sitting clear of both strain thresholds
 const BALANCE_SEED = 1
 const BALANCE_STEP_SECONDS = 0.1
@@ -59,7 +56,6 @@ const CONVERGENCE_STEPS = [
 const CONTRAST_STEP = 0.4 // Too coarse to hold anyone to; reported for contrast only
 const RESTART_SEEDS = 12
 const RESTART_STEP_SECONDS = 0.1
-const MARKET_SEEDS = 32
 
 /** One assertion and the two values it compares. */
 interface Check {
@@ -184,22 +180,6 @@ function atMost(name: string, got: number, limit: number): Check {
     got: got.toFixed(4),
     expected: `<= ${limit}`,
     passed: got <= limit,
-  }
-}
-
-/**
- * A check that a value never falls below a limit.
- * @param name - What is being checked
- * @param got - The value the engine produced
- * @param limit - The lowest value that holds
- * @returns The check
- */
-function atLeast(name: string, got: number, limit: number): Check {
-  return {
-    name: name,
-    got: got.toFixed(4),
-    expected: `>= ${limit}`,
-    passed: got >= limit,
   }
 }
 
@@ -464,38 +444,30 @@ function stallGroup(): CheckGroup {
 }
 
 /**
- * The market may never leave its clamp, and over many seeds it must sit on its trend
- * rather than drifting off it.
+ * The price is the trend and nothing but the trend: it opens at StartPrice, compounds
+ * by PriceGrowth every minute, and only ever rises.
  * @returns The group
  */
 function marketGroup(): CheckGroup {
-  const means: number[] = []
-  let lowest = Number.POSITIVE_INFINITY
-  let highest = Number.NEGATIVE_INFINITY
+  const coalMarket = new CoalMarket()
+  const openingPrice = coalMarket.price
+  const closingPrice = MARKET.startPrice * MARKET.priceGrowth ** (TIME_LIMIT / SECONDS_PER_MINUTE)
+  let rose = true
+  let previous = openingPrice
 
-  for (let seed = 0; seed < MARKET_SEEDS; seed += 1) {
-    const coalMarket = new CoalMarket(seed)
-    let total = 0
-    let samples = 0
-
-    while (coalMarket.elapsedSeconds < TIME_LIMIT) {
-      coalMarket.step(DELTA_TIME_SECONDS)
-      lowest = Math.min(lowest, coalMarket.market)
-      highest = Math.max(highest, coalMarket.market)
-      total += coalMarket.market
-      samples += 1
-    }
-
-    means.push(total / samples)
+  while (coalMarket.elapsedSeconds < TIME_LIMIT) {
+    coalMarket.step(DELTA_TIME_SECONDS)
+    rose &&= coalMarket.price > previous
+    previous = coalMarket.price
   }
 
   return {
-    title: `MARKET BOUNDS over ${MARKET_SEEDS} seeds`,
+    title: 'MARKET TREND',
     notes: [],
     checks: [
-      atLeast('market low bound', lowest, 1 - MARKET.range),
-      atMost('market high bound', highest, 1 + MARKET.range),
-      near('market mean', mean(means), 1, MARKET_MEAN_TOLERANCE),
+      near('opening price', openingPrice, MARKET.startPrice, PRICE_TOLERANCE),
+      near('closing price', previous, closingPrice, PRICE_TOLERANCE),
+      exact('rises every step', rose ? 'rising' : 'not rising', 'rising'),
     ],
   }
 }

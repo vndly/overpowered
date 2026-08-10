@@ -13,8 +13,8 @@ standard library, and nothing here is built, linted, or shipped by the frontend.
 ```sh
 cd simulator
 python3 verify.py           # soundness checks -- run this first, exits non-zero on failure
-python3 measure.py          # sweep policies, then report the peak distribution (~10 min)
-python3 measure.py --quick  # skip the sweep, reuse the policies already found (~1 min)
+python3 measure.py          # sweep policies, then report the peak each one reaches (~1 min)
+python3 measure.py --quick  # skip the sweep, reuse the policies already found (seconds)
 ```
 
 ## After retuning the economy
@@ -23,7 +23,7 @@ python3 measure.py --quick  # skip the sweep, reuse the policies already found (
 2. Run `verify.py`. Its first section compares the opening state against the values
    printed in the spec's component tables, so a missed constant shows up there.
 3. Run `measure.py` and take the suggested `TargetEnergy`, or pick another value from
-   the win-rate table it prints.
+   the table of shares it prints.
 4. Update the measured figures in the spec's Objective section.
 
 ## What "strong play" means here
@@ -58,27 +58,23 @@ above `settings()`.
 - **Energy balance** closes exactly: everything generated is banked, drawn by a
   machine, spent on coal, or spent on an upgrade. A residual would mean the model
   invents or loses energy.
-- **Step-size convergence** of the distribution and of the build. For `dt <= 0.2` the
-  median peak moves under 3% and total upgrade levels under 2%.
+- **Step-size convergence** of the peak and of the build. For `dt <= 0.2` the peak moves
+  under 1% and total upgrade levels not at all.
 - **The restart floor** — `MinimumReserve` never sits below `StartupEnergy`, the
   condition that keeps a stalled chain restartable.
 
 Two things it deliberately does not claim:
 
-- **A single run is not reproducible across step sizes.** Purchases are discrete, so a
-  marginal upgrade can fire a second earlier and compound; an individual run moves
-  about 2% between `dt = 0.1` and `0.05`. Only the distribution is stable. `dt = 0.4`
-  is reported for contrast and not used.
+- **A run is only approximately reproducible across step sizes.** Purchases are
+  discrete, so a marginal upgrade can fire a second earlier and compound. `dt = 0.4` is
+  reported for contrast and not used.
 - **The measured peak is not an optimum**, for the reason above.
 
-## One deliberate deviation from the spec
+## One run per policy
 
-The spec advances the coal market once per simulation step, which ties the realised
-price path to `DeltaTimeSeconds`. That is fine for the game, where the step is fixed,
-but it means two step sizes face different markets on the same seed and convergence
-cannot be tested. Here the market walk runs on its own fixed 0.05 s grid
-(`MARKET_DT`), so a seed means one market at any step size. The two are equivalent
-when `DeltaTimeSeconds` is 0.05.
+The coal price is a function of run time alone, so a policy has exactly one run in it.
+There is no seed, no distribution, and no win rate: `measure.py` reports the peak each
+policy reaches, and `TargetEnergy` is a share of the best of them.
 
 ## Sweep the whole grid, and bracket the winner
 

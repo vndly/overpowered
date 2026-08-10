@@ -1,7 +1,8 @@
 /**
  * Mulberry32, a small seeded pseudo-random generator.
- * The coal market draws its noise from one of these, so a run replays identically from
- * its seed and two runs sharing a seed face the same market — specs.md §The coal market.
+ * No rule draws from one at the moment — the coal market did until its price became a
+ * fixed curve (specs.md §The coal market), and every other rule is deterministic too.
+ * It is kept, with the seed each run is built from, for the rule that needs randomness.
  */
 export class Random {
   private state: number // 32-bit generator state, advanced on every draw

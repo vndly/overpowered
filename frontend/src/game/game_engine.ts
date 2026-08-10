@@ -24,10 +24,14 @@ export class GameEngine {
   readonly turbine: Turbine
   readonly market: CoalMarket
   readonly ledger: EnergyLedger
+  // The seed the run was created from. Nothing draws from it while every rule is
+  // deterministic — it is the hook a rule that needs randomness would take.
+  readonly seed: number
   private elapsed: number // Run time consumed, s
   private runOutcome: RunOutcome // Where the run stands
 
   constructor(seed: number) {
+    this.seed = seed
     this.stockpile = new Storage(STORAGE_CAPACITY.stockpile)
     this.silo = new Storage(STORAGE_CAPACITY.silo)
     this.tank = new Storage(STORAGE_CAPACITY.tank)
@@ -35,7 +39,7 @@ export class GameEngine {
     this.pulverizer = new Pulverizer()
     this.boiler = new Boiler()
     this.turbine = new Turbine()
-    this.market = new CoalMarket(seed)
+    this.market = new CoalMarket()
     this.ledger = new EnergyLedger(STARTING_CHARGE)
     this.elapsed = 0
     this.runOutcome = 'idle'

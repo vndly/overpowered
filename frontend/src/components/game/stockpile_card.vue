@@ -1,16 +1,13 @@
 <!-- The Stockpile: how much raw coal is stored, what a tonne costs right now, and
      the controls that buy it (ui_ux.md §11). The price itself is not upgradable —
-     specs.md sets it from the market — so the card has one upgrade. -->
+     specs.md sets it from the clock — so the card has one upgrade. -->
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
     <EquipmentIcon component="stockpile" />
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
     <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
-    <div class="stockpile-card__price">
-      <ValueRow label="COAL PRICE" :value="view.priceText" />
-      <PriceHistory :samples="view.priceHistory" />
-    </div>
+    <ValueRow class="stockpile-card__price" label="PRICE" :value="view.priceText" />
     <div class="stockpile-card__purchase">
       <NumericStepper
         class="stockpile-card__amount"
@@ -46,7 +43,6 @@
 
 <script setup lang="ts">
 import EquipmentIcon from '@/components/game/equipment_icon.vue'
-import PriceHistory from '@/components/game/price_history.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import NumericStepper from '@/components/terminal/numeric_stepper.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
@@ -72,11 +68,11 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-/* A blank line off what is stored: the price and its history are the other half of
-   the card, and the purchase controls answer both (ui_ux.md §11) */
+/* A blank line off what is stored: the price is the other half of the card, and the
+   purchase controls answer both (ui_ux.md §11). A margin rather than padding, because
+   the row it sits on is one character cell tall and border-box would eat it */
 .stockpile-card__price {
-    flex: none;
-    padding-top: var(--cell-height);
+    margin-top: var(--cell-height);
 }
 
 .stockpile-card__purchase {

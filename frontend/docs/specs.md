@@ -16,13 +16,13 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 `TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
 
-The current value of 1290 was measured with [`simulator/`](../simulator/), which implements this document. Run under a greedy reinvestment policy across 60 market seeds, it reaches a **median peak of about 1610 MWh** — quartiles 1337 and 1776, individual runs from 1127 to 1952. A target of 1290 is reached on 78% of seeds by one good line of play, and 95% when the line is chosen to suit the market.
+The current value of 1290 was measured with [`simulator/`](../simulator/), which implements this document. The coal price is a function of run time alone, so a greedy reinvestment policy has exactly one run in it and there is no distribution to take: the best of the swept policies reaches a **peak of 1599 MWh**, and 1290 is 81% of that. Candidate targets as shares of the measured peak, which is what `measure.py` prints:
 
-| TargetEnergy         | 805 | 965 | 1125 | 1210 | 1290 | 1450 | 1610 |
-| -------------------- | --: | --: | ---: | ---: | ---: | ---: | ---: |
-| Strong-play win rate | 100% | 100% | 100% | 90% | 78% | 65% | 50% |
+| TargetEnergy      | 800 | 960 | 1120 | 1200 | 1280 | 1440 | 1600 |
+| ----------------- | --: | --: | ---: | ---: | ---: | ---: | ---: |
+| Share of the peak | 50% | 60% |  70% |  75% |  80% |  90% | 100% |
 
-Two caveats attach to the number, one fewer than the version before it. 1290 is a strict 80% of the measured median and still holds the strong-play win rate above three quarters, so the target no longer has to be pulled below the rule to stay winnable. What remains is that the policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 1610 and the target errs towards the generous; and that seeds still differ, though far less than they did — the market now separates a 1127 MWh run from a 1952 one, a spread of 1.7× where it used to be 2.9×. That narrowing is the widened `Efficiency` band showing up in the distribution, for the reason given under [The coal market](#the-coal-market).
+1290 rather than the 1280 that is exactly 80%: the difference is a tenth of one upgrade and the constant is already in play, so it is left where it stands until something moves the peak further than this. One caveat attaches to the number, where two used to. The policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 1599 and the target errs towards the generous. The second caveat is gone with the random market: every run now faces the same prices, so the target is a fixed skill threshold rather than a bet, and a run that misses it missed it on the play.
 
 Neither of the previous values is comparable. The 175 that stood before the `Efficiency` band was widened was measured against a plant whose yield ceiling was 2.30 MWh/t rather than 3.55; the 80 before that was measured with the policy's `buffer` knob pinned at 45 s rather than swept, which sizes every store far larger than a run wants. Both times the lesson was the same one, and it is worth stating as a rule: **a grid must bracket its winner on every axis, not end at it.** Widening the band moved the winning policy on four axes at once, and the first attempt at rewidening the grid pushed its low ends out while letting `ride` 1.75 and `t_stop` 380 fall off the other ends — whereupon both promptly became the new winners. Extend an axis; never slide it.
 
@@ -167,13 +167,8 @@ The Stockpile stores raw coal purchased by the player. A purchase adds as much o
 | ----------------- | ---------------- | ----- | --------------------------------------------------------------------------------------------- | ----: |
 | Player controlled | Capacity         | t     | Maximum raw coal that can be stored                                                           |     1 |
 | Constant          | StartPrice       | MWh/t | Coal price at the start of a run                                                              |     1 |
-| Constant          | PriceGrowth      | ×/min | Trend multiplier applied to the price each minute                                             |  1.06 |
-| Constant          | MarketRange      | %     | Largest deviation from the trend the market can reach                                         |  0.25 |
-| Constant          | MarketVolatility | 1/√s  | Half-width of each random market step                                                         |  0.03 |
-| Constant          | MarketReversion  | 1/s   | Rate at which the market is pulled back towards the trend                                     |  0.01 |
-| Variable          | Trend            | MWh/t | StartPrice × PriceGrowth^(ElapsedSeconds / 60)                                                |     1 |
-| Variable          | Market           | ×     | Deviation from the trend, updated every step                                                  |     1 |
-| Variable          | CoalPrice        | MWh/t | Trend × Market                                                                                |     1 |
+| Constant          | PriceGrowth      | ×/min | Multiplier applied to the price each minute                                                   |  1.06 |
+| Variable          | CoalPrice        | MWh/t | StartPrice × PriceGrowth^(ElapsedSeconds / 60)                                                |     1 |
 | Variable          | Contents         | t     | Raw coal currently stored                                                                     |     0 |
 | Variable          | PurchasedCoal    | t     | min(RequestedCoal, Capacity − Contents, max(0, Battery Contents − StartupEnergy) / CoalPrice) |     — |
 | Variable          | PurchaseCost     | MWh   | PurchasedCoal × CoalPrice                                                                     |     — |
@@ -182,33 +177,30 @@ The player can buy any positive amount of raw coal, and `Capacity` can be increa
 
 #### The coal market
 
-Coal grows more expensive as a run progresses, following a compounding trend with a random deviation on top:
+Coal grows more expensive as a run progresses, compounding on a fixed curve:
 
 ```text
-Trend      = StartPrice × PriceGrowth^(ElapsedSeconds / 60)
-Drift      = (1 − Market) × MarketReversion × DeltaTimeSeconds
-NextMarket = clamp(Market + Drift + Noise × √DeltaTimeSeconds, 1 − MarketRange, 1 + MarketRange)
-CoalPrice  = Trend × Market
+CoalPrice = StartPrice × PriceGrowth^(ElapsedSeconds / 60)
 ```
 
-`Noise` is drawn uniformly from `[−MarketVolatility, +MarketVolatility]` on every step, from a seeded generator, so a run replays identically and two runs sharing a seed face the same market. `Market` starts at 1 and settles around ±12% of the trend, touching the ±`MarketRange` clamp only occasionally.
+Nothing else moves it. The price at a given second is the same price in every run, so the market is a clock rather than a risk: there is no spike to be caught by and no dip to wait for, and a player who knows the curve knows every price they will ever be quoted. What that removes is a hedging game; what it leaves is the decision the price exists to force, which is that everything bought late costs more than the same thing bought early.
 
-The trend reaches 1.79 MWh/t by the end of a 600 s run. What that costs the player depends on how much energy the plant extracts from a tonne of raw coal:
+The price reaches 1.79 MWh/t by the end of a 600 s run. What that costs the player depends on how much energy the plant extracts from a tonne of raw coal:
 
-| Plant state                 | Net MWh per tonne of raw coal | Trend reaches it at |
+| Plant state                 | Net MWh per tonne of raw coal | Price reaches it at |
 | --------------------------- | ----------------------------: | ------------------: |
 | Starting Efficiency of 0.70 |                          1.78 |                9:56 |
 | Efficiency at its 0.95 cap  |                          3.55 |     after the timer |
 
-Both figures are for a chain matched to the Turbine's steam draw, which is not what the starting Settings give — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain). Neither depends on `Capacity` or on storage: a capacity upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and storage buys headroom** — a plant that never touches Efficiency reaches break-even moments before the timer expires, while one at `MaxEfficiency` still holds a 50% margin and is threatened only by a market spike near the clamp.
+Both figures are for a chain matched to the Turbine's steam draw, which is not what the starting Settings give — see [Oversupply and the matched chain](#oversupply-and-the-matched-chain). Neither depends on `Capacity` or on storage: a capacity upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys wear headroom rather than output. `Efficiency` is the only track that moves this number. Against a rising price, **Capacity buys speed, Efficiency buys survival, and storage buys headroom** — a plant that never touches Efficiency reaches break-even moments before the timer expires, while one at `MaxEfficiency` is still earning half of what it earned at the opening price.
 
 That band is 1.99× wide, because `Efficiency` spans 0.70 to 0.95. The range used to be 0.85 to 0.95 and the band 1.29×, which was too narrow for any exponential price curve to both spare a well-run plant and sharply punish a neglected one: the market applied a steady tax rather than a deadline. Widening the range needed the chain rebalanced around the new starting value, and that is what `SteamYield` and the Turbine's `BaseConsumption` do. At 10 and 0.62 they hold the opening material flows, the matched ratio, and the starting net yield within a hair of where 8 and 0.75 put them at an `Efficiency` of 0.85 — only the ceiling moved.
 
-The widening also flattens the spread between market seeds without the market itself changing, because a plant running near break-even is enormously levered to the price. At a yield of 1.79 against a late-run price of 1.79, the ±12% the market swings is the difference between earning and not; at a yield of 3.55 the same swing moves income by a tenth. Efficiency is what buys out of that leverage, which is a second reason the track has to be worth buying.
+A plant running near break-even is also enormously levered to the price. At a yield of 1.78 the margin on a tonne falls from 0.78 MWh at the opening price to nothing by the end of the run; at 3.55 the same climb takes a third of the margin and leaves the rest. Efficiency is what buys out of that leverage, which is a second reason the track has to be worth buying.
 
 The rising price also sharpens the closing decision. Net income is `Throughput × (YieldPerTonne − CoalPrice)`, and the second factor shrinks all run no matter how large the plant grows, so there is a point past which no reinvestment can pay itself back and banking is the only correct move.
 
-Because the price only ever trends upward, a full Stockpile is worth more than the energy that bought it, and the decision in a coal purchase is timing: buying into a spike wastes energy, but waiting out a dip starves the Pulverizer. Stockpile `Capacity` is what buys the ability to wait, which is the reason it is an upgrade worth considering against throughput.
+Because the price only ever rises, a full Stockpile is worth more than the energy that bought it, and coal is never cheaper than it is now. The decision in a purchase is therefore not when but how much: energy spent on coal ahead of time is energy not spent on an upgrade that would compound, and coal that cannot be burned before the timer expires is spent for nothing. Stockpile `Capacity` is the ceiling on how far ahead a player can buy, which is the reason it is an upgrade worth considering against throughput.
 
 ### Pulverizer
 
@@ -388,16 +380,16 @@ The Turbine inverts because it is the only pure consumer. Its output store is th
 
 `StrainGain` was measured rather than chosen, against two requirements: reading the gauge has to beat ignoring it by enough to be worth doing, and a run must not punish the player before they have done anything. It no longer satisfies the first, and the measurement below is what says so.
 
-The measurement compares one policy against itself. Throttling against the strained ceiling, it reaches a median peak of 1610 MWh and trips nothing. Throttling against the slack ceiling — the same play from someone who never looks at the gauge — it reaches 1277 and trips a machine 0.95 times a run: a **21% penalty for ignoring strain**. Against `TargetEnergy` that is the difference between winning 78% of seeds and winning 50%.
+The measurement compares one policy against itself, over the single run the price curve now allows. Throttling against the strained ceiling, it peaks at 1599 MWh and trips nothing. Throttling against the slack ceiling — the same play from someone who never looks at the gauge — it peaks at 1391 and still trips nothing: a **13% penalty for ignoring strain**. The second row of the table below is a separate run: every `Setting` held at its starting 0.6 and nothing upgraded, which is what the opening does to a player who has not yet touched a control.
 
-**This is the weakest part of the current tuning, and it is open.** 1.25 was set when the same comparison read 65%, and widening the `Efficiency` band closed the window between the two requirements above. A run that banks 1600 MWh absorbs a trip that a 248 MWh run could not, so the same constant now buys a fifth of the bite it used to — squarely in the 15% to 35% band that was previously rejected as a mild tax rather than something worth steering around. Raising the gain does not recover it:
+**This is the weakest part of the current tuning, and it is open.** 1.25 was set when the same comparison read 65%, and widening the `Efficiency` band closed the window between the two requirements above. A run that banks 1600 MWh absorbs a trip that a 248 MWh run could not, so the same constant now buys a fifth of the bite it used to — below even the 15% to 35% band that was previously rejected as a mild tax rather than something worth steering around. Raising the gain does not recover it:
 
 | `StrainGain`         |  1.25 |  1.40 |  1.55 |  1.70 |
 | -------------------- | ----: | ----: | ----: | ----: |
-| Penalty for ignoring |   21% |   57% |   55% |   63% |
-| Opening Turbine wear |   79% |  trip |  trip |  trip |
+| Penalty for ignoring |   13% |    7% |   69% |   44% |
+| Opening Turbine wear |   55% |   77% |  trip |  trip |
 
-At 1.25 there is too little bite; by 1.40 the opening spin-up trips the Turbine on its own, before the player has touched a control. The two requirements can no longer both be met by this constant alone, and the fix — if the 65% is worth recovering — has to come from something that decouples them, such as what the Turbine faces during spin-up. Re-matching the chain does not help: a variant holding the old 0.811 : 0.882 : 1 ratio exactly measures 15%, worse rather than better.
+At 1.25 and 1.40 there is too little bite, and 1.40 buys less of it than 1.25 while taking the opening from 55% wear to 77%; by 1.55 the spin-up trips the Turbine on its own. The two requirements can no longer both be met by this constant alone, and the fix — if the 65% is worth recovering — has to come from something that decouples them, such as what the Turbine faces during spin-up. The penalty is not monotonic in the gain because a single run either eats a trip or does not; under the random market it was a median that smoothed that, and the old figures — including the 15% measured for a variant re-matching the chain to the 0.811 : 0.882 : 1 ratio — were taken there and have not been re-measured since.
 
 **The stores become bands rather than tanks.** The Tank is squeezed from both ends: too full and the Boiler strains, too empty and the Turbine does. Neither end is a place to sit. The Silo has a wear penalty at one end only — full and the Pulverizer cooks, empty and the Boiler simply throttles, which costs output rather than damage. The Tank is the tighter rope, which is the second reason to buy its capacity before the Silo's.
 
@@ -463,7 +455,7 @@ A persistent run header shows the remaining time and progress toward `TargetEner
 └────────────────────────────────────────────────────┘
 ```
 
-Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls, the current energy price per tonne, and a short history of that price — without it the player cannot tell a dip worth waiting out from the trend, and the timing decision is invisible. The Battery additionally displays its reserve, so the player can see why part of its contents is unspendable.
+Each storage card displays its current contents, capacity, fill percentage, and capacity-upgrade cost in MWh. The Stockpile also displays coal-purchase controls and the current energy price per tonne; the price follows a fixed curve, so that one figure and the clock in the run header say everything there is to know about it. The Battery additionally displays its reserve, so the player can see why part of its contents is unspendable.
 
 The Silo and Tank mark their strain thresholds on the fill bar — `BacklogThreshold` on both, and `StarveThreshold` on the Tank as well. Those marks are the only place the thresholds appear; without them the player watches a machine start to wear with nothing on screen explaining why.
 
@@ -472,7 +464,7 @@ The Silo and Tank mark their strain thresholds on the fill bar — `BacklogThres
 │ Stockpile                                 │
 ├───────────────────────────────────────────┤
 │ Stored       █░░░░░░░░░ {value} ({fill}%) │
-│ Coal price   {value} MWh/t  ▁▂▄▃▅▇▆ ▲     │
+│ Price        {value} MWh/t                │
 │ Buy coal     [-] {value} t [+]            │
 │              [Buy: {cost} MWh]            │
 │ Capacity     [Upgrade: {cost} MWh]        │

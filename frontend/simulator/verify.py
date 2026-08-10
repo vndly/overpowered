@@ -95,7 +95,7 @@ for name, (m, want) in SPEC_MAX_STRESS.items():
     check(name, m['base'] + m['rng'] * sim.MAX_SETTING, want, 0.05)
 
 print('\nENERGY BALANCE')
-s = sim.run(POL, 1, 0.1)
+s = sim.run(POL, 0.1)
 lhs = sim.STARTING_CHARGE + s.generated
 rhs = s.batt + s.machine_use + s.coal_cost + s.spent
 print(f'  in  : start {sim.STARTING_CHARGE:.2f} + stored {s.generated:.2f} = {lhs:.2f} MWh')
@@ -105,33 +105,25 @@ check('residual', lhs - rhs, 0.0, 1e-6)
 print(f'  (discarded by a full Battery: {s.clipped:.2f} MWh)')
 
 print('\nSTEP-SIZE CONVERGENCE')
-# An individual run is sensitive to dt because purchases are discrete: a marginal
-# upgrade can fire one second earlier and compound. That averages out across seeds, so
-# the distribution is what converges, and the build itself is the structural check.
-seeds = range(16)
-runs = {dt: [sim.run(POL, sd, dt) for sd in seeds] for dt in (0.4, 0.2, 0.1, 0.05)}
-for dt, rs in runs.items():
-    peaks = [r.peak for r in rs]
-    lv = st.mean(sum(r.levels.values()) for r in rs)
-    print(f'  dt={dt:<5} median peak {st.median(peaks):7.2f}   mean upgrade levels {lv:6.1f}')
+# A run is sensitive to dt because purchases are discrete: a marginal upgrade can fire
+# one second earlier and compound. Nothing averages that out now that a policy has one
+# run in it, so the peak is held to a looser bound than the build, which is the
+# structural check -- the same plant reached by a slightly different path.
+runs = {dt: sim.run(POL, dt) for dt in (0.4, 0.2, 0.1, 0.05)}
+for dt, r in runs.items():
+    print(f'  dt={dt:<5} peak {r.peak:7.2f}   upgrade levels {sum(r.levels.values()):6.0f}')
 
 fine = [0.2, 0.1, 0.05]     # dt=0.4 is too coarse to use and is reported for contrast
-meds = [st.median([r.peak for r in runs[dt]]) for dt in fine]
-check('median spread, dt<=0.2', (max(meds) - min(meds)) / st.mean(meds), 0.0, 0.06)
-lvls = [st.mean(sum(r.levels.values()) for r in runs[dt]) for dt in fine]
+peaks = [runs[dt].peak for dt in fine]
+check('peak spread, dt<=0.2', (max(peaks) - min(peaks)) / st.mean(peaks), 0.0, 0.06)
+lvls = [sum(runs[dt].levels.values()) for dt in fine]
 check('build spread, dt<=0.2', (max(lvls) - min(lvls)) / st.mean(lvls), 0.0, 0.02)
 
-per_seed = [abs(x.peak - y.peak) / max(x.peak, y.peak)
-            for x, y in zip(runs[0.1], runs[0.05])]
-print(f'  note: a single run still moves {st.mean(per_seed):.0%} on average between '
-      f'dt=0.1 and 0.05, from discrete purchase timing')
-
 print('\nRESTART FLOOR (MinimumReserve must never sit below a restart)')
-worst = 0.0
-for sd in range(12):
-    r = sim.run(POL, sd, 0.1)
-    worst = max(worst, r.startup_energy() - r.reserve())
-check('max startup - reserve', worst, 0.0, 0.0)
+r = sim.run(POL, 0.1)
+# Clamped at zero: the check is that the gap never turns positive, and printing how far
+# below the floor a comfortable run sits would say nothing about the rule.
+check('max startup - reserve', max(0.0, r.startup_energy() - r.reserve()), 0.0, 0.0)
 
 print('\nFAILED: ' + ', '.join(failures) if failures else '\nall checks passed')
 raise SystemExit(1 if failures else 0)

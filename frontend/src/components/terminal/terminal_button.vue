@@ -82,13 +82,11 @@ function onClick(event: MouseEvent): void {
     color: var(--bg);
 }
 
-/* Dim green on black, as ui_ux.md §21 sets the disabled state — but the border
-   breaks as well as dims, because §28 forbids a state a player can only tell by how
-   bright it is. Dashed already reads as inactive here: it is what a card's own rules
-   use for a division that is not a division (§8). */
+/* Dim green on black, as ui_ux.md §21 sets the disabled state: the border keeps its
+   solid stroke and only dims, so a disabled control reads as the same button turned
+   down rather than as a different kind of frame. */
 .terminal-button[aria-disabled='true'] {
     border-color: var(--fg-disabled);
-    border-style: dashed;
     color: var(--fg-disabled);
     cursor: default;
 }

@@ -11,8 +11,6 @@ and re-run `measure.py`.
 """
 import copy
 import itertools
-import math
-import random
 
 TIME_LIMIT = 600.0
 MAX_SETTING = 2.0
@@ -26,7 +24,7 @@ T = dict(cap=50.0, base=1.0,  rng=6.0,   safe=6.0,  mx=13.0,  cons=0.62, wg=0.06
 PULV_YIELD, STEAM_YIELD = 0.95, 10.0
 MAX_EFF, UPGRADE_GAIN, CAPACITY_GROWTH = 0.95, 0.25, 1.5
 RESERVE_FRACTION, STARTUP_SECONDS, RESTART_MULTIPLE, STARTING_CHARGE = 0.10, 30.0, 2.0, 4.0
-START_PRICE, PRICE_GROWTH, MARKET_RANGE, VOLATILITY, REVERSION = 1.0, 1.06, 0.25, 0.03, 0.01
+START_PRICE, PRICE_GROWTH = 1.0, 1.06
 START_SETTING, START_EFFICIENCY = 0.6, 0.70
 
 # Strain: a machine out of step with the chain runs hotter than its Setting alone implies.
@@ -47,12 +45,6 @@ def starve(contents, capacity):
     fill = 0.0 if capacity <= 0 else contents / capacity
     return STRAIN_GAIN * max(0.0, min(1.0, (STARVE_THRESHOLD - fill) / STARVE_THRESHOLD))
 
-
-# The spec advances the market once per simulation step, which ties the realised price
-# path to DeltaTimeSeconds -- two implementations stepping differently would face
-# different markets on the same seed. Here the walk runs on its own fixed grid so that a
-# seed means one market at any step size, which is what makes convergence testable.
-MARKET_DT = 0.05
 
 # upgrade track -> (BaseCost, CostGrowth)
 COST = {
@@ -75,7 +67,6 @@ class State:
         self.wear = {'P': 0.0, 'B': 0.0, 'T': 0.0}
         self.repair = {'P': 0.0, 'B': 0.0, 'T': 0.0}
         self.levels = {k: 0 for k in COST}
-        self.market = 1.0
         self.last_elec, self.last_raw = (0.0, 0.0), 0.0
         # outcome and energy accounting, so a run can be audited for conservation
         self.peak = STARTING_CHARGE
@@ -84,7 +75,7 @@ class State:
         self.stalled = False
 
     def price(self):
-        return START_PRICE * PRICE_GROWTH ** (self.t / 60.0) * self.market
+        return START_PRICE * PRICE_GROWTH ** (self.t / 60.0)
 
     def startup_energy(self):
         return sum(self.last_elec) * STARTUP_SECONDS / 3600.0
@@ -291,13 +282,14 @@ def buy_coal(s):
     s.stock += kg
 
 
-def run(pol, seed, dt=0.2):
-    """One run. Machines read start-of-step state; every store is written at step end."""
-    path = market_path(seed)
+def run(pol, dt=0.2):
+    """One run. Machines read start-of-step state; every store is written at step end.
+
+    The coal price is a function of `t` alone, so a policy has exactly one run in it:
+    what used to be a distribution over market seeds is now a single number."""
     s = State()
     mode, next_decision = 'ride', 0.0
     for _ in range(int(TIME_LIMIT / dt)):
-        s.market = path[int(s.t / MARKET_DT)]
         if max(s.wear.values()) > pol['wear_hi']: mode = 'back'
         elif max(s.wear.values()) < pol['wear_lo']: mode = 'ride'
         sP, sB, sT = settings(s, pol, mode)
@@ -358,25 +350,12 @@ def run(pol, seed, dt=0.2):
     return s
 
 
-def market_path(seed):
-    """The whole run's Market series on the fixed MARKET_DT grid."""
-    rng = random.Random(seed)
-    market, path = 1.0, []
-    for _ in range(int(TIME_LIMIT / MARKET_DT) + 2):
-        path.append(market)
-        drift = (1 - market) * REVERSION * MARKET_DT
-        noise = rng.uniform(-VOLATILITY, VOLATILITY) * math.sqrt(MARKET_DT)
-        market = max(1 - MARKET_RANGE, min(1 + MARKET_RANGE, market + drift + noise))
-    return path
-
-
-def sweep(grid, seeds, dt=0.2):
-    """Run every combination in `grid` over `seeds`, best mean peak first."""
+def sweep(grid, dt=0.2):
+    """Run every combination in `grid`, highest peak first."""
     keys = list(grid)
     out = []
     for combo in itertools.product(*(grid[k] for k in keys)):
         pol = dict(zip(keys, combo))
-        peaks = sorted(run(pol, sd, dt).peak for sd in seeds)
-        out.append((sum(peaks) / len(peaks), peaks[len(peaks) // 2], max(peaks), pol))
+        out.append((run(pol, dt).peak, pol))
     out.sort(key=lambda r: -r[0])
     return out

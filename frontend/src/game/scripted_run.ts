@@ -56,7 +56,7 @@ export interface ScriptedRunResult {
  * input sequence that touches coal purchases, all ten upgrade tracks, Settings deep in the
  * wear band and Settings back below the clean ceilings, so that properties which must hold
  * under *any* input can be asserted against one reproducible run.
- * @param seed - Seed for the run's coal market
+ * @param seed - Seed for the run; no rule draws from it while every rule is deterministic
  * @param deltaSeconds - Length of each simulation step
  * @returns The finished engine and the figures the conservation checks read
  */

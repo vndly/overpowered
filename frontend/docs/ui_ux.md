@@ -506,7 +506,7 @@ STOCKPILE
 STORED      0.7 / 1.0 t
 ██████████████░░░░░░
 
-COAL PRICE  1.0 MWh/t
+PRICE       1.0 MWh/t
 
 [-]          0.5 t          [+]
 
@@ -877,7 +877,7 @@ dim green text
 black background
 ```
 
-The disabled border is also dashed. §28 forbids a state that can be told apart only by how bright it is, and a dim green outline beside a bright one is exactly that; dashed is what §8 already uses for a rule that divides nothing, so it reads as inactive without introducing a second colour.
+The disabled border keeps its solid stroke and only dims. This is a deliberate exception to §28, which forbids a state told apart by brightness alone. A dashed border was used here first; the judgment against it is that a chain of cards whose buttons break into dashes as costs rise reads as a damaged frame rather than as controls out of reach. The exception is narrow: a button is disabled because its cost is above `SpendableEnergy`, which the Battery card states outright, so the state is legible from the numbers as well as from the dimming.
 
 A disabled button keeps its label and its place in the tab order. It carries `aria-disabled="true"` rather than the `disabled` attribute, so a player can reach it and read the price they cannot yet pay instead of finding a dimmed mystery.
 
@@ -1093,7 +1093,7 @@ The bars, gauges and sparklines drawn in block glyphs are hidden from assistive 
 
 # 28. Accessibility
 
-Even though the UI is monochrome, state must not be communicated by brightness alone.
+Even though the UI is monochrome, state must not be communicated by brightness alone. The disabled button is the single exception, and §21 records why.
 
 Use combinations of:
 

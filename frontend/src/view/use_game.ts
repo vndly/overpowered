@@ -30,7 +30,8 @@ export interface Game {
 }
 
 /**
- * @returns A seed for a fresh run's coal market; never shown to the player
+ * @returns A seed for a fresh run; never shown to the player, and read by no rule while
+ * every one of them is deterministic
  */
 function newSeed(): number {
   return Math.floor(Math.random() * SEED_RANGE)
