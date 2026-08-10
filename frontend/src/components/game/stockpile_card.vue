@@ -11,8 +11,10 @@
       <FillBar :fraction="view.fraction" />
       <span>({{ view.fillPercentText }}%)</span>
     </div>
-    <ValueRow label="COAL PRICE" :value="view.priceText" />
-    <PriceHistory :samples="view.priceHistory" />
+    <div class="stockpile-card__price">
+      <ValueRow label="COAL PRICE" :value="view.priceText" />
+      <PriceHistory :samples="view.priceHistory" />
+    </div>
     <div class="stockpile-card__purchase">
       <NumericStepper
         class="stockpile-card__amount"
@@ -28,7 +30,6 @@
       @press="emit('buy')"
     />
     <div class="stockpile-card__upgrades">
-      <SectionDivider dashed />
       <p class="stockpile-card__section">UPGRADES</p>
       <TerminalButton
         :label="`CAPACITY: ${view.upgradeCostText}`"
@@ -80,6 +81,13 @@ const emit = defineEmits<{
     line-height: var(--cell-height);
 }
 
+/* A blank line off what is stored: the price and its history are the other half of
+   the card, and the purchase controls answer both (ui_ux.md §11) */
+.stockpile-card__price {
+    flex: none;
+    padding-top: var(--cell-height);
+}
+
 .stockpile-card__purchase {
     display: flex;
     flex: none;
@@ -96,9 +104,11 @@ const emit = defineEmits<{
 }
 
 /* The upgrade section sits at the foot of the card, so the buttons line up across
-   the chain however tall a card's readings make it (ui_ux.md §25) */
+   the chain however tall a card's readings make it (ui_ux.md §25). A blank line
+   opens it rather than a rule (ui_ux.md §8) */
 .stockpile-card__upgrades {
     flex: none;
     margin-top: auto;
+    padding-top: var(--cell-height);
 }
 </style>

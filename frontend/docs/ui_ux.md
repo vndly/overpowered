@@ -336,6 +336,8 @@ or
 dashed green line
 ```
 
+The upgrade section at the foot of a card is the exception: a blank line opens it, not a rule. The section title and the buttons' own borders already carry the break, and a second rule crowds a card this compact.
+
 Recommended card padding:
 
 ```text
@@ -428,7 +430,7 @@ Generic layout:
 │                      │
 │ additional values    │
 │                      │
-├ - - - - - - - - - - ┤
+│                      │
 │       UPGRADES       │
 │ [     CAPACITY     ] │
 └──────────────────────┘
@@ -473,8 +475,6 @@ COAL PRICE  1.0 MWh/t
 [-]          0.5 t          [+]
 
 [         BUY: 0.5 MWh         ]
-
---------------------------------
 
 UPGRADES
 
@@ -523,8 +523,6 @@ CLEAN TO      0.69
 PENALTY       -7%
 
 OUTPUT        value
-
---------------------------------
 
 UPGRADES
 ```

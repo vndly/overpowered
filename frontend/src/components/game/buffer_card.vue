@@ -12,7 +12,6 @@
     </div>
     <p v-if="legend.length > 0" class="buffer-card__legend">{{ legend }}</p>
     <div class="buffer-card__upgrades">
-      <SectionDivider dashed />
       <p class="buffer-card__section">UPGRADES</p>
       <TerminalButton
         :label="`CAPACITY: ${view.upgradeCostText}`"
@@ -87,9 +86,11 @@ const legend = computed(() => props.view.marks
 }
 
 /* The upgrade section sits at the foot of the card, so the buttons line up across
-   the chain however tall a card's readings make it (ui_ux.md §25) */
+   the chain however tall a card's readings make it (ui_ux.md §25). A blank line
+   opens it rather than a rule (ui_ux.md §8) */
 .buffer-card__upgrades {
     flex: none;
     margin-top: auto;
+    padding-top: var(--cell-height);
 }
 </style>
