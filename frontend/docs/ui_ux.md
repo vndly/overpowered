@@ -775,6 +775,10 @@ Graph styling:
 
 The graph should appear like instrumentation, not analytics software.
 
+The trace ships as **inline SVG** rather than as the box-drawing characters sketched above. A character-cell chart quantises the line to whole cells, and at this update rate a reading that sits between two cells flickers between them several times a second. Every rule this section states still holds — green line, faint green grid, no fill, no gradient, square corners, minimal labels — and `components/game/net_flow_graph.vue` is the one component to change if a character chart is ever preferred.
+
+The value axis rescales to the window rather than to a fixed range, with zero always on it, so the trace fills its band at any output and the sign of the flow is never in doubt. The axis never narrows below 2 MW, so a plant sitting at nothing reads as a flat line instead of amplified rounding error.
+
 ---
 
 # 20. Alerts Panel

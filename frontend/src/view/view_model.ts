@@ -131,6 +131,11 @@ export interface AlertView {
   urgent: boolean
 }
 
+/** An alert and what raises it, so the two can be read side by side. */
+interface AlertRule extends AlertView {
+  raised: boolean
+}
+
 /** The whole interface, as one immutable snapshot. */
 export interface GameView {
   outcome: RunOutcome
@@ -315,6 +320,87 @@ function buildPowerView(engine: GameEngine): PowerView {
 }
 
 /**
+ * Every alert the interface can raise, in the order ui_ux.md §20 ranks them: a machine
+ * that has stopped first, then the Battery, then the stresses and the stores that are
+ * costing the player something. The store alerts fire on the strain thresholds rather
+ * than on a store actually reaching an end, because that is where the cost starts.
+ * @param engine - The engine to read
+ * @returns Each alert, and whether it is raised
+ */
+function alertRules(engine: GameEngine): AlertRule[] {
+  return [
+    {
+      text: 'PULVERIZER TRIPPED',
+      urgent: true,
+      raised: engine.pulverizer.isTripped,
+    },
+    {
+      text: 'BOILER TRIPPED',
+      urgent: true,
+      raised: engine.boiler.isTripped,
+    },
+    {
+      text: 'TURBINE TRIPPED',
+      urgent: true,
+      raised: engine.turbine.isTripped,
+    },
+    {
+      text: 'LOW BATTERY',
+      urgent: true,
+      raised: engine.battery.contents <= engine.minimumReserve,
+    },
+    {
+      text: 'HIGH TEMPERATURE',
+      urgent: false,
+      raised: engine.pulverizer.excess(engine.pulverizerStrain) > 0,
+    },
+    {
+      text: 'HIGH PRESSURE',
+      urgent: false,
+      raised: engine.boiler.excess(engine.boilerStrain) > 0,
+    },
+    {
+      text: 'HIGH VIBRATION',
+      urgent: false,
+      raised: engine.turbine.excess(engine.turbineStrain) > 0,
+    },
+    {
+      text: 'TANK LOW',
+      urgent: false,
+      raised: engine.tank.fill <= STARVE_THRESHOLD,
+    },
+    {
+      text: 'TANK FULL',
+      urgent: false,
+      raised: engine.tank.fill >= BACKLOG_THRESHOLD,
+    },
+    {
+      text: 'SILO FULL',
+      urgent: false,
+      raised: engine.silo.fill >= BACKLOG_THRESHOLD,
+    },
+    {
+      text: 'STOCKPILE EMPTY',
+      urgent: false,
+      raised: engine.stockpile.contents <= 0,
+    },
+  ]
+}
+
+/**
+ * @param engine - The engine to read
+ * @returns The alerts standing right now, most urgent first
+ */
+function buildAlerts(engine: GameEngine): AlertView[] {
+  return alertRules(engine)
+    .filter((rule) => rule.raised)
+    .map((rule) => ({
+      text: rule.text,
+      urgent: rule.urgent,
+    }))
+}
+
+/**
  * Reads the whole engine into one snapshot for the components to render.
  * @param engine - The engine to read
  * @param purchaseKilograms - The coal stepper's current amount, which is UI state
@@ -355,6 +441,6 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
     boiler: buildMachineView(BOILER_SPEC, engine.boiler, engine.boilerStrain, engine.spendableEnergy),
     turbine: buildMachineView(TURBINE_SPEC, engine.turbine, engine.turbineStrain, engine.spendableEnergy),
     power: buildPowerView(engine),
-    alerts: [],
+    alerts: buildAlerts(engine),
   }
 }

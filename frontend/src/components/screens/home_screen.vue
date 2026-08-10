@@ -1,5 +1,5 @@
-<!-- The application's only screen: the run header, the production chain, and the
-     overlay that opens and closes a run. -->
+<!-- The application's only screen: the run header, the production chain, the lower
+     dashboard, and the overlay that opens and closes a run. -->
 <template>
   <main class="home-screen">
     <RunHeader :view="view" />
@@ -11,6 +11,7 @@
       @step-setting="stepSetting"
       @purchase-upgrade="purchaseUpgrade($event)"
     />
+    <SecondaryDashboard :view="view" />
     <RunOverlay v-if="view.outcome !== 'running'" :view="view" @advance="onAdvance" />
   </main>
 </template>
@@ -19,6 +20,7 @@
 import ProductionChain from '@/components/game/production_chain.vue'
 import RunHeader from '@/components/game/run_header.vue'
 import RunOverlay from '@/components/game/run_overlay.vue'
+import SecondaryDashboard from '@/components/game/secondary_dashboard.vue'
 import {useGame} from '@/view/use_game'
 
 const {
