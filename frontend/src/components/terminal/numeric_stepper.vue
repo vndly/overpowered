@@ -161,8 +161,10 @@ onUnmounted(stopRepeat)
     height: calc(var(--cell-height) * 2);
 }
 
+/* A reading like any other, even though the player is the one moving it */
 .numeric-stepper__value {
     flex: 1;
+    color: var(--data);
     line-height: var(--cell-height);
     text-align: center;
     white-space: pre;

@@ -12,7 +12,7 @@
 withDefaults(defineProps<{
   label: string
   value: string // Already formatted; this component never rounds
-  dim?: boolean // Secondary reading, rendered in dim green
+  dim?: boolean // Secondary reading, turned down on both sides of the row
   large?: boolean // A reading its panel is built around, set half again the character cell
 }>(), {
   dim: false,
@@ -45,7 +45,15 @@ withDefaults(defineProps<{
     line-height: calc(var(--cell-height) * 1.5);
 }
 
+/* The label is the console's printed legend and the value is its readout, so the row
+   carries both colours (assets/styles.css). This is the one rule that puts every
+   reading in the interface in green — every card builds its numbers out of this row. */
 .value-row__value {
+    color: var(--data);
     text-align: right;
+}
+
+.value-row--dim .value-row__value {
+    color: var(--data-dim);
 }
 </style>

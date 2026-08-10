@@ -117,16 +117,21 @@ const emit = defineEmits<{
     width: calc(var(--cell-width) * 7);
 }
 
+/* The countdown to a trip or to a clean machine — a clock, so it reads as one
+   (assets/styles.css). CLEAN and HOLDING take the same colour: the note is one row
+   answering one question, and a line that changed colour with its own wording would
+   read as a state change rather than as an answer. */
 .machine-card__wear-note {
     flex: none;
     height: var(--cell-height);
     padding-left: calc(var(--cell-width) * 7);
-    color: var(--fg-dim);
+    color: var(--data-dim);
     line-height: var(--cell-height);
 }
 
 .machine-card__wear-percent {
     flex: 1;
+    color: var(--data);
     text-align: right;
 }
 

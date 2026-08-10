@@ -207,6 +207,25 @@ Disabled controls  dim/faint green
 
 Do not introduce additional colors for normal operation.
 
+What shipped: the same two-value monochrome, with the two values split by role rather than by brightness. The console — every border, rule, title, label, button, arrow, alert, grid line and axis scale — is phosphor white. Green is kept for what the plant is actually reading: **values and their units, the bars that draw them, and the clocks**. Nothing that merely labels, frames, or explains a reading takes it.
+
+```css
+:root {
+  --bg: #000000;
+  --fg: #e8e8e8;                          /* the console */
+  --fg-dim: rgba(232, 232, 232, 0.55);
+  --fg-faint: rgba(232, 232, 232, 0.25);
+  --fg-disabled: rgba(232, 232, 232, 0.30);
+
+  --data: #39ff14;                        /* the readout */
+  --data-dim: rgba(57, 255, 20, 0.55);
+}
+```
+
+This is still one accent on black, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no third color, no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. Where a section below names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
+
+Yellow and red are reserved for a later pass on values and indicators, and are not in the interface yet.
+
 Warnings should preferably use:
 
 - blinking text
@@ -1219,9 +1238,12 @@ Example:
 ```css
 :root {
   --bg: #000;
-  --fg: #39ff14;
-  --fg-dim: rgba(57,255,20,.55);
-  --fg-faint: rgba(57,255,20,.25);
+  --fg: #e8e8e8;
+  --fg-dim: rgba(232,232,232,.55);
+  --fg-faint: rgba(232,232,232,.25);
+
+  --data: #39ff14;
+  --data-dim: rgba(57,255,20,.55);
 
   --border: 1px solid var(--fg);
 
@@ -1233,7 +1255,7 @@ Example:
 }
 ```
 
-Do not hard-code slightly different greens or border styles throughout individual components.
+Do not hard-code slightly different whites, greens or border styles throughout individual components. Which of the two colors anything takes is decided in [Color System](#4-color-system); a component picks a token, it does not pick a hue.
 
 ---
 

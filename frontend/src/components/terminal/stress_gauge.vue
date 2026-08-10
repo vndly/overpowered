@@ -73,9 +73,11 @@ const barText = computed(() => {
 }
 
 /* The outlined rectangle of §14, drawn as an outline so the gauge still occupies
-   exactly one character cell */
+   exactly one character cell. The frame is the console's and the fill is the
+   reading's, so the two take different colours (assets/styles.css). */
 .stress-gauge__bar {
     outline: 1px solid var(--fg-faint);
+    color: var(--data);
     white-space: pre;
 }
 </style>

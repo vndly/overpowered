@@ -21,12 +21,24 @@
    ============================================ */
 
 :root {
-    /* Monochrome green on black (ui_ux.md §4) */
+    /* Phosphor white on black, with green kept for the readings (ui_ux.md §4).
+       The console is white and what it measures is green — the split an instrument
+       panel makes between its printed legend and its lit readout. */
     --bg: #000000;
-    --fg: #39ff14;
-    --fg-dim: rgba(57, 255, 20, 0.55);
-    --fg-faint: rgba(57, 255, 20, 0.25);
-    --fg-disabled: rgba(57, 255, 20, 0.30);
+    --fg: #e8e8e8;
+    --fg-dim: rgba(232, 232, 232, 0.55);
+    --fg-faint: rgba(232, 232, 232, 0.25);
+    --fg-disabled: rgba(232, 232, 232, 0.30);
+
+    /* --fg as a brightness, for the one thing that cannot take a colour: the equipment
+       drawings are raster and are tinted by a filter chain rather than a fill
+       (components/game/equipment_icon.vue). Moves with --fg or the icons drift off it. */
+    --fg-level: 0.91;
+
+    /* Values and their units, the bars that draw them, and the clocks. Nothing that
+       merely labels or frames a reading takes these. */
+    --data: #39ff14;
+    --data-dim: rgba(57, 255, 20, 0.55);
 
     --border: 1px solid var(--fg);
 

@@ -73,6 +73,14 @@ const markText = computed(() => {
     white-space: pre;
 }
 
+/* The bar is the reading, so it is green (assets/styles.css) */
+.fill-bar__cells {
+    color: var(--data);
+}
+
+/* The marks are a scale printed under the bar rather than part of it, so they stay
+   the console's own colour — and so they match the legend that names them in
+   components/game/buffer_card.vue, which is the same glyph in running text */
 .fill-bar__marks {
     color: var(--fg-dim);
 }

@@ -24,7 +24,7 @@
       </g>
       <line class="net-flow-graph__zero" shape-rendering="crispEdges" :x1="PLOT_LEFT" :y1="zeroY" :x2="width" :y2="zeroY" />
       <polyline v-if="samples.length > 1" class="net-flow-graph__trace" :points="tracePoints" />
-      <text v-for="label in valueLabels" :key="label.text" class="net-flow-graph__label" text-anchor="end" :x="LABEL_X" :y="label.y">{{ label.text }}</text>
+      <text v-for="label in valueLabels" :key="label.text" class="net-flow-graph__label net-flow-graph__label--value" text-anchor="end" :x="LABEL_X" :y="label.y">{{ label.text }}</text>
       <text v-for="tick in timeTicks" :key="tick.age" class="net-flow-graph__label" :x="tick.x" :y="TIME_BASELINE" :text-anchor="tick.anchor">{{ tick.text }}</text>
     </svg>
   </TerminalPanel>
@@ -186,10 +186,12 @@ const tracePoints = computed(() => {
     stroke-width: 1;
 }
 
-/* No fill, no gradient, mitred corners: an instrument trace, not an area chart */
+/* No fill, no gradient, mitred corners: an instrument trace, not an area chart. It is
+   the reading this panel exists to draw, so it takes the readout's colour
+   (assets/styles.css) while the grid it is drawn on stays the console's. */
 .net-flow-graph__trace {
     fill: none;
-    stroke: var(--fg);
+    stroke: var(--data);
     stroke-width: 1;
     stroke-linejoin: miter;
     stroke-linecap: butt;
@@ -199,5 +201,11 @@ const tracePoints = computed(() => {
     fill: var(--fg-dim);
     font-family: inherit;
     font-size: inherit;
+}
+
+/* The value axis is quoted in MW and rescales with the trace, so its labels are
+   readings. The time axis is a fixed sixty-second scale and stays printed. */
+.net-flow-graph__label--value {
+    fill: var(--data-dim);
 }
 </style>

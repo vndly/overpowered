@@ -15,9 +15,9 @@
   <header class="run-header">
     <h1 class="run-header__title">OVERPOWERED</h1>
     <div class="run-header__run">
-      <p class="run-header__time">TIME {{ view.timeText }}</p>
+      <p class="run-header__time">TIME <span class="run-header__reading">{{ view.timeText }}</span></p>
       <div class="run-header__target">
-        <p class="run-header__stored">STORED {{ view.target.storedText }} / {{ view.target.targetText }} MWh</p>
+        <p class="run-header__stored">STORED <span class="run-header__reading">{{ view.target.storedText }} / {{ view.target.targetText }} MWh</span></p>
         <FillBar :fraction="view.target.fraction" :cells="TARGET_BAR_CELLS" />
       </div>
     </div>
@@ -112,6 +112,13 @@ defineExpose({
 .run-header__stored {
     height: var(--cell-height);
     line-height: var(--cell-height);
+}
+
+/* The clock and the stored figure are readings inside a labelled line, so the label
+   stays the console's colour and the number takes the readout's. The header writes
+   both as running text rather than as a value_row, so it colours them itself. */
+.run-header__reading {
+    color: var(--data);
 }
 
 /* Set at two cells like the title and the clock beside it, so the one control in the
