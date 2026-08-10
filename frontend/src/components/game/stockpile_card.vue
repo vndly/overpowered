@@ -1,0 +1,104 @@
+<!-- The Stockpile: how much raw coal is stored, what a tonne costs right now, and
+     the controls that buy it (ui_ux.md §11). The price itself is not upgradable —
+     specs.md sets it from the market — so the card has one upgrade. -->
+<template>
+  <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
+    <!-- Reserved for the equipment icon (ui_ux.md §9) -->
+    <div class="stockpile-card__icon"></div>
+    <SectionDivider />
+    <ValueRow label="STORED" :value="view.storedText" />
+    <div class="stockpile-card__bar">
+      <FillBar :fraction="view.fraction" />
+      <span>({{ view.fillPercentText }}%)</span>
+    </div>
+    <ValueRow label="COAL PRICE" :value="view.priceText" />
+    <PriceHistory :samples="view.priceHistory" />
+    <div class="stockpile-card__purchase">
+      <NumericStepper
+        class="stockpile-card__amount"
+        :value="view.purchaseAmountText"
+        :disabled-down="view.purchaseKilograms <= 0"
+        @step="emit('stepAmount', $event)"
+      />
+      <TerminalButton label="MAX" :width-cells="MAX_BUTTON_CELLS" @press="emit('fillAmount')" />
+    </div>
+    <TerminalButton
+      :label="`BUY: ${view.purchaseCostText} MWh`"
+      :disabled="!view.purchaseAffordable"
+      @press="emit('buy')"
+    />
+    <div class="stockpile-card__upgrades">
+      <SectionDivider dashed />
+      <p class="stockpile-card__section">UPGRADES</p>
+      <TerminalButton
+        :label="`CAPACITY: ${view.upgradeCostText}`"
+        :disabled="!view.upgradeAffordable"
+        @press="emit('upgrade')"
+      />
+    </div>
+  </TerminalPanel>
+</template>
+
+<script setup lang="ts">
+import PriceHistory from '@/components/game/price_history.vue'
+import FillBar from '@/components/terminal/fill_bar.vue'
+import NumericStepper from '@/components/terminal/numeric_stepper.vue'
+import SectionDivider from '@/components/terminal/section_divider.vue'
+import TerminalButton from '@/components/terminal/terminal_button.vue'
+import TerminalPanel from '@/components/terminal/terminal_panel.vue'
+import ValueRow from '@/components/terminal/value_row.vue'
+import type {StockpileView} from '@/view/view_model'
+
+const CARD_CELLS = 24 // Storage card width (docs/plan.md)
+const MAX_BUTTON_CELLS = 3 // The label's width; the button adds its own padding
+
+defineProps<{
+  view: StockpileView
+}>()
+
+const emit = defineEmits<{
+  stepAmount: [direction: number]
+  fillAmount: []
+  buy: []
+  upgrade: []
+}>()
+</script>
+
+<style scoped>
+/* Three cells tall, which is where the 64 x 48 icon lands (ui_ux.md §9) */
+.stockpile-card__icon {
+    flex: none;
+    height: calc(var(--cell-height) * 3);
+}
+
+/* The fill percentage sits in the same right-hand column as every value above it */
+.stockpile-card__bar {
+    display: flex;
+    flex: none;
+    align-items: flex-start;
+    justify-content: space-between;
+    line-height: var(--cell-height);
+}
+
+.stockpile-card__purchase {
+    display: flex;
+    flex: none;
+    gap: var(--space-1);
+}
+
+.stockpile-card__amount {
+    flex: 1;
+}
+
+.stockpile-card__section {
+    height: var(--cell-height);
+    line-height: var(--cell-height);
+}
+
+/* The upgrade section sits at the foot of the card, so the buttons line up across
+   the chain however tall a card's readings make it (ui_ux.md §25) */
+.stockpile-card__upgrades {
+    flex: none;
+    margin-top: auto;
+}
+</style>

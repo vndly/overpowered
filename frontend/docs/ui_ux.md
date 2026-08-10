@@ -479,8 +479,9 @@ COAL PRICE  1.0 MWh/t
 UPGRADES
 
 [           CAPACITY           ]
-[         COAL PRICE           ]
 ```
+
+`Capacity` is the Stockpile's only upgrade: `docs/specs.md` states that the coal price cannot be upgraded, because it is set by the market.
 
 Interaction controls should remain rectangular.
 
