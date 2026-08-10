@@ -1,11 +1,8 @@
-<!-- The application's only screen: the production chain, the overlay that opens and
-     closes a run, and a status line standing in for the run header until Stage 7. -->
+<!-- The application's only screen: the run header, the production chain, and the
+     overlay that opens and closes a run. -->
 <template>
   <main class="home-screen">
-    <p class="home-screen__status">
-      <span>TIME {{ view.timeText }}</span>
-      <span>STORED {{ view.target.storedText }} / {{ view.target.targetText }} MWh</span>
-    </p>
+    <RunHeader :view="view" />
     <ProductionChain
       :view="view"
       @step-purchase-amount="stepPurchaseAmount($event)"
@@ -20,6 +17,7 @@
 
 <script setup lang="ts">
 import ProductionChain from '@/components/game/production_chain.vue'
+import RunHeader from '@/components/game/run_header.vue'
 import RunOverlay from '@/components/game/run_overlay.vue'
 import {useGame} from '@/view/use_game'
 
@@ -44,13 +42,5 @@ function onAdvance(): void {
 .home-screen {
     height: 100%;
     padding: var(--space-4);
-}
-
-.home-screen__status {
-    display: flex;
-    gap: calc(var(--cell-width) * 4);
-    height: var(--cell-height);
-    margin-bottom: var(--space-2);
-    line-height: var(--cell-height);
 }
 </style>

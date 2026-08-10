@@ -666,6 +666,8 @@ UPGRADES
 
 Use the same styling as the rest of the interface.
 
+The upgrade section follows [§8](#8-card-style) like every other card: a blank line opens it rather than a rule, and `CAPACITY` is a gain row above a button carrying only the price.
+
 Do not introduce a separate accent color.
 
 ---

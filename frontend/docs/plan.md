@@ -21,8 +21,8 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
 - [x] [Stage 5 — Storage cards](#stage-5--storage-cards)
 - [x] [Stage 6 — Machine cards](#stage-6--machine-cards)
-- [ ] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
-- [ ] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — done in Stages 5 and 6; only the Battery card Stage 7 builds is left
+- [x] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
+- [x] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — done in Stages 5 and 6; the Battery card's drawing came with Stage 7
 - [ ] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
 - [ ] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
 - [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out

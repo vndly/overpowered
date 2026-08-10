@@ -1,7 +1,6 @@
 <!-- The production chain: seven cards in the order specs.md sets, each flow between
      them drawn as an arrow. The row is all this component owns. Cards read the view
-     model and report intent, which this passes straight up; no rule is applied here.
-     The Battery slot is a placeholder until Stage 7. -->
+     model and report intent, which this passes straight up; no rule is applied here. -->
 <template>
   <section class="production-chain" aria-label="PRODUCTION CHAIN">
     <StockpileCard
@@ -40,23 +39,18 @@
       @upgrade-efficiency="emit('purchaseUpgrade', 'turbine_efficiency')"
     />
     <FlowArrow />
-    <TerminalPanel :title="view.battery.title" :width-cells="STORAGE_CELLS">
-      <p class="production-chain__pending">{{ PENDING_NOTE }}</p>
-    </TerminalPanel>
+    <BatteryCard :view="view.battery" @upgrade="emit('purchaseUpgrade', 'battery_capacity')" />
   </section>
 </template>
 
 <script setup lang="ts">
+import BatteryCard from '@/components/game/battery_card.vue'
 import BufferCard from '@/components/game/buffer_card.vue'
 import MachineCard from '@/components/game/machine_card.vue'
 import StockpileCard from '@/components/game/stockpile_card.vue'
 import FlowArrow from '@/components/terminal/flow_arrow.vue'
-import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import type {MachineId, UpgradeTrackId} from '@/game/types'
 import type {GameView} from '@/view/view_model'
-
-const STORAGE_CELLS = 24 // Card width (docs/plan.md)
-const PENDING_NOTE = 'CARD PENDING'
 
 defineProps<{
   view: GameView
@@ -77,12 +71,5 @@ const emit = defineEmits<{
     display: flex;
     align-items: stretch;
     overflow-x: auto;
-}
-
-.production-chain__pending {
-    height: var(--cell-height);
-    color: var(--fg-dim);
-    line-height: var(--cell-height);
-    text-align: center;
 }
 </style>
