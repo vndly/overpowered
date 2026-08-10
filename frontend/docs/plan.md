@@ -18,7 +18,7 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 1 — Foundations: font, tokens, character grid, terminal primitives](#stage-1--foundations-font-tokens-character-grid-terminal-primitives)
 - [x] [Stage 2 — The engine](#stage-2--the-engine) — not tickable on its own; Stage 3 is its proof
 - [x] [Stage 3 — Verification screen](#stage-3--verification-screen)
-- [ ] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
+- [x] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
 - [ ] [Stage 5 — Storage cards](#stage-5--storage-cards)
 - [ ] [Stage 6 — Machine cards](#stage-6--machine-cards)
 - [ ] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
