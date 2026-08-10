@@ -1,7 +1,11 @@
 <!-- A storage bar drawn in CP437 block glyphs, with an optional row of
-     threshold marks beneath it (ui_ux.md §10 and §16). -->
+     threshold marks beneath it (ui_ux.md §10 and §16).
+
+     The glyphs are a picture of a number that is already written out beside the bar,
+     so the bar is hidden from assistive technology: read aloud, a row of block
+     characters is noise, and the reading it draws is on the line above it. -->
 <template>
-  <div class="fill-bar">
+  <div class="fill-bar" aria-hidden="true">
     <div class="fill-bar__cells">{{ barText }}</div>
     <div v-if="markText.length > 0" class="fill-bar__marks">{{ markText }}</div>
   </div>

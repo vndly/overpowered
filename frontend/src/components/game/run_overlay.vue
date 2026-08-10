@@ -1,6 +1,9 @@
 <!-- The panel that opens and closes a run: the objective before it starts, and
      what it came to afterwards. Shown for every outcome except a run in
-     progress, over a scrim that dims the chain behind it. -->
+     progress, over a scrim that dims the chain behind it.
+
+     It claims to be modal and it is: home_screen makes the chain behind it inert
+     while it is up, so the one button it offers is the only thing Tab can reach. -->
 <template>
   <div class="run-overlay" role="dialog" aria-modal="true" :aria-label="panel.title">
     <TerminalPanel :title="panel.title" :width-cells="PANEL_CELLS">

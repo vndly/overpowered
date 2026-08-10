@@ -859,6 +859,10 @@ dim green text
 black background
 ```
 
+The disabled border is also dashed. §28 forbids a state that can be told apart only by how bright it is, and a dim green outline beside a bright one is exactly that; dashed is what §8 already uses for a rule that divides nothing, so it reads as inactive without introducing a second colour.
+
+A disabled button keeps its label and its place in the tab order. It carries `aria-disabled="true"` rather than the `disabled` attribute, so a player can reach it and read the price they cannot yet pay instead of finding a dimmed mystery.
+
 Suggested CSS concept:
 
 ```css
@@ -1060,6 +1064,12 @@ inverse colors
 Do not rely on browser-default blue focus outlines if they break the monochrome appearance.
 
 Maintain accessibility semantics.
+
+What shipped: a 2px solid green outline on every focusable element, and a stepper that steps from either of its buttons — `ArrowUp` / `ArrowRight` / `+` up, `ArrowDown` / `ArrowLeft` / `-` down, with the key claimed so an arrow never scrolls the chain out from under the control. A modified press is left to the browser, so `Ctrl` and the sign keys still zoom. `Escape` is unclaimed and stays that way until there is a menu to close.
+
+The run overlay is the interface's one modal, and it is one in fact as well as in name: everything behind it is inert while it is up, so its button is the only thing `Tab` can reach.
+
+The bars, gauges and sparklines drawn in block glyphs are hidden from assistive technology. Read aloud they are noise, and each one draws a number that is written out in the row beside it.
 
 ---
 

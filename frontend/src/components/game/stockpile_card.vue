@@ -15,10 +15,16 @@
       <NumericStepper
         class="stockpile-card__amount"
         :value="view.purchaseAmountText"
+        label="COAL PURCHASE"
         :disabled-down="view.purchaseKilograms <= 0"
         @step="emit('stepAmount', $event)"
       />
-      <TerminalButton label="MAX" :width-cells="MAX_BUTTON_CELLS" @press="emit('fillAmount')" />
+      <TerminalButton
+        label="MAX"
+        aria-label="MAX COAL PURCHASE"
+        :width-cells="MAX_BUTTON_CELLS"
+        @press="emit('fillAmount')"
+      />
     </div>
     <TerminalButton
       :label="`BUY: ${view.purchaseCostText}`"
@@ -30,6 +36,7 @@
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
+        :aria-label="`UPGRADE CAPACITY: ${view.upgradeCostText}`"
         :disabled="!view.upgradeAffordable"
         @press="emit('upgrade')"
       />

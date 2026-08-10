@@ -19,6 +19,7 @@
       <NumericStepper
         class="machine-card__stepper"
         :value="view.settingText"
+        :label="`${view.title} SETTING`"
         :disabled-down="view.settingSteps <= 0"
         :disabled-up="view.settingSteps >= MAX_SETTING_STEPS"
         @step="emit('step', $event)"
@@ -45,12 +46,14 @@
       <ValueRow label="CAPACITY" :value="view.capacityUpgradeGainText" />
       <TerminalButton
         :label="view.capacityUpgradeCostText"
+        :aria-label="`UPGRADE CAPACITY: ${view.capacityUpgradeCostText}`"
         :disabled="!view.capacityUpgradeAffordable"
         @press="emit('upgradeCapacity')"
       />
       <ValueRow label="EFFICIENCY" :value="view.efficiencyUpgradeGainText" />
       <TerminalButton
         :label="view.efficiencyUpgradeCostText"
+        :aria-label="`UPGRADE EFFICIENCY: ${view.efficiencyUpgradeCostText}`"
         :disabled="!view.efficiencyUpgradeAffordable"
         @press="emit('upgradeEfficiency')"
       />

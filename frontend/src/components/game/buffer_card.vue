@@ -6,12 +6,15 @@
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
     <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" :marks="view.marks" />
-    <p v-if="legend.length > 0" class="buffer-card__legend">{{ legend }}</p>
+    <!-- Hidden with the marks it names: an explanation of a drawing nobody can see is
+         worse than silence, and the thresholds announce themselves in the alerts panel -->
+    <p v-if="legend.length > 0" class="buffer-card__legend" aria-hidden="true">{{ legend }}</p>
     <div class="buffer-card__upgrades">
       <p class="buffer-card__section">UPGRADES</p>
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
+        :aria-label="`UPGRADE CAPACITY: ${view.upgradeCostText}`"
         :disabled="!view.upgradeAffordable"
         @press="emit('upgrade')"
       />

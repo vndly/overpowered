@@ -1,9 +1,10 @@
 <!-- The last minute of the coal price as a line of CP437 block glyphs, with the
      direction of the newest sample beside it. Without a history a dip worth
      waiting out cannot be told from the trend, and the timing of a purchase is
-     invisible (specs.md §UI). -->
+     invisible (specs.md §UI). Hidden from assistive technology like the other glyph
+     drawings: the price itself is the row above. -->
 <template>
-  <div class="price-history">{{ line }}</div>
+  <div class="price-history" aria-hidden="true">{{ line }}</div>
 </template>
 
 <script setup lang="ts">

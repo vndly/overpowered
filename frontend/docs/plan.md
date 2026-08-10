@@ -24,7 +24,7 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
 - [x] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — done in Stages 5 and 6; the Battery card's drawing came with Stage 7
 - [x] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
-- [ ] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
+- [x] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
 - [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out
 
 ---
@@ -970,8 +970,16 @@ brightness alone. `ui_ux.md` §27–§28.
 
 ### Files
 
-Modified: the terminal primitives, `machine_card.vue`, `stockpile_card.vue`, `run_overlay.vue`,
-`src/assets/styles.css`.
+Modified: `terminal_panel.vue`, `terminal_button.vue`, `numeric_stepper.vue`, `fill_bar.vue`,
+`stress_gauge.vue`, `price_history.vue`, `machine_card.vue`, `stockpile_card.vue`,
+`buffer_card.vue`, `battery_card.vue`, `alerts_panel.vue`, `run_overlay.vue`,
+`home_screen.vue`, `docs/ui_ux.md`.
+
+Two departures from the list this stage first gave. `src/assets/styles.css` needed nothing —
+the focus ring Stage 1 pinned there is already the 2px green outline asked for here. And
+`home_screen.vue` was not listed, but the overlay claimed `aria-modal` over a chain that Tab
+could still reach, whose buttons still bought upgrades for a run that had already ended, so the
+background is made `inert` while the overlay is up. The overlay itself needed no change.
 
 ### Work
 
@@ -985,8 +993,12 @@ Modified: the terminal primitives, `machine_card.vue`, `stockpile_card.vue`, `ru
   greyed-out mystery.
 - The tripped state is signalled by an inverted border _and_ the `REPAIR {n}S` text, never by
   brightness alone.
-- Each card is a `<section>` with an `aria-label`; the chain is a `<nav>`-free plain region with
-  an `aria-label` of `PRODUCTION CHAIN`.
+- Each card is a `<section>` named by its own title, so it is a region a player can jump to; the
+  chain is a `<nav>`-free plain region with an `aria-label` of `PRODUCTION CHAIN`.
+- The bars, gauges and sparklines drawn in block glyphs are `aria-hidden`. Read aloud they are
+  noise, and each one draws a number written out in the row beside it.
+- A button whose visible label is only a price names what it buys through an `aria-label`
+  (`UPGRADE CAPACITY: 0.02 MWh`), and a stepper's `-` and `+` name what they step.
 - Live regions: the alerts panel is `aria-live="polite"`; the run overlay is `role="dialog"` with
   `aria-modal="true"` and focus moved to its button on open.
 - `prefers-reduced-motion: reduce` disables the alert blink.

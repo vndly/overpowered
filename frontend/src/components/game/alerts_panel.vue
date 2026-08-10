@@ -1,8 +1,11 @@
 <!-- What needs attention, in the order the view model ranks it (ui_ux.md §20). The panel
      always says something: a plant with nothing wrong reads NO ALERTS rather than going
-     blank, so an empty list can be told from a panel that has stopped updating. -->
+     blank, so an empty list can be told from a panel that has stopped updating.
+
+     It is the one live region in the interface: a new alert is read out where it is,
+     rather than waiting for a player to go looking for the panel that holds it. -->
 <template>
-  <TerminalPanel title="ALERTS" :width-cells="widthCells">
+  <TerminalPanel title="ALERTS" :width-cells="widthCells" aria-live="polite">
     <p v-if="alerts.length === 0" class="alerts-panel__clear">NO ALERTS</p>
     <AlertMessage v-for="alert in alerts" :key="alert.text" :text="alert.text" :urgent="alert.urgent" />
   </TerminalPanel>

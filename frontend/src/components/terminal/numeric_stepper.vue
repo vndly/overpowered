@@ -1,9 +1,12 @@
 <!-- The [-] value [+] control used for Settings and coal purchases
-     (ui_ux.md §13). -->
+     (ui_ux.md §13). Either button carries the whole control from the keyboard: the
+     arrow and sign keys step it without the player having to Tab across the value
+     to change direction (ui_ux.md §27). -->
 <template>
-  <div class="numeric-stepper">
+  <div class="numeric-stepper" @keydown="onKeyDown">
     <TerminalButton
       label="-"
+      :aria-label="`DECREASE ${label}`"
       :width-cells="1"
       :disabled="disabledDown"
       @press="onPress(-1, $event)"
@@ -13,9 +16,10 @@
       @pointerleave="stopRepeat"
       @blur="stopRepeat"
     />
-    <span class="numeric-stepper__value">{{ value }}</span>
+    <span class="numeric-stepper__value" aria-live="polite">{{ value }}</span>
     <TerminalButton
       label="+"
+      :aria-label="`INCREASE ${label}`"
       :width-cells="1"
       :disabled="disabledUp"
       @press="onPress(1, $event)"
@@ -37,8 +41,21 @@ const REPEAT_INTERVAL_MILLISECONDS = 80
 
 type StepDirection = -1 | 1
 
+// Both axes, and both signs, so the control answers whichever key the player reaches
+// for. Holding one repeats at the operating system's rate, which is what a held key
+// does everywhere else.
+const STEP_KEYS: Record<string, StepDirection> = {
+  ArrowUp: 1,
+  ArrowRight: 1,
+  '+': 1,
+  ArrowDown: -1,
+  ArrowLeft: -1,
+  '-': -1,
+}
+
 const props = withDefaults(defineProps<{
   value: string // Already formatted; the stepper only reports intent
+  label: string // What is being stepped, for the buttons that would otherwise read - and +
   disabledDown?: boolean
   disabledUp?: boolean
 }>(), {
@@ -102,6 +119,32 @@ function onPointerDown(direction: StepDirection, event: PointerEvent): void {
  */
 function onPress(direction: StepDirection, event: MouseEvent): void {
   if (event.detail === 0) {
+    emit('step', direction)
+  }
+}
+
+/**
+ * Steps from the keyboard while either button holds the focus.
+ * A modified press is left alone: Ctrl and Meta with a sign key are the browser's
+ * zoom, and the game has no business taking those.
+ * @param event - The key press
+ */
+function onKeyDown(event: KeyboardEvent): void {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return
+  }
+
+  const direction = STEP_KEYS[event.key]
+
+  if (direction === undefined) {
+    return
+  }
+
+  // Claimed whether or not it steps, so an arrow at the end of the range never
+  // scrolls the chain out from under the control the player is holding
+  event.preventDefault()
+
+  if (!isDisabled(direction)) {
     emit('step', direction)
   }
 }

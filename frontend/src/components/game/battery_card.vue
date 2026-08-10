@@ -20,6 +20,7 @@
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
         :label="view.upgradeCostText"
+        :aria-label="`UPGRADE CAPACITY: ${view.upgradeCostText}`"
         :disabled="!view.upgradeAffordable"
         @press="emit('upgrade')"
       />
