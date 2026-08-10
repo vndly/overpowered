@@ -358,9 +358,16 @@ Card title:
 
 ---
 
-# 9. Vector Graphics
+# 9. Equipment Graphics
 
-All equipment illustrations should be **vector assets**, preferably SVG.
+The seven equipment illustrations ship as **PNG line drawings**, one per component, in `src/assets/icons/`. They are the artwork the game was designed around, so they are used as drawn rather than re-cut as SVG. This section originally required vector assets; that requirement is dropped for these seven, and still holds for anything else drawn later.
+
+What the raster form costs, and how each cost is paid:
+
+- **They cannot follow `currentColor`.** The drawings are green on transparent, which is what a card wants everywhere except the inverted border of a tripped machine. There, the card blacks the strokes out with `filter: brightness(0)` rather than recolouring them — the alpha channel keeps the silhouette, so the icon reads black on green with no second copy of the art.
+- **They cannot be scaled up.** Each drawing is 56–190 px wide, and the icon band is six character cells (96 px) tall so every one renders at or near its native size. Do not enlarge them.
+
+One component, `components/game/equipment_icon.vue`, picks the drawing for a component id; there is no component per icon.
 
 Required visual assets:
 
@@ -375,7 +382,7 @@ Required visual assets:
 - small navigation icons
 - optional warning symbols
 
-SVG design rules:
+The arrows are text glyphs, not assets. Any vector drawn later follows these rules:
 
 ```css
 fill: none;
@@ -401,7 +408,7 @@ Avoid:
 
 Icons should remain understandable at relatively small sizes.
 
-Use `currentColor` so all SVGs inherit the UI green.
+Use `currentColor` so any SVG inherits the UI green.
 
 ---
 

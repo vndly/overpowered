@@ -2,8 +2,7 @@
      they differ only in the strain thresholds marked beneath their fill bars. -->
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
-    <!-- Reserved for the equipment icon (ui_ux.md §9) -->
-    <div class="buffer-card__icon"></div>
+    <EquipmentIcon :component="component" />
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
     <div class="buffer-card__bar">
@@ -24,6 +23,7 @@
 
 <script setup lang="ts">
 import {computed} from 'vue'
+import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import SectionDivider from '@/components/terminal/section_divider.vue'
 import TerminalButton from '@/components/terminal/terminal_button.vue'
@@ -44,6 +44,7 @@ const MARK_LABELS: Record<string, string> = {
 
 const props = defineProps<{
   view: BufferView
+  component: 'silo' | 'tank' // Which drawing heads the card
 }>()
 
 const emit = defineEmits<{
@@ -56,12 +57,6 @@ const legend = computed(() => props.view.marks
 </script>
 
 <style scoped>
-/* Three cells tall, which is where the 64 x 48 icon lands (ui_ux.md §9) */
-.buffer-card__icon {
-    flex: none;
-    height: calc(var(--cell-height) * 3);
-}
-
 /* The fill percentage sits in the same right-hand column as every value above it,
    on the bar's own line: the bar is two lines tall once it carries marks, and the
    row has to grow with it rather than crop it */

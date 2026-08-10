@@ -16,13 +16,13 @@
       <p class="production-chain__pending">{{ PENDING_NOTE }}</p>
     </TerminalPanel>
     <FlowArrow />
-    <BufferCard :view="view.silo" @upgrade="emit('purchaseUpgrade', 'silo_capacity')" />
+    <BufferCard :view="view.silo" component="silo" @upgrade="emit('purchaseUpgrade', 'silo_capacity')" />
     <FlowArrow />
     <TerminalPanel :title="view.boiler.title" :width-cells="MACHINE_CELLS">
       <p class="production-chain__pending">{{ PENDING_NOTE }}</p>
     </TerminalPanel>
     <FlowArrow />
-    <BufferCard :view="view.tank" @upgrade="emit('purchaseUpgrade', 'tank_capacity')" />
+    <BufferCard :view="view.tank" component="tank" @upgrade="emit('purchaseUpgrade', 'tank_capacity')" />
     <FlowArrow />
     <TerminalPanel :title="view.turbine.title" :width-cells="MACHINE_CELLS">
       <p class="production-chain__pending">{{ PENDING_NOTE }}</p>

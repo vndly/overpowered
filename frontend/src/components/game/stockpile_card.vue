@@ -3,8 +3,7 @@
      specs.md sets it from the market — so the card has one upgrade. -->
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
-    <!-- Reserved for the equipment icon (ui_ux.md §9) -->
-    <div class="stockpile-card__icon"></div>
+    <EquipmentIcon component="stockpile" />
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
     <div class="stockpile-card__bar">
@@ -41,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import EquipmentIcon from '@/components/game/equipment_icon.vue'
 import PriceHistory from '@/components/game/price_history.vue'
 import FillBar from '@/components/terminal/fill_bar.vue'
 import NumericStepper from '@/components/terminal/numeric_stepper.vue'
@@ -66,12 +66,6 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-/* Three cells tall, which is where the 64 x 48 icon lands (ui_ux.md §9) */
-.stockpile-card__icon {
-    flex: none;
-    height: calc(var(--cell-height) * 3);
-}
-
 /* The fill percentage sits in the same right-hand column as every value above it */
 .stockpile-card__bar {
     display: flex;

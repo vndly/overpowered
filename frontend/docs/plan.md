@@ -22,7 +22,7 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 5 — Storage cards](#stage-5--storage-cards)
 - [ ] [Stage 6 — Machine cards](#stage-6--machine-cards)
 - [ ] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
-- [ ] [Stage 8 — SVG icons](#stage-8--svg-icons)
+- [ ] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — mostly done in Stage 5; only the cards Stages 6 and 7 build are left
 - [ ] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
 - [ ] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
 - [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out
@@ -860,44 +860,35 @@ colour.
 
 ---
 
-## Stage 8 — SVG icons
+## Stage 8 — Equipment icons
 
-**Goal.** Seven line-drawing equipment icons, per `ui_ux.md` §9.
+**Goal.** All seven cards carry their equipment drawing, per `ui_ux.md` §9.
+
+**Mostly done during Stage 5.** The artwork was supplied as PNG line drawings rather than drawn
+here, so this stage no longer creates anything: `src/assets/icons/*.png` and
+`src/components/game/equipment_icon.vue` exist, and the Stockpile, Silo and Tank already use
+them. What is left is the four cards Stages 6 and 7 build.
 
 ### Files
 
-Created, one component each:
-
-```
-src/components/icons/stockpile_icon.vue
-src/components/icons/pulverizer_icon.vue
-src/components/icons/silo_icon.vue
-src/components/icons/boiler_icon.vue
-src/components/icons/tank_icon.vue
-src/components/icons/turbine_icon.vue
-src/components/icons/battery_icon.vue
-```
-
-Modified: the four card components, to fill their icon slots.
+Modified: `machine_card.vue` and `battery_card.vue`, each rendering
+`<EquipmentIcon :component="..." />` at the head of the card.
 
 ### Rules
 
-Inline `<svg>`, no external files, `viewBox="0 0 64 48"`, rendered at 64×48 CSS pixels (whole
-multiples of the 8×16 cell). Every path: `fill: none`, `stroke: currentColor`,
-`stroke-width: 1.5`, `stroke-linecap: square`, `stroke-linejoin: round`. Inherit colour via
-`currentColor` so the icon follows the card, including the inverted tripped state. Each icon
-carries `role="img"` and an `<title>` naming the component.
+The drawings are used as they were given: 56–190 px wide, green on transparent, in a six-cell
+(96 px) band so each renders at or near its native size. **Do not enlarge them, and do not
+re-cut them as SVG** — that decision and what it costs are recorded in `ui_ux.md` §9.
 
-Draw them as simplified engineering diagrams — a conveyor and a heap, a crusher drum with a feed
-chute, a cylindrical silo with a conical base, a fire-tube boiler with a stack, a horizontal
-pressure vessel with saddles, a turbine rotor with blades and a shaft, a cell with terminals. No
-shading, no perspective, no gradient, no fill.
+A raster cannot follow `currentColor`, so the one place a card recolours its icon — the inverted
+border of a tripped machine — blacks the strokes out with `filter: brightness(0)`. The alpha
+channel carries the silhouette, so no second copy of the art is needed.
 
 ### Acceptance
 
-- Every icon is legible at 64×48 and its outline still reads at 32×24.
-- Icons turn black when a tripped machine card inverts, with no CSS changes to the icon itself.
-- No `<img>`, no data URI, no file under `public/`.
+- Every card heads with its own drawing, at native size, on the character grid.
+- A tripped machine card's icon reads black on green, with the drawing's shape intact.
+- No icon is scaled above 100%.
 
 ---
 
@@ -1042,6 +1033,8 @@ Do these in the stage that causes them, not at the end:
 | `CLAUDE.md`     | Economy rule extended to include `src/game/constants.ts`.                                                                               | 2                                |
 | `CLAUDE.md`     | Project section rewritten — `src/` is no longer a blank slate. Describe `game/`, `view/`, `components/`, and the dev-only verify route. | 11 (or the last stage completed) |
 | `docs/ui_ux.md` | §11: drop the `[COAL PRICE]` upgrade.                                                                                                   | 5                                |
+| `docs/ui_ux.md` | §8: the upgrade section is opened by a blank line, not a rule.                                                                          | 5                                |
+| `docs/ui_ux.md` | §9: the equipment icons ship as the supplied PNG line drawings rather than as SVG.                                                       | 5                                |
 | `docs/ui_ux.md` | §12 and §14: drop the `PENALTY` row.                                                                                                    | 6                                |
 | `docs/ui_ux.md` | §19: note that the net-flow graph ships as SVG rather than character cells, and why.                                                    | 9                                |
 
