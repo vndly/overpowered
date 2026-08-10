@@ -1,52 +1,53 @@
 <!-- The application's only screen: the run header, the production chain, the lower
      dashboard, and the overlay that opens and closes a run.
 
-     While the overlay is up, everything behind it is inert. The scrim already takes
-     the pointer, and inert takes the keyboard with it: the overlay says aria-modal,
-     and a Tab that reached a card behind it would make that a lie — and would let a
-     player buy an upgrade for a run that has already ended.
+     While a dialog is up, the chain and the dashboard behind it are inert. The scrim
+     already takes the pointer, and inert takes the keyboard with it: a Tab that reached
+     a card behind the run overlay would let a player buy an upgrade for a run that has
+     already ended. The header is the exception, because it carries the way into the
+     settings and a player has to be able to reach those before their first run.
 
-     The display options replace that overlay rather than stack on it, so there is only
-     ever one dialog, and closing them puts the focus back on the run's own button. The
-     two attributes on the root switch the parts of the CRT layer that belong to
-     everything at once; the scanlines are their own element (assets/styles.css). -->
+     The settings replace the run overlay rather than stack on it, so there is only ever
+     one dialog. Closing them hands the focus back: to the run's own button when there is
+     a run overlay to take it, and to the header's control when there is not. The two
+     attributes on the root switch the parts of the CRT layer that belong to everything
+     at once; the scanlines are their own element (assets/styles.css). -->
 <template>
   <main class="home-screen" :data-glow="glowAttribute" :data-animation="animationAttribute">
-    <RunHeader :view="view" :inert="isOverlayOpen" />
+    <RunHeader ref="header" :view="view" :inert="isSettingsOpen" @settings="isSettingsOpen = true" />
     <ProductionChain
       :view="view"
-      :inert="isOverlayOpen"
+      :inert="isDialogOpen"
       @step-purchase-amount="stepPurchaseAmount($event)"
       @fill-purchase-amount="fillPurchaseAmount()"
       @buy-coal="buyCoal()"
       @step-setting="stepSetting"
       @purchase-upgrade="purchaseUpgrade($event)"
     />
-    <SecondaryDashboard :view="view" :inert="isOverlayOpen" />
+    <SecondaryDashboard :view="view" :inert="isDialogOpen" />
     <RunOverlay
-      v-if="isOverlayOpen && !isOptionsOpen"
+      v-if="isOverlayOpen && !isSettingsOpen"
       :view="view"
       @advance="onAdvance"
-      @options="isOptionsOpen = true"
     />
-    <OptionsPanel
-      v-if="isOptionsOpen"
+    <SettingsPanel
+      v-if="isSettingsOpen"
       :options="options"
       @toggle="toggle"
-      @close="isOptionsOpen = false"
+      @close="closeSettings()"
     />
     <CrtOverlay v-if="options.crt" />
   </main>
 </template>
 
 <script setup lang="ts">
-import {computed, ref} from 'vue'
+import {computed, nextTick, ref, useTemplateRef} from 'vue'
 import CrtOverlay from '@/components/game/crt_overlay.vue'
-import OptionsPanel from '@/components/game/options_panel.vue'
 import ProductionChain from '@/components/game/production_chain.vue'
 import RunHeader from '@/components/game/run_header.vue'
 import RunOverlay from '@/components/game/run_overlay.vue'
 import SecondaryDashboard from '@/components/game/secondary_dashboard.vue'
+import SettingsPanel from '@/components/game/settings_panel.vue'
 import {useGame} from '@/view/use_game'
 import {isGlowVisible, useOptions} from '@/view/use_options'
 
@@ -57,10 +58,13 @@ const {
   options, toggle,
 } = useOptions()
 
-const isOptionsOpen = ref(false)
+const isSettingsOpen = ref(false)
+const header = useTemplateRef<InstanceType<typeof RunHeader>>('header')
 
 // Every outcome but a run in progress is a run waiting on the player
 const isOverlayOpen = computed(() => view.value.outcome !== 'running')
+
+const isDialogOpen = computed(() => isOverlayOpen.value || isSettingsOpen.value)
 
 const glowAttribute = computed(() => (isGlowVisible(options.value) ? 'on' : 'off'))
 const animationAttribute = computed(() => (options.value.reducedAnimation ? 'reduced' : 'normal'))
@@ -74,6 +78,22 @@ function onAdvance(): void {
     startRun()
   } else {
     newRun()
+  }
+}
+
+/**
+ * Closes the settings, and puts the focus somewhere a keyboard can carry on from.
+ * The run overlay claims it back itself when it returns, so only a run in progress —
+ * where nothing else is mounted to take it — needs the control that opened the panel.
+ * The header is inert until the panel has gone, hence the wait for the next frame.
+ */
+function closeSettings(): void {
+  isSettingsOpen.value = false
+
+  if (!isOverlayOpen.value) {
+    void nextTick(() => {
+      header.value?.focusSettings()
+    })
   }
 }
 </script>

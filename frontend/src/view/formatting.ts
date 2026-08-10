@@ -50,6 +50,17 @@ export function formatEnergy(megawattHours: number): string {
 }
 
 /**
+ * The run's target, which docs/specs.md fixes at a whole number of MWh and which never
+ * moves during a run. A decimal on a figure that is neither measured nor changing is the
+ * unnecessary precision ui_ux.md §3 asks the interface to leave off.
+ * @param megawattHours - A fixed energy figure, MWh
+ * @returns The energy as text, to the nearest whole MWh
+ */
+export function formatWholeEnergy(megawattHours: number): string {
+  return Math.round(megawattHours).toString()
+}
+
+/**
  * @param megawatts - A power reading, MW
  * @param signed - Whether to prefix a positive reading with a plus
  * @returns The power as text

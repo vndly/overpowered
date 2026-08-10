@@ -120,6 +120,13 @@ font-smooth: never;
 
 The interface should preserve the visibly pixelated edges of the font.
 
+Type sizes are multiples of the 16px cell. Whole multiples are strictly crisp, and the
+two-cell size the title, the clock and the header's settings control take is the one
+step up the interface uses. The run overlay's target and time limit are the single
+exception at one and a half cells: two cells swamped a panel read on its own, and 1.5
+is the one fraction that still lands a pair of rows on a whole number of character
+lines. Nothing else takes a fractional size.
+
 ---
 
 # 3. Typography Rules
@@ -162,6 +169,11 @@ OUTPUT         31.9 MW
 ```
 
 Avoid unnecessary decimal precision.
+
+What shipped: readings carry two decimals below ten and one at or above it, so a column
+holds its width as a value grows. The run's target is the exception and is quoted as a
+whole number of MWh — `docs/specs.md` fixes it at one, and it is the only figure on
+screen that is neither measured nor changing.
 
 ---
 
@@ -253,13 +265,14 @@ OVERPOWERED
 TIME
 STORED ENERGY
 TARGET PROGRESS BAR
+SETTINGS
 ```
 
 Reference layout:
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ OVERPOWERED       TIME 07:12   STORED 12.4 / 40 MWh          │
+│ OVERPOWERED       TIME 07:12   STORED 12.4 / 40 MWh      [☼] │
 │                                █████░░░░░░░░░░               │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -271,6 +284,10 @@ Design rules:
 - timer set at two character cells, as the title is: the countdown is the run's
   headline number, and a bitmap face only stays crisp at whole multiples of its cell
 - horizontal progress bar next to or below stored-energy value
+- settings control aligned right, drawn as CP437's `☼` — the face has no gear glyph,
+  and §9's decision against new image assets covers icons too
+- the settings control is the one thing in the header a run overlay leaves reachable,
+  so the display can be changed before the first run as well as during one
 - no decorative logo required
 - keep header height compact
 - information should be readable at a glance
@@ -1068,7 +1085,7 @@ Maintain accessibility semantics.
 
 What shipped: a 2px solid green outline on every focusable element, and a stepper that steps from either of its buttons — `ArrowUp` / `ArrowRight` / `+` up, `ArrowDown` / `ArrowLeft` / `-` down, with the key claimed so an arrow never scrolls the chain out from under the control. A modified press is left to the browser, so `Ctrl` and the sign keys still zoom. `Escape` is unclaimed and stays that way until there is a menu to close.
 
-The run overlay is the interface's one modal, and it is one in fact as well as in name: everything behind it is inert while it is up, so its button is the only thing `Tab` can reach.
+The run overlay makes the chain and the dashboard behind it inert while it is up, so the only things `Tab` can reach are its own button and the header's settings control. That one exception is why it is a plain `role="dialog"` rather than `aria-modal`: the settings have to be reachable before a first run has ever been started. The settings panel itself is `aria-modal`, and is one in fact — the header goes inert behind it too.
 
 The bars, gauges and sparklines drawn in block glyphs are hidden from assistive technology. Read aloud they are noise, and each one draws a number that is written out in the row beside it.
 
@@ -1105,6 +1122,11 @@ reduced animation
 ```
 
 Use semantic HTML controls when possible.
+
+What shipped: a SETTINGS panel of three toggles — CRT EFFECTS, GLOW nested under it, and
+REDUCED ANIMATION — opened from the header's `☼` control and reachable at any time,
+including under a run in progress. The run keeps running behind it: nothing in the panel
+touches the plant, and a panel that stopped the clock would be a way to stop the clock.
 
 ---
 

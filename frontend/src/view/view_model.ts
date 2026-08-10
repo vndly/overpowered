@@ -3,7 +3,7 @@ import type {GameEngine} from '@/game/game_engine'
 import type {Machine} from '@/game/machine'
 import type {Storage} from '@/game/storage'
 import type {RunOutcome, StressKind} from '@/game/types'
-import {formatCeiling, formatEfficiency, formatEnergy, formatMass, formatPercent, formatPower, formatPrice, formatRate, formatSeconds, formatSetting, formatStress, formatTime} from '@/view/formatting'
+import {formatCeiling, formatEfficiency, formatEnergy, formatMass, formatPercent, formatPower, formatPrice, formatRate, formatSeconds, formatSetting, formatStress, formatTime, formatWholeEnergy} from '@/view/formatting'
 
 /**
  * The one thing components are allowed to see.
@@ -143,7 +143,7 @@ export interface GameView {
   timeText: string // Time left, MM:SS
   target: {
     storedText: string
-    targetText: string
+    targetText: string // TargetEnergy, to the nearest whole MWh
     fraction: number
   }
   peakStoredText: string // Highest Battery Contents this run
@@ -414,7 +414,7 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
     timeText: formatTime(engine.remainingSeconds),
     target: {
       storedText: formatEnergy(engine.battery.contents),
-      targetText: formatEnergy(TARGET_ENERGY),
+      targetText: formatWholeEnergy(TARGET_ENERGY),
       fraction: clamp(engine.battery.contents / TARGET_ENERGY, 0, 1),
     },
     peakStoredText: `${formatEnergy(engine.ledger.peakContents)} MWh`,

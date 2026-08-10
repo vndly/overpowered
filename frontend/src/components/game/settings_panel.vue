@@ -1,6 +1,7 @@
-<!-- How the interface is drawn, and nothing else (ui_ux.md §28). Opened from the run
-     overlay, so it is only reachable between runs: the display never changes under a
-     run in progress.
+<!-- How the interface is drawn, and nothing else (ui_ux.md §28). Opened from the
+     header's settings control, so it is reachable at any time — including under a run
+     in progress, which goes on running behind it: nothing here touches the plant, and a
+     panel that stopped the clock would be a way to stop the clock.
 
      Each row says its value in words and inverts when it is on. A setting a player could
      only tell by how bright the screen looks is the state §28 rules out, and this panel
@@ -10,18 +11,18 @@
        that click drops the focus on the body, the key press stops reaching this element,
        and Escape quietly stops closing the panel. -->
   <div
-    class="options-panel"
+    class="settings-panel"
     role="dialog"
     aria-modal="true"
-    aria-label="OPTIONS"
+    aria-label="SETTINGS"
     tabindex="-1"
     @keydown.escape="emit('close')"
   >
-    <TerminalPanel title="OPTIONS" :width-cells="PANEL_CELLS">
+    <TerminalPanel title="SETTINGS" :width-cells="PANEL_CELLS">
       <SectionDivider />
-      <div class="options-panel__rows">
-        <div v-for="row in rows" :key="row.id" class="options-panel__row">
-          <span :class="{'options-panel__label--nested': row.nested}">{{ row.label }}</span>
+      <div class="settings-panel__rows">
+        <div v-for="row in rows" :key="row.id" class="settings-panel__row">
+          <span :class="{'settings-panel__label--nested': row.nested}">{{ row.label }}</span>
           <TerminalButton
             :label="row.enabled ? ON_LABEL : OFF_LABEL"
             :aria-label="row.label"
@@ -48,13 +49,13 @@ import TerminalPanel from '@/components/terminal/terminal_panel.vue'
 import type {DisplayOptionId, DisplayOptions} from '@/view/use_options'
 import {isGlowVisible} from '@/view/use_options'
 
-const PANEL_CELLS = 32 // Narrower than the run overlay it opens from, and wide enough for the longest row
+const PANEL_CELLS = 32 // Narrower than the run overlay it covers, and wide enough for the longest row
 const TOGGLE_CELLS = 3 // The width of OFF, so ON and OFF are the same button
 const ON_LABEL = 'ON'
 const OFF_LABEL = 'OFF'
 
 /** One setting as the panel draws it: what it is called, where it stands, and whether it can be reached. */
-interface OptionRow {
+interface SettingRow {
   id: DisplayOptionId
   label: string
   enabled: boolean
@@ -76,7 +77,7 @@ const actions = useTemplateRef<HTMLElement>('actions')
 // GLOW reports what the screen is actually doing rather than what is stored: with the
 // CRT layer off it reads OFF and goes unreachable, and the player's own preference comes
 // back the moment that layer returns.
-const rows = computed<OptionRow[]>(() => [
+const rows = computed<SettingRow[]>(() => [
   {
     id: 'crt',
     label: 'CRT EFFECTS',
@@ -109,7 +110,7 @@ onMounted(() => {
 <style scoped>
 /* The same black scrim the run overlay uses, over the run overlay's own place: only one
    of the two is ever mounted, so the screen never carries two dialogs. */
-.options-panel {
+.settings-panel {
     position: fixed;
     display: flex;
     align-items: center;
@@ -119,13 +120,13 @@ onMounted(() => {
 }
 
 /* Two cells of row and one of gap: a 48px pitch that stays on the character grid */
-.options-panel__rows {
+.settings-panel__rows {
     display: flex;
     flex-direction: column;
     gap: var(--cell-height);
 }
 
-.options-panel__row {
+.settings-panel__row {
     display: flex;
     flex: none;
     align-items: center;
@@ -134,7 +135,7 @@ onMounted(() => {
     height: calc(var(--cell-height) * 2);
 }
 
-.options-panel__label--nested {
+.settings-panel__label--nested {
     padding-left: calc(var(--cell-width) * 2);
 }
 </style>

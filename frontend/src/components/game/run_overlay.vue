@@ -2,21 +2,28 @@
      what it came to afterwards. Shown for every outcome except a run in
      progress, over a scrim that dims the chain behind it.
 
-     It claims to be modal and it is: home_screen makes the chain behind it inert
-     while it is up, so its two buttons are the only things Tab can reach.
+     The chain behind it is inert while it is up, so the only things Tab can reach are
+     its own button and the header's settings control — which is why it is a dialog
+     rather than aria-modal: the settings have to stay reachable before the first run.
 
-     The display options hang off this panel rather than off the chain, because
-     between runs is the only time changing them costs a player nothing. -->
+     The opening panel is the one that names nothing. A player who has just loaded the
+     game is not reading a heading, and the target and the clock they are about to play
+     against carry it on their own (ui_ux.md §6). -->
 <template>
-  <div class="run-overlay" role="dialog" aria-modal="true" :aria-label="panel.title">
-    <TerminalPanel :title="panel.title" :width-cells="PANEL_CELLS">
+  <div class="run-overlay" role="dialog" :aria-label="panel.label">
+    <TerminalPanel :title="panel.title ?? undefined" :width-cells="PANEL_CELLS" class="run-overlay__panel">
       <p v-if="panel.message !== null" class="run-overlay__message">{{ panel.message }}</p>
-      <SectionDivider />
-      <ValueRow v-for="row in panel.rows" :key="row.label" :label="row.label" :value="row.value" />
+      <SectionDivider v-if="panel.title !== null || panel.message !== null" />
+      <ValueRow
+        v-for="row in panel.rows"
+        :key="row.label"
+        :label="row.label"
+        :value="row.value"
+        :large="row.large"
+      />
       <SectionDivider dashed />
       <div ref="actions" class="run-overlay__actions">
         <TerminalButton :label="panel.buttonLabel" :width-cells="ADVANCE_CELLS" @press="emit('advance')" />
-        <TerminalButton label="OPTIONS" :width-cells="OPTIONS_CELLS" @press="emit('options')" />
       </div>
     </TerminalPanel>
   </div>
@@ -34,19 +41,19 @@ import type {GameView} from '@/view/view_model'
 const PANEL_CELLS = 40
 const NO_BEST_RESULT = 'NONE'
 
-// The two buttons fill the panel body exactly: 27 and 8 cells are 234px and 82px once
-// each has its padding and border, and the 4px between them makes the body's 320. The
-// difference in width is what says which of the two the panel is for.
+// 27 cells is 234px once the button has its padding and border, against the body's 320:
+// wide enough to read as the panel's one action, short of a bar across its whole foot.
 const ADVANCE_CELLS = 27
-const OPTIONS_CELLS = 8
 
 /** One statement of where the run stands, and the one thing the player can do next. */
 interface OverlayPanel {
-  title: string
+  label: string // Names the dialog, whether or not the panel draws a title
+  title: string | null
   message: string | null
   rows: {
     label: string
     value: string
+    large?: boolean
   }[]
   buttonLabel: string
 }
@@ -57,7 +64,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   advance: []
-  options: []
 }>()
 
 const actions = useTemplateRef<HTMLElement>('actions')
@@ -78,6 +84,7 @@ const panel = computed<OverlayPanel>(() => {
   switch (props.view.outcome) {
     case 'won':
       return {
+        label: 'TARGET REACHED',
         title: 'TARGET REACHED',
         message: null,
         rows: [
@@ -92,6 +99,7 @@ const panel = computed<OverlayPanel>(() => {
       }
     case 'timeout':
       return {
+        label: 'TIME EXPIRED',
         title: 'TIME EXPIRED',
         message: null,
         rows: [
@@ -102,6 +110,7 @@ const panel = computed<OverlayPanel>(() => {
       }
     case 'stalled':
       return {
+        label: 'PLANT STALLED',
         title: 'PLANT STALLED',
         message: 'EVERY STORE IS EMPTY. THERE IS NOTHING LEFT TO RUN ON AND NOTHING LEFT TO BUY WITH.',
         rows: [
@@ -113,18 +122,20 @@ const panel = computed<OverlayPanel>(() => {
     case 'idle':
     case 'running':
       return {
-        title: 'OVERPOWERED',
-        message: 'RAISE THE BATTERY TO THE TARGET BEFORE THE CLOCK RUNS OUT.',
+        label: 'OVERPOWERED',
+        title: null,
+        message: null,
         rows: [
           {
-            label: 'TARGET',
+            label: 'GOAL',
             value: `${props.view.target.targetText} MWh`,
+            large: true,
           },
           {
-            label: 'TIME LIMIT',
+            label: 'TIME',
             value: props.view.timeText,
+            large: true,
           },
-          bestResultRow.value,
         ],
         buttonLabel: 'START RUN',
       }
@@ -149,14 +160,21 @@ onMounted(() => {
     background: rgb(0 0 0 / 80%);
 }
 
+/* A full character cell of room around the body rather than the half the cards take.
+   This panel is read on its own with the screen dimmed behind it, and it is the one
+   place in the interface that is not competing for space. */
+.run-overlay__panel {
+    --panel-padding: var(--space-4);
+}
+
 /* The only wrapped text in the interface, still on the 16px character grid */
 .run-overlay__message {
     line-height: var(--cell-height);
 }
 
-/* One row of soft keys along the foot of the panel, as an operator console has */
+/* The panel's one soft key, centred along its foot as an operator console has */
 .run-overlay__actions {
     display: flex;
-    gap: var(--space-1);
+    justify-content: center;
 }
 </style>
