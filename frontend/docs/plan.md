@@ -16,8 +16,8 @@ Tick a box only when the stage's acceptance criteria hold and its
 [Per-stage commands](#per-stage-commands) have passed.
 
 - [x] [Stage 1 — Foundations: font, tokens, character grid, terminal primitives](#stage-1--foundations-font-tokens-character-grid-terminal-primitives)
-- [ ] [Stage 2 — The engine](#stage-2--the-engine) — not tickable on its own; Stage 3 is its proof
-- [ ] [Stage 3 — Verification screen](#stage-3--verification-screen)
+- [x] [Stage 2 — The engine](#stage-2--the-engine) — not tickable on its own; Stage 3 is its proof
+- [x] [Stage 3 — Verification screen](#stage-3--verification-screen)
 - [ ] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
 - [ ] [Stage 5 — Storage cards](#stage-5--storage-cards)
 - [ ] [Stage 6 — Machine cards](#stage-6--machine-cards)
@@ -433,10 +433,28 @@ Renders a `<pre>`-style report in the terminal font: one line per check,
 | Clean ceilings   | The 3 machines × {slack store, fully strained}, tolerance 0.002. Build one state per machine as `verify.py`'s `at()` does — no single state strains all three.                                       |
 | Max stress       | Each machine's stress at `MaxSetting` with a slack store equals its `MaxTemperature` / `MaxPressure` / `MaxVibration`, tolerance 0.05.                                                               |
 | Energy balance   | `runScript(1, 0.1).residual` is 0 within `1e-6`.                                                                                                                                                     |
-| Step convergence | `runScript` over seeds 0–15 at `dt ∈ {0.2, 0.1, 0.05}`: the relative spread of the median peak is ≤ 0.06 and of total upgrade levels ≤ 0.02. Report `dt = 0.4` for contrast without asserting on it. |
+| Step convergence | `runScript` over seeds 0–15 at `dt ∈ {0.2, 0.1, 0.05}`: the relative spread of median energy generated and of median machine draw is ≤ 0.06. Report `dt = 0.4`, median peak stored energy and mean upgrade levels for contrast without asserting on them — see [below](#why-convergence-is-asserted-on-flow-not-on-peak-or-purchases). |
 | Restart floor    | `worstReserveGap ≤ 0` across seeds 0–11 at `dt = 0.1`. This is `specs.md`'s guarantee that `MinimumReserve` never sinks below a restart.                                                             |
 | Stall            | The rule asserted directly: an engine whose Battery, Stockpile, Silo and Tank are all empty reports `outcome === 'stalled'` after one step, and one holding a kilogram of steam does not.            |
 | Market bounds    | Over a 600 s walk, `Market` never leaves `[1 − MarketRange, 1 + MarketRange]`, and its mean over 32 seeds is within 2% of 1.                                                                         |
+
+### Why convergence is asserted on flow, not on peak or purchases
+
+This plan first asked for the spread of the median peak stored energy and of the total upgrade
+levels, both taken from `verify.py`. Measured against this stage's fixed script, neither works:
+
+- **The script banks nothing.** Peak stored energy is exactly `StartingCharge` at every step size
+  and every seed, so its spread is identically zero and the check can never fail. The script is a
+  stress fixture — it drives the machines to 1.8 and pays a rising coal price — not a strategy.
+- **The script makes about sixteen discrete purchases.** One upgrade landing a second earlier
+  moves the total by 6%, so the 0.02 threshold is unreachable. `verify.py` clears it only because
+  its greedy policy buys far more, and it says as much: an individual run is sensitive to `dt`
+  because purchases are discrete.
+
+Neither is a defect in the engine. The residual is exact to 1e-12 and the continuous totals do
+converge — generated 2.5%, machine draw 2.0%, coal 1.7% across `dt ≤ 0.2`. Continuous flow is what
+step-size convergence is about, so that is what is asserted; the two discrete figures are still
+printed, as contrast rather than as checks.
 
 ### Routing
 
