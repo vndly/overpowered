@@ -443,7 +443,7 @@ Generic layout:
 │                      │
 ├──────────────────────┤
 │ STORED  0.7 / 1.0 t  │
-│ ███████░░░           │
+│ ██████████████░░░░░░ │
 │                      │
 │ additional values    │
 │                      │
@@ -454,7 +454,7 @@ Generic layout:
 └──────────────────────┘
 ```
 
-The fill bar should always make current storage visually obvious.
+The fill bar is 20 characters wide, so one character is 5% of `Capacity`, and it carries no percentage beside it — the `STORED` row above already gives the exact figure, and 5% is as fine as a reading anyone takes off a bar. Twenty is also what puts both strain marks on an exact character: `StarveThreshold` at 30% is the sixth, `BacklogThreshold` at 70% the fourteenth.
 
 ## Strain markers
 
@@ -463,16 +463,16 @@ The Silo and Tank fill bars carry tick marks for the points at which a neighbour
 ```text
 SILO                          TANK
 STORED  0.7 / 1.0 t           STORED  1.4 / 3.0 t
-███████░░░╷                   ████╵░░░░░░╷
-          ╵ backlog 70%           ╵ starve 30%
-                                         ╷ backlog 70%
+██████████████░░░░░░          █████████░░░░░░░░░░
+              ╷                     ╵       ╷
+              ╷backlog               ╵starve ╷backlog
 ```
 
 - Silo: one mark at `BacklogThreshold`. Above it the Pulverizer heats.
 - Tank: two marks, at `StarveThreshold` and `BacklogThreshold`. Below the first the Turbine vibrates; above the second the Boiler strains.
 - Stockpile and Battery carry no marks — neither has a strain rule.
 
-Keep the marks in the same green as the bar outline and thinner than the fill blocks. They are a scale, not an alarm; the alarm is the machine card's stress gauge. Without them the player watches a machine start to wear with nothing on screen explaining why, so they are required, not decorative.
+The marks sit on their own line beneath the bar, with a dim legend line under that naming them: printed inline a mark overwrites a fill character, which is the one thing the bar exists to show. Keep the marks in the same green as the bar outline and thinner than the fill blocks. They are a scale, not an alarm; the alarm is the machine card's stress gauge. Without them the player watches a machine start to wear with nothing on screen explaining why, so they are required, not decorative.
 
 ---
 
@@ -486,7 +486,7 @@ STOCKPILE
 [coal/conveyor SVG]
 
 STORED      0.7 / 1.0 t
-███████░░░
+██████████████░░░░░░
 
 COAL PRICE  1.0 MWh/t
 
@@ -538,7 +538,9 @@ STRESS TYPE
 
 STRESS        62%
 CLEAN TO      0.69
-PENALTY       -7%
+
+WEAR   ███░░░░░░░  31%
+       TRIPS IN 12S
 
 OUTPUT        value
 
@@ -546,6 +548,10 @@ UPGRADES
 ```
 
 `CAPACITY` and `EFFICIENCY` are the only upgradable rows. There is no control row: wear headroom is bought as Silo and Tank capacity on the storage cards, not on the machine.
+
+This layout originally carried a `PENALTY` row. `docs/specs.md` levies no output penalty for running above the rating — "pushing past the rating is not penalised in output, it damages the machine" — so the row is dropped and the wear bar carries the whole cost of overdriving. The note beneath it reads `TRIPS IN {n}S` while wear is growing, `CLEARS IN {n}S` while it is shedding, and `CLEAN` at zero.
+
+A tripped machine replaces its `OUTPUT` row with `REPAIR {n}S`, inverted, inside a card whose border fills in to a solid green frame. State is never signalled by brightness alone (§28), and a trip is the loudest thing that happens to a machine, so it is the one place a card inverts.
 
 `CLEAN TO` is the highest `SETTING` that accrues no wear right now. It is not a constant — it falls as the store beside the machine moves toward its strain threshold, so it can come down to meet a `SETTING` the player never touched. Render it as a live value and let it move.
 
@@ -596,15 +602,15 @@ SAFE                 MAX
 
 STRESS        62%
 CLEAN TO      0.69
-PENALTY       -7%
 ```
+
+The gauge is 20 characters wide, so one character is 5% of `MaxStress`, and the `SAFE` marker overwrites the character it lands on rather than taking one of its own — a gauge that shifted by a character as the fill passed its marker would be unreadable.
 
 The gauge should communicate:
 
 - current stress position
 - safe region
 - maximum region
-- current penalty
 
 The `SAFE` marker is fixed but the fill is not bounded by `MAX`: a machine straining against a backed-up or empty store can read past its maximum. Peg the fill at the right-hand end rather than letting it overflow the gauge.
 

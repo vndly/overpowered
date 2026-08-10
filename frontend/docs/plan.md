@@ -20,9 +20,9 @@ Tick a box only when the stage's acceptance criteria hold and its
 - [x] [Stage 3 — Verification screen](#stage-3--verification-screen)
 - [x] [Stage 4 — Loop, view model, run lifecycle](#stage-4--loop-view-model-run-lifecycle)
 - [x] [Stage 5 — Storage cards](#stage-5--storage-cards)
-- [ ] [Stage 6 — Machine cards](#stage-6--machine-cards)
+- [x] [Stage 6 — Machine cards](#stage-6--machine-cards)
 - [ ] [Stage 7 — Battery card and run header](#stage-7--battery-card-and-run-header)
-- [ ] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — mostly done in Stage 5; only the cards Stages 6 and 7 build are left
+- [ ] [Stage 8 — Equipment icons](#stage-8--equipment-icons) — done in Stages 5 and 6; only the Battery card Stage 7 builds is left
 - [ ] [Stage 9 — Lower dashboard](#stage-9--lower-dashboard)
 - [ ] [Stage 10 — Keyboard, focus, accessibility](#stage-10--keyboard-focus-accessibility)
 - [ ] [Stage 11 — Optional polish](#stage-11--optional-polish) — may be skipped; tick it or strike it out
@@ -541,9 +541,9 @@ interface GameView {
 interface StorageViewBase {
   title: string;
   storedText: string; // "0.70 / 1.00 t"
-  fraction: number;
-  fillPercentText: string;
-  upgradeCostText: string;
+  fraction: number; // What the 20-cell fill bar draws; no percentage is shown
+  upgradeGainText: string; // "+0.50 t", live — a capacity upgrade multiplies
+  upgradeCostText: string; // "0.02 MWh"
   upgradeAffordable: boolean;
 }
 
@@ -683,7 +683,8 @@ STOCKPILE
 [icon slot — empty until Stage 8]
 ────────────────────────────
 STORED       0.70 / 1.00 t
-███████░░░  (70%)
+██████████████░░░░░░
+
 COAL PRICE   1.00 MWh/t
 [price history sparkline]
 [-]  0.5 t  [+]       [MAX]
@@ -837,7 +838,7 @@ BATTERY
 [icon slot]
 ──────────────────────
 STORED   12.4 / 40 MWh
-██████░░░░  (31%)
+██████░░░░░░░░░░░░░░
 SPENDABLE     11.4 MWh
 RESERVED       1.0 MWh
 ──────────────────────
@@ -867,15 +868,15 @@ colour.
 
 **Goal.** All seven cards carry their equipment drawing, per `ui_ux.md` §9.
 
-**Mostly done during Stage 5.** The artwork was supplied as PNG line drawings rather than drawn
+**Done during Stages 5 and 6.** The artwork was supplied as PNG line drawings rather than drawn
 here, so this stage no longer creates anything: `src/assets/icons/*.png` and
-`src/components/game/equipment_icon.vue` exist, and the Stockpile, Silo and Tank already use
-them. What is left is the four cards Stages 6 and 7 build.
+`src/components/game/equipment_icon.vue` exist, and the Stockpile, Silo, Tank and all three
+machines already use them. What is left is the Battery card Stage 7 builds.
 
 ### Files
 
-Modified: `machine_card.vue` and `battery_card.vue`, each rendering
-`<EquipmentIcon :component="..." />` at the head of the card.
+Modified: `battery_card.vue`, rendering `<EquipmentIcon component="battery" />` at the head of
+the card.
 
 ### Rules
 
@@ -883,14 +884,17 @@ The drawings are used as they were given: 56–190 px wide, green on transparent
 (96 px) band so each renders at or near its native size. **Do not enlarge them, and do not
 re-cut them as SVG** — that decision and what it costs are recorded in `ui_ux.md` §9.
 
-A raster cannot follow `currentColor`, so the one place a card recolours its icon — the inverted
-border of a tripped machine — blacks the strokes out with `filter: brightness(0)`. The alpha
-channel carries the silhouette, so no second copy of the art is needed.
+This stage originally required a tripped machine to black its icon out with `filter:
+brightness(0)`, on the assumption that a tripped card inverts its whole background. Stage 6 built
+the tripped state as a solid green frame around an otherwise black card, so the icon still sits on
+black and must stay green — `ui_ux.md` §12 records the treatment that shipped. Should the card
+ever invert its background instead, the filter comes back, and the comment at the head of
+`equipment_icon.vue` describes it already.
 
 ### Acceptance
 
 - Every card heads with its own drawing, at native size, on the character grid.
-- A tripped machine card's icon reads black on green, with the drawing's shape intact.
+- A tripped machine card's icon stays legible against the card behind it.
 - No icon is scaled above 100%.
 
 ---

@@ -5,10 +5,7 @@
     <EquipmentIcon :component="component" />
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
-    <div class="buffer-card__bar">
-      <FillBar :fraction="view.fraction" :marks="view.marks" />
-      <span>({{ view.fillPercentText }}%)</span>
-    </div>
+    <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" :marks="view.marks" />
     <p v-if="legend.length > 0" class="buffer-card__legend">{{ legend }}</p>
     <div class="buffer-card__upgrades">
       <p class="buffer-card__section">UPGRADES</p>
@@ -33,6 +30,7 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {BufferView} from '@/view/view_model'
 
 const CARD_CELLS = 24 // Storage card width (docs/plan.md)
+const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity, so both marks land exactly
 
 // What each mark on the bar means. The marks are a scale rather than an alarm
 // (ui_ux.md §10), and an unexplained tick is neither. The glyphs are the ones the
@@ -58,17 +56,6 @@ const legend = computed(() => props.view.marks
 </script>
 
 <style scoped>
-/* The fill percentage sits in the same right-hand column as every value above it,
-   on the bar's own line: the bar is two lines tall once it carries marks, and the
-   row has to grow with it rather than crop it */
-.buffer-card__bar {
-    display: flex;
-    flex: none;
-    align-items: flex-start;
-    justify-content: space-between;
-    line-height: var(--cell-height);
-}
-
 .buffer-card__legend {
     flex: none;
     height: var(--cell-height);

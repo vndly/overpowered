@@ -62,8 +62,7 @@ export interface StrainMark {
 export interface StorageViewBase {
   title: string
   storedText: string // Contents against Capacity, with its unit
-  fraction: number
-  fillPercentText: string
+  fraction: number // What the fill bar draws; the STORED row carries the exact figure
   upgradeGainText: string // Capacity the next upgrade adds, signed and with its unit
   upgradeCostText: string
   upgradeAffordable: boolean
@@ -210,7 +209,6 @@ function buildStorageView(
     title: title,
     storedText: `${format(storage.contents)} / ${format(storage.capacity)} ${unit}`,
     fraction: clamp(storage.fill, 0, 1),
-    fillPercentText: formatPercent(storage.fill),
     upgradeGainText: `+${format(storage.capacityGain)} ${unit}`,
     upgradeCostText: `${formatEnergy(cost)} MWh`,
     upgradeAffordable: cost <= spendableEnergy,

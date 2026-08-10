@@ -11,6 +11,7 @@
       @step-purchase-amount="stepPurchaseAmount($event)"
       @fill-purchase-amount="fillPurchaseAmount()"
       @buy-coal="buyCoal()"
+      @step-setting="stepSetting"
       @purchase-upgrade="purchaseUpgrade($event)"
     />
     <RunOverlay v-if="view.outcome !== 'running'" :view="view" @advance="onAdvance" />
@@ -23,7 +24,7 @@ import RunOverlay from '@/components/game/run_overlay.vue'
 import {useGame} from '@/view/use_game'
 
 const {
-  view, startRun, newRun, stepPurchaseAmount, fillPurchaseAmount, buyCoal, purchaseUpgrade,
+  view, startRun, newRun, stepSetting, stepPurchaseAmount, fillPurchaseAmount, buyCoal, purchaseUpgrade,
 } = useGame()
 
 /**

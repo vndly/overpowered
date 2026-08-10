@@ -6,10 +6,7 @@
     <EquipmentIcon component="stockpile" />
     <SectionDivider />
     <ValueRow label="STORED" :value="view.storedText" />
-    <div class="stockpile-card__bar">
-      <FillBar :fraction="view.fraction" />
-      <span>({{ view.fillPercentText }}%)</span>
-    </div>
+    <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
     <div class="stockpile-card__price">
       <ValueRow label="COAL PRICE" :value="view.priceText" />
       <PriceHistory :samples="view.priceHistory" />
@@ -52,6 +49,7 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {StockpileView} from '@/view/view_model'
 
 const CARD_CELLS = 24 // Storage card width (docs/plan.md)
+const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity
 const MAX_BUTTON_CELLS = 3 // The label's width; the button adds its own padding
 
 defineProps<{
@@ -67,15 +65,6 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-/* The fill percentage sits in the same right-hand column as every value above it */
-.stockpile-card__bar {
-    display: flex;
-    flex: none;
-    align-items: flex-start;
-    justify-content: space-between;
-    line-height: var(--cell-height);
-}
-
 /* A blank line off what is stored: the price and its history are the other half of
    the card, and the purchase controls answer both (ui_ux.md §11) */
 .stockpile-card__price {
