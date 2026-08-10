@@ -3,16 +3,18 @@
      because the clock and the progress are the two halves of the invest-or-bank
      decision and specs.md §UI asks for them together.
 
-     The title is the one thing in the interface set larger than a character cell. A
-     bitmap face only stays crisp at whole multiples of its cell, so it doubles to two
-     cells rather than taking some intermediate size (ui_ux.md §2). -->
+     The title and the clock are the two things in the interface set larger than a
+     character cell. A bitmap face only stays crisp at whole multiples of its cell, so
+     they double to two cells rather than taking some intermediate size (ui_ux.md §2). -->
 <template>
   <header class="run-header">
     <h1 class="run-header__title">OVERPOWERED</h1>
-    <p class="run-header__time">TIME {{ view.timeText }}</p>
-    <div class="run-header__target">
-      <p class="run-header__stored">STORED {{ view.target.storedText }} / {{ view.target.targetText }} MWh</p>
-      <FillBar :fraction="view.target.fraction" :cells="TARGET_BAR_CELLS" />
+    <div class="run-header__run">
+      <p class="run-header__time">TIME {{ view.timeText }}</p>
+      <div class="run-header__target">
+        <p class="run-header__stored">STORED {{ view.target.storedText }} / {{ view.target.targetText }} MWh</p>
+        <FillBar :fraction="view.target.fraction" :cells="TARGET_BAR_CELLS" />
+      </div>
     </div>
   </header>
 </template>
@@ -33,9 +35,14 @@ defineProps<{
    value over its bar. The rule and the blank line beneath it come to one more line
    between them, as a section_divider does — so with a border box the height carries
    the padding and the rule as well (ui_ux.md §6 asks for a compact header). */
+/* Three columns whose outer two take the same share, so the run readout between them
+   sits at the centre of the window rather than the centre of what is left. The third
+   column is left empty: that is what an equal share on the right costs, and it is
+   cheaper than an element that exists only to push. */
 .run-header {
-    display: flex;
+    display: grid;
     flex: none;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: var(--space-4);
     height: calc(var(--cell-height) * 2 + var(--space-2));
@@ -44,24 +51,30 @@ defineProps<{
     border-bottom: 1px solid var(--fg-faint);
 }
 
-/* The title and the readout each take the same share, so the clock between them
-   sits at the centre of the window rather than the centre of what is left */
 .run-header__title {
-    flex: 1;
     font-size: calc(var(--cell-height) * 2);
     /* A bitmap face has one weight; the browser would fake the heading's bold */
     font-weight: inherit;
     line-height: calc(var(--cell-height) * 2);
 }
 
-.run-header__time {
-    flex: none;
-    line-height: var(--cell-height);
+/* The clock and the target are the two halves of the invest-or-bank decision, so they
+   read as one group. Both are two character lines tall and centre against each other. */
+.run-header__run {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
 }
 
+.run-header__time {
+    font-size: calc(var(--cell-height) * 2);
+    line-height: calc(var(--cell-height) * 2);
+}
+
+/* The stored value is shorter than its bar, so it is centred over it rather than
+   hanging off one end of the block */
 .run-header__target {
-    flex: 1;
-    text-align: right;
+    text-align: center;
 }
 
 .run-header__stored {

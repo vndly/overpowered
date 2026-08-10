@@ -259,16 +259,17 @@ Reference layout:
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ OVERPOWERED        TIME 07:12        STORED 12.4 / 40 MWh  │
-│                                           █████░░░░░░░░░░   │
+│ OVERPOWERED       TIME 07:12   STORED 12.4 / 40 MWh          │
+│                                █████░░░░░░░░░░               │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 Design rules:
 
 - title aligned left
-- timer near center
-- stored-energy readout aligned right
+- timer and stored-energy readout grouped together at the center
+- timer set at two character cells, as the title is: the countdown is the run's
+  headline number, and a bitmap face only stays crisp at whole multiples of its cell
 - horizontal progress bar next to or below stored-energy value
 - no decorative logo required
 - keep header height compact
