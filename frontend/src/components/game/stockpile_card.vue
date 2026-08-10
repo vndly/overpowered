@@ -24,14 +24,15 @@
       <TerminalButton label="MAX" :width-cells="MAX_BUTTON_CELLS" @press="emit('fillAmount')" />
     </div>
     <TerminalButton
-      :label="`BUY: ${view.purchaseCostText} MWh`"
+      :label="`BUY: ${view.purchaseCostText}`"
       :disabled="!view.purchaseAffordable"
       @press="emit('buy')"
     />
     <div class="stockpile-card__upgrades">
       <p class="stockpile-card__section">UPGRADES</p>
+      <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
-        :label="`CAPACITY: ${view.upgradeCostText}`"
+        :label="view.upgradeCostText"
         :disabled="!view.upgradeAffordable"
         @press="emit('upgrade')"
       />

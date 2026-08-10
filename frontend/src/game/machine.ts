@@ -123,6 +123,16 @@ export abstract class Machine {
     }
   }
 
+  /** Capacity the next capacity upgrade would add; it grows with every level bought. */
+  get capacityGain(): number {
+    return this.capacity * (CAPACITY_GROWTH - 1)
+  }
+
+  /** Efficiency the next efficiency upgrade would add; it shrinks as the gap closes. */
+  get efficiencyGain(): number {
+    return (MAX_EFFICIENCY - this.efficiency) * UPGRADE_GAIN
+  }
+
   /**
    * Buys one capacity level, multiplying Capacity by CapacityGrowth.
    */

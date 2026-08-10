@@ -12,8 +12,9 @@
     <p v-if="legend.length > 0" class="buffer-card__legend">{{ legend }}</p>
     <div class="buffer-card__upgrades">
       <p class="buffer-card__section">UPGRADES</p>
+      <ValueRow label="CAPACITY" :value="view.upgradeGainText" />
       <TerminalButton
-        :label="`CAPACITY: ${view.upgradeCostText}`"
+        :label="view.upgradeCostText"
         :disabled="!view.upgradeAffordable"
         @press="emit('upgrade')"
       />

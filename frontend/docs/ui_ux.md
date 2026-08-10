@@ -338,6 +338,16 @@ dashed green line
 
 The upgrade section at the foot of a card is the exception: a blank line opens it, not a rule. The section title and the buttons' own borders already carry the break, and a second rule crowds a card this compact.
 
+Inside that section each upgrade is a value row naming what it buys, and a button carrying only the price:
+
+```text
+UPGRADES
+CAPACITY         +0.50 t
+[      0.02 MWh       ]
+```
+
+The gain is right-aligned into the same numeric column as every other reading on the card, and neither figure is a constant — a capacity upgrade multiplies capacity, so its gain grows with each level bought, and an efficiency upgrade closes a share of the remaining gap, so its gain shrinks. Both are read live from the view model. Name and gain will not fit beside the price on a storage card, which is why the price stands alone.
+
 Recommended card padding:
 
 ```text
@@ -439,7 +449,8 @@ Generic layout:
 │                      │
 │                      │
 │       UPGRADES       │
-│ [     CAPACITY     ] │
+│ CAPACITY     +0.5 t  │
+│ [    0.02 MWh      ] │
 └──────────────────────┘
 ```
 
@@ -484,8 +495,8 @@ COAL PRICE  1.0 MWh/t
 [         BUY: 0.5 MWh         ]
 
 UPGRADES
-
-[           CAPACITY           ]
+CAPACITY                 +0.5 t
+[          0.02 MWh           ]
 ```
 
 `Capacity` is the Stockpile's only upgrade: `docs/specs.md` states that the coal price cannot be upgraded, because it is set by the market.

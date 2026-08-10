@@ -686,11 +686,12 @@ STORED       0.70 / 1.00 t
 ███████░░░  (70%)
 COAL PRICE   1.00 MWh/t
 [price history sparkline]
-[-]  0.5 t  [+]      [FILL]
+[-]  0.5 t  [+]       [MAX]
 [      BUY: 0.50 MWh      ]
-- - - - - - - - - - - - - -
+
 UPGRADES
-[     CAPACITY: 0.02      ]
+CAPACITY           +0.50 t
+[        0.02 MWh         ]
 ```
 
 - The stepper moves the purchase amount by 0.1 t, clamped to `[0, capacity − contents]`.
@@ -772,10 +773,12 @@ CLEAN TO            0.67
 WEAR   ███░░░░░░░    31%
        TRIPS IN 12S
 OUTPUT      4.80 kg/s
-- - - - - - - - - - - - - -
+
 UPGRADES
-[    CAPACITY: 0.02     ]
-[  EFFICIENCY: 0.05     ]
+CAPACITY          +4.00 kg/s
+[        0.02 MWh         ]
+EFFICIENCY            +0.06
+[        0.05 MWh         ]
 ```
 
 The two upgrade buttons sit in their own bottom section, as `ui_ux.md` §12's generic layout puts
@@ -1033,7 +1036,7 @@ Do these in the stage that causes them, not at the end:
 | `CLAUDE.md`     | Economy rule extended to include `src/game/constants.ts`.                                                                               | 2                                |
 | `CLAUDE.md`     | Project section rewritten — `src/` is no longer a blank slate. Describe `game/`, `view/`, `components/`, and the dev-only verify route. | 11 (or the last stage completed) |
 | `docs/ui_ux.md` | §11: drop the `[COAL PRICE]` upgrade.                                                                                                   | 5                                |
-| `docs/ui_ux.md` | §8: the upgrade section is opened by a blank line, not a rule.                                                                          | 5                                |
+| `docs/ui_ux.md` | §8: the upgrade section is opened by a blank line, not a rule, and each upgrade is a gain row above a price button.                     | 5                                |
 | `docs/ui_ux.md` | §9: the equipment icons ship as the supplied PNG line drawings rather than as SVG.                                                       | 5                                |
 | `docs/ui_ux.md` | §12 and §14: drop the `PENALTY` row.                                                                                                    | 6                                |
 | `docs/ui_ux.md` | §19: note that the net-flow graph ships as SVG rather than character cells, and why.                                                    | 9                                |

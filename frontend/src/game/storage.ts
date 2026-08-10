@@ -45,6 +45,11 @@ export class Storage {
     this.contents = Math.max(0, this.contents - amount)
   }
 
+  /** Capacity the next capacity upgrade would add; it grows with every level bought. */
+  get capacityGain(): number {
+    return this.capacity * (CAPACITY_GROWTH - 1)
+  }
+
   /**
    * Buys one capacity level, multiplying Capacity by CapacityGrowth.
    */

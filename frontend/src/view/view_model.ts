@@ -64,6 +64,7 @@ export interface StorageViewBase {
   storedText: string // Contents against Capacity, with its unit
   fraction: number
   fillPercentText: string
+  upgradeGainText: string // Capacity the next upgrade adds, signed and with its unit
   upgradeCostText: string
   upgradeAffordable: boolean
 }
@@ -107,8 +108,10 @@ export interface MachineView {
   wearNoteText: string // What the wear is about to do
   outputText: string
   repairText: string | null // Replaces the output row while tripped
+  capacityUpgradeGainText: string // What the next upgrade adds, signed and with its unit
   capacityUpgradeCostText: string
   capacityUpgradeAffordable: boolean
+  efficiencyUpgradeGainText: string
   efficiencyUpgradeCostText: string
   efficiencyUpgradeAffordable: boolean
 }
@@ -208,7 +211,8 @@ function buildStorageView(
     storedText: `${format(storage.contents)} / ${format(storage.capacity)} ${unit}`,
     fraction: clamp(storage.fill, 0, 1),
     fillPercentText: formatPercent(storage.fill),
-    upgradeCostText: formatEnergy(cost),
+    upgradeGainText: `+${format(storage.capacityGain)} ${unit}`,
+    upgradeCostText: `${formatEnergy(cost)} MWh`,
     upgradeAffordable: cost <= spendableEnergy,
   }
 }
@@ -241,7 +245,7 @@ function buildStockpileView(engine: GameEngine, purchaseKilograms: number): Stoc
     priceHistory: [...engine.market.priceHistory],
     purchaseKilograms: purchaseKilograms,
     purchaseAmountText: `${formatMass(purchaseKilograms)} t`,
-    purchaseCostText: formatEnergy(cost),
+    purchaseCostText: `${formatEnergy(cost)} MWh`,
     purchaseAffordable: purchaseKilograms > 0 && cost <= engine.coalBudget,
   }
 }
@@ -286,9 +290,11 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
     wearNoteText: wearNote(machine),
     outputText: `${spec.format(machine.output)} ${spec.unit}`,
     repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
-    capacityUpgradeCostText: formatEnergy(capacityCost),
+    capacityUpgradeGainText: `+${spec.format(machine.capacityGain)} ${spec.unit}`,
+    capacityUpgradeCostText: `${formatEnergy(capacityCost)} MWh`,
     capacityUpgradeAffordable: capacityCost <= spendableEnergy,
-    efficiencyUpgradeCostText: formatEnergy(efficiencyCost),
+    efficiencyUpgradeGainText: `+${formatEfficiency(machine.efficiencyGain)}`,
+    efficiencyUpgradeCostText: `${formatEnergy(efficiencyCost)} MWh`,
     efficiencyUpgradeAffordable: efficiencyCost <= spendableEnergy,
   }
 }
