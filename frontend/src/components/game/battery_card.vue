@@ -39,7 +39,7 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {BatteryView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity, as on the other stores
+const STORED_BAR_CELLS = CARD_CELLS // The bar spans the card: one cell per 1/28 of Capacity
 
 defineProps<{
   view: BatteryView

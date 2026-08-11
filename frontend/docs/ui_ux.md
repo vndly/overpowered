@@ -512,7 +512,7 @@ Generic layout:
 
 The fill bar is 20 characters wide, so one character is 5% of `Capacity`, and it carries no percentage beside it — the `STORED` row above already gives the exact figure, and 5% is as fine as a reading anyone takes off a bar. Twenty is also what puts both strain marks on an exact character: `StarveThreshold` at 30% is the sixth, `BacklogThreshold` at 70% the fourteenth.
 
-What shipped: twenty on the Silo, the Tank and the Battery, and the card's full 28 characters on the Stockpile, where one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and the Stockpile is the one storage card with no strain marks to keep on exact characters. Any bar that carries marks stays at twenty.
+What shipped: the card's full 28 characters on all four stores, so one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and four stores drawn to two different widths read as two different scales. The Silo's and the Tank's strain marks give up their exact characters for it — `StarveThreshold` at 30% falls at 8.4 and `BacklogThreshold` at 70% at 19.6, so each mark is drawn on the nearest character, within half a cell of the fill it names. The marks are a scale rather than a figure anyone reads off, and half a character is under 2% of `Capacity`.
 
 ## Strain markers
 

@@ -34,7 +34,11 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {BufferView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity, so both marks land exactly
+// The bar spans the card like the Stockpile's, one cell per 1/28 of Capacity: a bar
+// that stops short of the card it is drawn in reads as a bar that is not full. The
+// strain marks no longer land on an exact character — 28 does not divide the two
+// thresholds — so each is drawn on the nearest one (ui_ux.md §10).
+const STORED_BAR_CELLS = CARD_CELLS
 
 // What each mark on the bar means. The marks are a scale rather than an alarm
 // (ui_ux.md §10), and an unexplained tick is neither. The glyphs are the ones the
