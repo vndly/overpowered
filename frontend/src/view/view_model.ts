@@ -12,9 +12,6 @@ import {formatEfficiency, formatEnergy, formatMass, formatPercent, formatPower, 
  * game without being able to reach it. Every gameplay rule stays behind this wall.
  */
 
-const BACKLOG_GLYPH = '╷' // The fill above which a producer strains
-const STARVE_GLYPH = '╵' // The fill below which a consumer strains
-
 const STRESS_LABELS: Record<StressKind, string> = {
   temperature: 'TEMPERATURE',
   pressure: 'PRESSURE',
@@ -52,12 +49,6 @@ const TURBINE_SPEC: MachineSpec = {
   format: formatPower,
 }
 
-/** A strain threshold, drawn beneath a Silo or Tank fill bar. */
-export interface StrainMark {
-  fraction: number
-  glyph: string
-}
-
 /** What every storage card shows, whatever it stores. */
 export interface StorageViewBase {
   title: string
@@ -77,10 +68,8 @@ export interface StockpileView extends StorageViewBase {
   purchaseAffordable: boolean
 }
 
-/** The Silo and the Tank, which mark the strain thresholds on their bars. */
-export interface BufferView extends StorageViewBase {
-  marks: StrainMark[]
-}
+/** The Silo and the Tank, which read out no more than any other store. */
+export type BufferView = StorageViewBase
 
 /** The Battery, which also answers what of its contents can be spent. */
 export interface BatteryView extends StorageViewBase {
@@ -195,15 +184,11 @@ function buildStorageView(
 /**
  * @param title - The card's title
  * @param storage - The buffer to read
- * @param marks - Its strain thresholds
  * @param spendableEnergy - MWh available for upgrades
  * @returns The Silo or Tank card
  */
-function buildBufferView(title: string, storage: Storage, marks: StrainMark[], spendableEnergy: number): BufferView {
-  return {
-    ...buildStorageView(title, storage, 't', formatMass, spendableEnergy),
-    marks: marks,
-  }
+function buildBufferView(title: string, storage: Storage, spendableEnergy: number): BufferView {
+  return buildStorageView(title, storage, 't', formatMass, spendableEnergy)
 }
 
 /**
@@ -388,22 +373,8 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
     peakStoredText: `${formatEnergy(engine.ledger.peakContents)} MWh`,
     bestResultText: bestResult === null ? null : `${formatEnergy(bestResult)} MWh`,
     stockpile: buildStockpileView(engine, purchaseKilograms),
-    silo: buildBufferView('SILO', engine.silo, [
-      {
-        fraction: BACKLOG_THRESHOLD,
-        glyph: BACKLOG_GLYPH,
-      },
-    ], engine.spendableEnergy),
-    tank: buildBufferView('TANK', engine.tank, [
-      {
-        fraction: STARVE_THRESHOLD,
-        glyph: STARVE_GLYPH,
-      },
-      {
-        fraction: BACKLOG_THRESHOLD,
-        glyph: BACKLOG_GLYPH,
-      },
-    ], engine.spendableEnergy),
+    silo: buildBufferView('SILO', engine.silo, engine.spendableEnergy),
+    tank: buildBufferView('TANK', engine.tank, engine.spendableEnergy),
     battery: buildBatteryView(engine),
     pulverizer: buildMachineView(PULVERIZER_SPEC, engine.pulverizer, engine.pulverizerStrain, engine.spendableEnergy),
     boiler: buildMachineView(BOILER_SPEC, engine.boiler, engine.boilerStrain, engine.spendableEnergy),

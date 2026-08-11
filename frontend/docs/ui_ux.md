@@ -21,13 +21,13 @@ What the mockup gets right and should be followed:
 - the overall composition — header, one-row production chain, four-panel lower dashboard
 - the seven cards in one row with arrows between them — though they now all take the same width, rather than the mockup's narrower storage cards (see [General Layout](#5-general-layout))
 - the internal card order: title, icon, divider, values, controls, divider, upgrades
-- the inline `[-] value [+]` stepper, the outlined buttons, the horizontal `SAFE`/`MAX` stress gauge
+- the inline `[-] value [+]` stepper, the outlined buttons, the horizontal stress gauge — though the gauge's `SAFE` and `MAX` labels are dropped, and only its marker survives (see [§14](#14-stress-gauge))
 - the primitive instrumentation look of the net-flow graph
 - black background, thin borders, and a palette held to the minimum — though the mockup's single green is now split by [Color System](#4-color-system)
 
 Known places where it diverges and should **not** be copied:
 
-- Silo and Tank fill bars carry no strain marks. They are required — see [Strain markers](#strain-markers).
+- Silo and Tank fill bars carry no strain marks. They were required, and then dropped — the mockup's plain bars are what shipped, see [Strain markers](#strain-markers).
 - Machine cards show a third parameter row (`COOLING`, `REGULATION`, `STABILITY`). No such parameter exists; machines have `Capacity` and `Efficiency` only.
 - `CLEAN TO` is missing and the penalty is folded into the stress row. Follow [Machine Cards](#12-machine-cards).
 - There is no wear gauge or trip countdown. Follow `docs/specs.md`.
@@ -512,7 +512,7 @@ Generic layout:
 
 The fill bar is 20 characters wide, so one character is 5% of `Capacity`, and it carries no percentage beside it — the `STORED` row above already gives the exact figure, and 5% is as fine as a reading anyone takes off a bar. Twenty is also what puts both strain marks on an exact character: `StarveThreshold` at 30% is the sixth, `BacklogThreshold` at 70% the fourteenth.
 
-What shipped: the card's full 28 characters on all four stores, so one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and four stores drawn to two different widths read as two different scales. The Silo's and the Tank's strain marks give up their exact characters for it — `StarveThreshold` at 30% falls at 8.4 and `BacklogThreshold` at 70% at 19.6, so each mark is drawn on the nearest character, within half a cell of the fill it names. The marks are a scale rather than a figure anyone reads off, and half a character is under 2% of `Capacity`.
+What shipped: the card's full 28 characters on all four stores, so one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and four stores drawn to two different widths read as two different scales. Nothing on a bar has to land on an exact character any more, now that the strain marks are gone (see [Strain markers](#strain-markers)).
 
 ## Strain markers
 
@@ -531,6 +531,8 @@ STORED  0.7 / 1.0 t           STORED  1.4 / 3.0 t
 - Stockpile and Battery carry no marks — neither has a strain rule.
 
 The marks sit on their own line beneath the bar, with a dim legend line under that naming them: printed inline a mark overwrites a fill character, which is the one thing the bar exists to show. Keep the marks in the same green as the bar outline and thinner than the fill blocks. They are a scale, not an alarm; the alarm is the machine card's stress gauge. Without them the player watches a machine start to wear with nothing on screen explaining why, so they are required, not decorative.
+
+What shipped: no marks and no legend. The Silo and the Tank draw a plain fill bar like every other store, and the thresholds are carried in words by the alerts panel instead — `SILO FULL` and `TANK FULL` at `BacklogThreshold`, `TANK LOW` at `StarveThreshold` ([§20](#20-alerts-panel)). Two lines of scale under every buffer bar cost more of the card than they returned: the mark was a tick the player had to learn, the legend a line of prose under a drawing, and both said what the alert says outright. The trade is that a threshold is now announced at the moment it is crossed rather than seen coming — the fill bar still shows the store filling, and the machine card's stress gauge still shows the strain arriving.
 
 ---
 
@@ -635,7 +637,7 @@ What changed from the layout above it, and nothing else moves:
 
 - Every reading opens on a blank line, the spacing [§8](#8-card-style) gives a card's sections and the Stockpile gives its `PRICE`. Run together they read as a table of figures rather than as separate answers.
 - `OUTPUT` sits under `CAPACITY` rather than at the foot of the card: what the machine is doing is read against what it is rated for, and the pair above the `SETTING` is what the player steps the `SETTING` to change.
-- The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets and cannot read a decision off — what it buys is on the card already, in the `OUTPUT` it produces from the same `CAPACITY` and in the gain quoted beside its upgrade.
+- The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets, and what it buys was never on this card: `specs.md` makes Efficiency divide what a machine *consumes* at a given `SETTING`, not what it produces, so `OUTPUT` — `Capacity × Setting` — does not move when one is bought. The gain shows up in the dashboard's `CONSUMPTION` and `NET FLOW`, and on the card only as the figure quoted beside the upgrade. The cost of dropping the row is that nothing else on the card moves when the player buys one.
 - The card carries two bars and no numbers off them. The `STRESS` row under the gauge is dropped — the gauge already draws where the machine is running between `SafeStress` and `MaxStress`, and a figure beside it is the same fact twice, in a unit the player never sets anything in.
 - `CLEAN TO` goes with it. The gauge's `SAFE` marker is that ceiling drawn instead of written: the fill left of the marker accrues no wear, and the marker holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear.
 - The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).

@@ -459,6 +459,8 @@ Each storage card displays its current contents, capacity, fill percentage, and 
 
 The Silo and Tank mark their strain thresholds on the fill bar — `BacklogThreshold` on both, and `StarveThreshold` on the Tank as well. Those marks are the only place the thresholds appear; without them the player watches a machine start to wear with nothing on screen explaining why.
 
+What shipped: no marks. The thresholds are named by the alerts panel instead — `SILO FULL` and `TANK FULL` at `BacklogThreshold`, `TANK LOW` at `StarveThreshold` — so a player is told in words when a store crosses into strain rather than shown the line it is approaching. The diagram below keeps the marks it was drawn with; `ui_ux.md` [§10](ui_ux.md#strain-markers) records the interface as built.
+
 ```text
 ┌───────────────────────────────────────────┐
 │ Stockpile                                 │
