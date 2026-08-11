@@ -13,8 +13,8 @@
     <EquipmentIcon :component="component" />
     <SectionDivider />
     <ValueRow label="CAPACITY" :value="view.capacityText" />
-    <ValueRow label="EFFICIENCY" :value="view.efficiencyText" />
-    <div class="machine-card__setting">
+    <ValueRow class="machine-card__reading" label="EFFICIENCY" :value="view.efficiencyText" />
+    <div class="machine-card__setting machine-card__reading">
       <span>SETTING</span>
       <NumericStepper
         class="machine-card__stepper"
@@ -32,15 +32,15 @@
       :fraction="view.stressFraction"
       :safe-fraction="view.safeFraction"
     />
-    <ValueRow label="CLEAN TO" :value="view.cleanToText" />
-    <div class="machine-card__wear">
-      <span class="machine-card__wear-label">WEAR</span>
+    <!-- The bar is the whole reading now that no percentage stands beside it, so the
+         pair is named as the drawing it is: read aloud, WEAR and a row of blocks say
+         nothing, and role="img" puts the figure back (ui_ux.md §28) -->
+    <div class="machine-card__wear machine-card__reading" role="img" :aria-label="`WEAR ${view.wearPercentText}%`">
+      <p>WEAR</p>
       <FillBar :fraction="view.wearFraction" :cells="WEAR_BAR_CELLS" />
-      <span class="machine-card__wear-percent">{{ view.wearPercentText }}%</span>
     </div>
-    <p class="machine-card__wear-note">{{ view.wearNoteText }}</p>
-    <ValueRow v-if="view.repairText === null" label="OUTPUT" :value="view.outputText" />
-    <p v-else class="machine-card__repair">{{ view.repairText }}</p>
+    <ValueRow v-if="view.repairText === null" class="machine-card__reading" label="OUTPUT" :value="view.outputText" />
+    <p v-else class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
     <div class="machine-card__upgrades">
       <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.capacityUpgradeGainText" />
@@ -76,7 +76,7 @@ import type {MachineId} from '@/game/types'
 import type {MachineView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const WEAR_BAR_CELLS = 10 // One cell per 10% of a trip
+const WEAR_BAR_CELLS = CARD_CELLS // A line of its own, so the bar takes the whole of it
 
 defineProps<{
   view: MachineView
@@ -91,6 +91,14 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
+/* Every reading opens on a blank line, the rule the Stockpile's PRICE row follows
+   (ui_ux.md §8): each one answers a question of its own, and run together they read as
+   a table of figures rather than as separate answers. A margin rather than padding,
+   because the row it sits on is one character cell tall and border-box would eat it. */
+.machine-card__reading {
+    margin-top: var(--cell-height);
+}
+
 .machine-card__setting {
     display: flex;
     flex: none;
@@ -104,36 +112,12 @@ const emit = defineEmits<{
     width: calc(var(--cell-width) * 12);
 }
 
+/* The label on its own line above the bar, so the bar spans the card like the
+   Stockpile's does and one cell reads the same fraction of a trip on all three
+   machines */
 .machine-card__wear {
-    display: flex;
     flex: none;
-    height: var(--cell-height);
     line-height: var(--cell-height);
-}
-
-/* The label reserves the seven cells its own text and the gap take, and the note
-   beneath is indented by the same, so both start where the bar does */
-.machine-card__wear-label {
-    flex: none;
-    width: calc(var(--cell-width) * 7);
-}
-
-/* The countdown to a trip or to a clean machine — a clock, so it reads as one
-   (assets/styles.css). CLEAN and HOLDING take the same colour: the note is one row
-   answering one question, and a line that changed colour with its own wording would
-   read as a state change rather than as an answer. */
-.machine-card__wear-note {
-    flex: none;
-    height: var(--cell-height);
-    padding-left: calc(var(--cell-width) * 7);
-    color: var(--data-dim);
-    line-height: var(--cell-height);
-}
-
-.machine-card__wear-percent {
-    flex: 1;
-    color: var(--data);
-    text-align: right;
 }
 
 /* A trip is the loudest thing that happens to a machine, so it is the one place a

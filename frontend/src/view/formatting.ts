@@ -104,14 +104,6 @@ export function formatSetting(setting: number): string {
 }
 
 /**
- * @param ceiling - A clean Setting ceiling
- * @returns The ceiling as text, finer than a Setting so its drift under strain shows
- */
-export function formatCeiling(ceiling: number): string {
-  return ceiling.toFixed(2)
-}
-
-/**
  * @param efficiency - A machine Efficiency, 0 to MaxEfficiency
  * @returns The Efficiency as text
  */

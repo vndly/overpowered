@@ -3,33 +3,37 @@
      machine straining against a backed-up or empty store reads past its maximum,
      so the fill pegs at the right-hand end rather than running off the gauge.
 
-     The scale and the bar are a drawing of the STRESS row beneath them, so both are
-     hidden from assistive technology; crossing SafeStress is announced by the alerts
-     panel, which is the same news in words (ui_ux.md §20). -->
+     The gauge carries no figure beside it, so the whole of it is named as the drawing
+     it is: read aloud, a scale and a row of blocks are noise, and role="img" gives the
+     reading they draw. Crossing SafeStress is announced by the alerts panel as well,
+     which is the same news in words (ui_ux.md §20). -->
 <template>
-  <div class="stress-gauge" :style="{'--gauge-cells': GAUGE_CELLS}">
+  <div
+    class="stress-gauge"
+    :style="{'--gauge-cells': GAUGE_CELLS}"
+    role="img"
+    :aria-label="`${label} ${valueText}`"
+  >
     <p class="stress-gauge__kind">{{ label }}</p>
-    <div class="stress-gauge__scale" aria-hidden="true">
+    <div class="stress-gauge__scale">
       <span>SAFE</span>
       <span>MAX</span>
     </div>
-    <div class="stress-gauge__bar" aria-hidden="true">{{ barText }}</div>
-    <ValueRow label="STRESS" :value="valueText" />
+    <div class="stress-gauge__bar">{{ barText }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import {computed} from 'vue'
-import ValueRow from '@/components/terminal/value_row.vue'
 
 const FILLED_GLYPH = '█'
 const EMPTY_GLYPH = '░'
 const SAFE_GLYPH = '|'
-const GAUGE_CELLS = 20 // One cell per 5% of MaxStress
+const GAUGE_CELLS = 28 // The card's full width: one cell per 1/28 of MaxStress
 
 const props = defineProps<{
   label: string // Which stress this is
-  valueText: string // The reading, already formatted with its unit
+  valueText: string // The reading, already formatted with its unit; names the gauge
   fraction: number // Stress against MaxStress, 0 to 1
   safeFraction: number // SafeStress against MaxStress
 }>()

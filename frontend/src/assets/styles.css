@@ -40,6 +40,13 @@
     --data: #39ff14;
     --data-dim: rgba(57, 255, 20, 0.55);
 
+    /* The alerts panel, and nothing else on the screen (ui_ux.md §20). Both are the
+       CP437 palette's own reds, the palette the interface font comes out of: the bright
+       one for a line on black, the dark one for the inverted line an urgent alert
+       blinks through, so the wording stays legible at either end of the blink. */
+    --alert: #ff5555;
+    --alert-inverted: #aa0000;
+
     --border: 1px solid var(--fg);
 
     /* Spacing scale (ui_ux.md §31) */

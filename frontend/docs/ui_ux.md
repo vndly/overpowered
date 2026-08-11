@@ -207,7 +207,7 @@ Disabled controls  dim/faint green
 
 Do not introduce additional colors for normal operation.
 
-What shipped: the same two-value monochrome, with the two values split by role rather than by brightness. The console — every border, rule, title, label, button, arrow, alert, grid line and axis scale — is phosphor white. Green is kept for what the plant is actually reading: **values and their units, the bars that draw them, and the clocks**. Nothing that merely labels, frames, or explains a reading takes it.
+What shipped: the same two-value monochrome, with the two values split by role rather than by brightness. The console — every border, rule, title, label, button, arrow, grid line and axis scale — is phosphor white. Green is kept for what the plant is actually reading: **values and their units, the bars that draw them, and the clocks**. Nothing that merely labels, frames, or explains a reading takes it.
 
 ```css
 :root {
@@ -222,9 +222,18 @@ What shipped: the same two-value monochrome, with the two values split by role r
 }
 ```
 
-This is still one accent on black, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no third color, no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. Where any other section of this document names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
+This is still one accent on black for everything the plant runs on, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. The alerts panel is the one thing outside the two values, and it is set out below. Where any other section of this document names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
 
-Yellow and red are reserved for a later pass on values and indicators, and are not in the interface yet.
+Yellow is reserved for a later pass on values and indicators, and is not in the interface yet. Red is in, in one place: the alerts panel writes every alert in it ([§20](#20-alerts-panel)). Nothing else on the screen may take it, so red on this interface means one thing — the plant is interrupting.
+
+```css
+:root {
+  --alert: #ff5555;                       /* an alert on the console's black */
+  --alert-inverted: #aa0000;              /* the same words on an inverted line */
+}
+```
+
+Both are the CP437 palette's own reds, the palette the interface font comes out of, and there are two because an urgent alert blinks between black and white and one red cannot stay legible on both.
 
 Warnings should preferably use:
 
@@ -499,6 +508,8 @@ Generic layout:
 
 The fill bar is 20 characters wide, so one character is 5% of `Capacity`, and it carries no percentage beside it — the `STORED` row above already gives the exact figure, and 5% is as fine as a reading anyone takes off a bar. Twenty is also what puts both strain marks on an exact character: `StarveThreshold` at 30% is the sixth, `BacklogThreshold` at 70% the fourteenth.
 
+What shipped: twenty on the Silo, the Tank and the Battery, and the card's full 28 characters on the Stockpile, where one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and the Stockpile is the one storage card with no strain marks to keep on exact characters. Any bar that carries marks stays at twenty.
+
 ## Strain markers
 
 The Silo and Tank fill bars carry tick marks for the points at which a neighbouring machine begins to wear:
@@ -529,7 +540,7 @@ STOCKPILE
 [coal/conveyor SVG]
 
 STORED      0.7 / 1.0 t
-██████████████░░░░░░
+███████████████████░░░░░░░░░
 
 PRICE       1.0 MWh/t
 
@@ -592,19 +603,56 @@ UPGRADES
 
 `CAPACITY` and `EFFICIENCY` are the only upgradable rows. There is no control row: wear headroom is bought as Silo and Tank capacity on the storage cards, not on the machine.
 
-This layout originally carried a `PENALTY` row. `docs/specs.md` levies no output penalty for running above the rating — "pushing past the rating is not penalised in output, it damages the machine" — so the row is dropped and the wear bar carries the whole cost of overdriving. The note beneath it reads `TRIPS IN {n}S` while wear is growing, `CLEARS IN {n}S` while it is shedding, and `CLEAN` at zero.
+This layout originally carried a `PENALTY` row. `docs/specs.md` levies no output penalty for running above the rating — "pushing past the rating is not penalised in output, it damages the machine" — so the row is dropped and the wear bar carries the whole cost of overdriving.
+
+What shipped:
+
+```text
+TITLE
+
+[SVG ICON]
+--------------------------------
+CAPACITY            8.00 kg/s
+
+EFFICIENCY               0.70
+
+SETTING       [-] 0.80 [+]
+--------------------------------
+TEMPERATURE
+SAFE                      MAX
+████████████|░░░░░░░░░░░░░░░
+
+WEAR
+████████░░░░░░░░░░░░░░░░░░░░
+
+OUTPUT             16.00 kg/s
+
+           UPGRADES
+```
+
+What changed from the layout above it, and nothing else moves:
+
+- Every reading opens on a blank line, the spacing [§8](#8-card-style) gives a card's sections and the Stockpile gives its `PRICE`. Run together they read as a table of figures rather than as separate answers.
+- The card carries two bars and no numbers off them. The `STRESS` row under the gauge is dropped — the gauge already draws where the machine is running between `SafeStress` and `MaxStress`, and a figure beside it is the same fact twice, in a unit the player never sets anything in.
+- `CLEAN TO` goes with it. The gauge's `SAFE` marker is that ceiling drawn instead of written: the fill left of the marker accrues no wear, and the marker holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear.
+- The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).
+- The note beneath the bar is dropped with it. It read `TRIPS IN {n}S` while wear was growing, `CLEARS IN {n}S` while it was shedding, `CLEAN` at zero and `HOLDING` at neither: a countdown that changed its wording four ways under a bar that was already moving. What it answered — how long can this Setting be held — is what the bar and its rate of travel show.
 
 A tripped machine replaces its `OUTPUT` row with `REPAIR {n}S`, inverted, inside a card whose border fills in to a solid green frame. State is never signalled by brightness alone (§28), and a trip is the loudest thing that happens to a machine, so it is the one place a card inverts.
 
 `CLEAN TO` is the highest `SETTING` that accrues no wear right now. It is not a constant — it falls as the store beside the machine moves toward its strain threshold, so it can come down to meet a `SETTING` the player never touched. Render it as a live value and let it move.
 
+It shipped that way and was then dropped, as above. The rule it named is still on the card: a machine wears whenever its fill is right of the gauge's `SAFE` marker, and a strained store pushes the fill right without the `SETTING` moving. The player reads the ceiling off the gauge and finds it by stepping, rather than being quoted a number to two decimals.
+
 Use the component-specific stress names:
 
 ```text
-PULVERIZER → TEMP
+PULVERIZER → TEMPERATURE
 BOILER     → PRESSURE
 TURBINE    → VIBRATION
 ```
+
+`TEMP` shipped as `TEMPERATURE`: it is the name of a reading, the card has the width for it, and the other two are not abbreviated.
 
 ---
 
@@ -638,16 +686,15 @@ Use a compact horizontal gauge.
 Example:
 
 ```text
-TEMP (°C)
+TEMPERATURE
 
-SAFE                 MAX
-██████████|████░░░░░
-
-STRESS        62%
-CLEAN TO      0.69
+SAFE                      MAX
+██████████████|██████░░░░░░░
 ```
 
 The gauge is 20 characters wide, so one character is 5% of `MaxStress`, and the `SAFE` marker overwrites the character it lands on rather than taking one of its own — a gauge that shifted by a character as the fill passed its marker would be unreadable.
+
+What shipped: 28 characters, the card's full width, so one character is 1/28 of `MaxStress`. The gauge carries no marks that have to land on exact characters, and it is the reading now that the `STRESS` row beneath it is gone ([§12](#12-machine-cards)) — so it is drawn at the size of a reading. The marker still overwrites its character, and the fill still pegs at the right-hand end.
 
 The gauge should communicate:
 
@@ -859,6 +906,8 @@ For higher-priority warnings, use:
 - stronger border
 
 Avoid adding new colors.
+
+What shipped: every alert is written in red, the one colour [§4](#4-color-system) admits beyond the console's white and the readings' green, and the only place on the screen that takes it. Rank is still not carried by the colour — both ranks are the same red, and an urgent alert is marked with a `!`, inverted, and blinking as before. The blink swaps the background between the console's white and black and leaves the words red throughout, which is why §4 defines two: `--alert` on black, `--alert-inverted` on white. `NO ALERTS` is not an alert and stays the console's own dim white.
 
 ---
 

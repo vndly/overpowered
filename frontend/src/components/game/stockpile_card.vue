@@ -53,7 +53,7 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {StockpileView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const STORED_BAR_CELLS = 20 // One cell per 5% of Capacity
+const STORED_BAR_CELLS = CARD_CELLS // The bar spans the card: one cell per 1/28 of Capacity
 const MAX_BUTTON_CELLS = 3 // The label's width; the button adds its own padding
 
 defineProps<{

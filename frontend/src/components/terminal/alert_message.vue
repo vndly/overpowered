@@ -23,16 +23,22 @@ const line = computed(() => (props.urgent ? URGENT_GUTTER : CALM_GUTTER) + props
 </script>
 
 <style scoped>
+/* The one colour on the screen that is neither the console nor a reading: an alert is
+   the plant interrupting, and red is what an operator's panel interrupts in
+   (assets/styles.css) */
 .alert-message {
     flex: none;
     height: var(--cell-height);
+    color: var(--alert);
     line-height: var(--cell-height);
     white-space: pre;
 }
 
+/* The inverted line keeps the console's white behind it — the rank is the inversion,
+   not a second colour — so the wording drops to the dark red to stay readable on it */
 .alert-message--urgent {
     background: var(--fg);
-    color: var(--bg);
+    color: var(--alert-inverted);
     animation: alert-blink 1s step-end infinite;
 }
 
@@ -40,7 +46,7 @@ const line = computed(() => (props.urgent ? URGENT_GUTTER : CALM_GUTTER) + props
 @keyframes alert-blink {
     50% {
         background: var(--bg);
-        color: var(--fg);
+        color: var(--alert);
     }
 }
 

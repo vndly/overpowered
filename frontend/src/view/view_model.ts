@@ -3,7 +3,7 @@ import type {GameEngine} from '@/game/game_engine'
 import type {Machine} from '@/game/machine'
 import type {Storage} from '@/game/storage'
 import type {RunOutcome, StressKind} from '@/game/types'
-import {formatCeiling, formatEfficiency, formatEnergy, formatMass, formatPercent, formatPower, formatPrice, formatRate, formatSeconds, formatSetting, formatStress, formatTime, formatWholeEnergy} from '@/view/formatting'
+import {formatEfficiency, formatEnergy, formatMass, formatPercent, formatPower, formatPrice, formatRate, formatSeconds, formatSetting, formatStress, formatTime, formatWholeEnergy} from '@/view/formatting'
 
 /**
  * The one thing components are allowed to see.
@@ -16,7 +16,7 @@ const BACKLOG_GLYPH = '╷' // The fill above which a producer strains
 const STARVE_GLYPH = '╵' // The fill below which a consumer strains
 
 const STRESS_LABELS: Record<StressKind, string> = {
-  temperature: 'TEMP',
+  temperature: 'TEMPERATURE',
   pressure: 'PRESSURE',
   vibration: 'VIBRATION',
 }
@@ -96,14 +96,12 @@ export interface MachineView {
   efficiencyText: string
   settingText: string
   settingSteps: number
-  stressLabel: string // TEMP | PRESSURE | VIBRATION
-  stressText: string // Value with its unit
+  stressLabel: string // TEMPERATURE | PRESSURE | VIBRATION
+  stressText: string // Value with its unit; the gauge is drawn, so this names it
   stressFraction: number // Stress against MaxStress, 0 to 1
   safeFraction: number // SafeStress against MaxStress
-  cleanToText: string // The live ceiling, strain included
   wearFraction: number
-  wearPercentText: string
-  wearNoteText: string // What the wear is about to do
+  wearPercentText: string // The wear bar is a drawing; this is the reading behind it
   outputText: string
   repairText: string | null // Replaces the output row while tripped
   capacityUpgradeGainText: string // What the next upgrade adds, signed and with its unit
@@ -166,30 +164,6 @@ export interface GameView {
  */
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value))
-}
-
-/**
- * What the wear bar is about to do, which is the only question a machine card has to
- * answer: how long can this Setting be held. Time to a trip is the headroom over the
- * current rate; time to clean is the wear over the recovery rate.
- * @param machine - The machine to read
- * @returns The note beneath its wear bar
- */
-function wearNote(machine: Machine): string {
-  if (machine.wear <= 0) {
-    return 'CLEAN'
-  }
-
-  if (machine.wearRate > 0) {
-    return `TRIPS IN ${formatSeconds((1 - machine.wear) / machine.wearRate)}S`
-  }
-
-  if (machine.wearRate < 0) {
-    return `CLEARS IN ${formatSeconds(machine.wear / machine.wearRecovery)}S`
-  }
-
-  // Over its safe stress but with nothing to work on, so the wear neither grows nor sheds
-  return 'HOLDING'
 }
 
 /**
@@ -285,10 +259,8 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
     stressText: `${formatStress(machine.stress(strain))} ${STRESS_UNITS[machine.stressKind]}`,
     stressFraction: clamp(machine.stress(strain) / machine.maxStress, 0, 1),
     safeFraction: clamp(machine.safeStress / machine.maxStress, 0, 1),
-    cleanToText: formatCeiling(machine.cleanCeiling(strain)),
     wearFraction: clamp(machine.wear, 0, 1),
     wearPercentText: formatPercent(machine.wear),
-    wearNoteText: wearNote(machine),
     outputText: `${spec.format(machine.output)} ${spec.unit}`,
     repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
     capacityUpgradeGainText: `+${spec.format(machine.capacityGain)} ${spec.unit}`,
