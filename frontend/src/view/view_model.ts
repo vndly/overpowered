@@ -93,7 +93,8 @@ export interface BatteryView extends StorageViewBase {
 export interface MachineView {
   title: string
   capacityText: string
-  efficiencyText: string
+  outputText: string
+  repairText: string | null // Replaces the output row while tripped
   settingText: string
   settingSteps: number
   stressLabel: string // TEMPERATURE | PRESSURE | VIBRATION
@@ -102,8 +103,6 @@ export interface MachineView {
   safeFraction: number // SafeStress against MaxStress
   wearFraction: number
   wearPercentText: string // The wear bar is a drawing; this is the reading behind it
-  outputText: string
-  repairText: string | null // Replaces the output row while tripped
   capacityUpgradeGainText: string // What the next upgrade adds, signed and with its unit
   capacityUpgradeCostText: string
   capacityUpgradeAffordable: boolean
@@ -252,7 +251,8 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
   return {
     title: spec.title,
     capacityText: `${spec.format(machine.capacity)} ${spec.unit}`,
-    efficiencyText: formatEfficiency(machine.efficiency),
+    outputText: `${spec.format(machine.output)} ${spec.unit}`,
+    repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
     settingText: formatSetting(machine.setting),
     settingSteps: machine.settingSteps,
     stressLabel: STRESS_LABELS[machine.stressKind],
@@ -261,8 +261,6 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
     safeFraction: clamp(machine.safeStress / machine.maxStress, 0, 1),
     wearFraction: clamp(machine.wear, 0, 1),
     wearPercentText: formatPercent(machine.wear),
-    outputText: `${spec.format(machine.output)} ${spec.unit}`,
-    repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
     capacityUpgradeGainText: `+${spec.format(machine.capacityGain)} ${spec.unit}`,
     capacityUpgradeCostText: `${formatEnergy(capacityCost)} MWh`,
     capacityUpgradeAffordable: capacityCost <= spendableEnergy,

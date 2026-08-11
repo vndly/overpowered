@@ -618,18 +618,15 @@ TITLE
 --------------------------------
 CAPACITY            8.00 kg/s
 
-EFFICIENCY               0.70
+OUTPUT             16.00 kg/s
 
 SETTING       [-] 0.80 [+]
 --------------------------------
 TEMPERATURE
-SAFE                      MAX
 ████████████|░░░░░░░░░░░░░░░
 
 WEAR
 ████████░░░░░░░░░░░░░░░░░░░░
-
-OUTPUT             16.00 kg/s
 
            UPGRADES
 ```
@@ -637,6 +634,8 @@ OUTPUT             16.00 kg/s
 What changed from the layout above it, and nothing else moves:
 
 - Every reading opens on a blank line, the spacing [§8](#8-card-style) gives a card's sections and the Stockpile gives its `PRICE`. Run together they read as a table of figures rather than as separate answers.
+- `OUTPUT` sits under `CAPACITY` rather than at the foot of the card: what the machine is doing is read against what it is rated for, and the pair above the `SETTING` is what the player steps the `SETTING` to change.
+- The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets and cannot read a decision off — what it buys is on the card already, in the `OUTPUT` it produces from the same `CAPACITY` and in the gain quoted beside its upgrade.
 - The card carries two bars and no numbers off them. The `STRESS` row under the gauge is dropped — the gauge already draws where the machine is running between `SafeStress` and `MaxStress`, and a figure beside it is the same fact twice, in a unit the player never sets anything in.
 - `CLEAN TO` goes with it. The gauge's `SAFE` marker is that ceiling drawn instead of written: the fill left of the marker accrues no wear, and the marker holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear.
 - The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).
@@ -699,6 +698,8 @@ SAFE                      MAX
 The gauge is 20 characters wide, so one character is 5% of `MaxStress`, and the `SAFE` marker overwrites the character it lands on rather than taking one of its own — a gauge that shifted by a character as the fill passed its marker would be unreadable.
 
 What shipped: 28 characters, the card's full width, so one character is 1/28 of `MaxStress`. The gauge carries no marks that have to land on exact characters, and it is the reading now that the `STRESS` row beneath it is gone ([§12](#12-machine-cards)) — so it is drawn at the size of a reading. The marker still overwrites its character, and the fill still pegs at the right-hand end.
+
+The `SAFE` and `MAX` labels above the bar are dropped with it. A bar filling left to right has its ends where every other bar in the interface has them, and the marker is the only thing on the gauge that has to be found — naming the two ends spent a line of the card on what the drawing already says. The marker keeps its meaning from the alerts panel, which says the same news in words when the fill crosses it ([§20](#20-alerts-panel)).
 
 The gauge should communicate:
 

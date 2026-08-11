@@ -1,5 +1,5 @@
-<!-- One machine of the chain (ui_ux.md §12): what it is rated for, what it is set to,
-     what that Setting is costing it in stress and wear, and what it is producing. One
+<!-- One machine of the chain (ui_ux.md §12): what it is rated for, what it is producing,
+     what it is set to, and what that Setting is costing it in stress and wear. One
      component for all three — the differences are text the view model supplies.
 
      specs.md levies no output penalty for running above the rating, so there is no
@@ -13,7 +13,10 @@
     <EquipmentIcon :component="component" />
     <SectionDivider spaced />
     <ValueRow label="CAPACITY" :value="view.capacityText" />
-    <ValueRow class="machine-card__reading" label="EFFICIENCY" :value="view.efficiencyText" />
+    <!-- What the machine is doing right now sits under what it is rated for, so the two
+         are read as a pair; a tripped machine puts its repair in the same place -->
+    <ValueRow v-if="view.repairText === null" class="machine-card__reading" label="OUTPUT" :value="view.outputText" />
+    <p v-else class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
     <div class="machine-card__setting machine-card__reading">
       <span>SETTING</span>
       <NumericStepper
@@ -39,8 +42,6 @@
       <p>WEAR</p>
       <FillBar :fraction="view.wearFraction" :cells="WEAR_BAR_CELLS" />
     </div>
-    <ValueRow v-if="view.repairText === null" class="machine-card__reading" label="OUTPUT" :value="view.outputText" />
-    <p v-else class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
     <div class="machine-card__upgrades">
       <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.capacityUpgradeGainText" />

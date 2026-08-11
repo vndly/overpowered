@@ -3,10 +3,10 @@
      machine straining against a backed-up or empty store reads past its maximum,
      so the fill pegs at the right-hand end rather than running off the gauge.
 
-     The gauge carries no figure beside it, so the whole of it is named as the drawing
-     it is: read aloud, a scale and a row of blocks are noise, and role="img" gives the
-     reading they draw. Crossing SafeStress is announced by the alerts panel as well,
-     which is the same news in words (ui_ux.md §20). -->
+     The gauge carries no figure beside it and no scale above it, so the whole of it is
+     named as the drawing it is: read aloud, a row of blocks is noise, and role="img"
+     gives the reading it draws. Crossing SafeStress is announced by the alerts panel as
+     well, which is the same news in words (ui_ux.md §20). -->
 <template>
   <div
     class="stress-gauge"
@@ -15,10 +15,6 @@
     :aria-label="`${label} ${valueText}`"
   >
     <p class="stress-gauge__kind">{{ label }}</p>
-    <div class="stress-gauge__scale">
-      <span>SAFE</span>
-      <span>MAX</span>
-    </div>
     <div class="stress-gauge__bar">{{ barText }}</div>
   </div>
 </template>
@@ -61,27 +57,16 @@ const barText = computed(() => {
     line-height: var(--cell-height);
 }
 
-/* Both label and bar are the gauge's own width rather than the card's, so MAX
-   sits over the end of the scale it names */
-.stress-gauge__scale,
+/* The outlined rectangle of §14, drawn as an outline so the gauge still occupies
+   exactly one character cell. Its own GaugeCells width rather than the card's, so the
+   bar is the same size wherever it is put. The frame is the console's and the fill is
+   the reading's, so the two take different colours (assets/styles.css). */
 .stress-gauge__bar {
     width: calc(var(--cell-width) * var(--gauge-cells));
     height: var(--cell-height);
-    line-height: var(--cell-height);
-}
-
-.stress-gauge__scale {
-    display: flex;
-    justify-content: space-between;
-    color: var(--fg-dim);
-}
-
-/* The outlined rectangle of §14, drawn as an outline so the gauge still occupies
-   exactly one character cell. The frame is the console's and the fill is the
-   reading's, so the two take different colours (assets/styles.css). */
-.stress-gauge__bar {
     outline: 1px solid var(--fg-faint);
     color: var(--data);
+    line-height: var(--cell-height);
     white-space: pre;
 }
 </style>
