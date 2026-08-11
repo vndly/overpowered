@@ -10,7 +10,7 @@
     <EquipmentIcon component="battery" />
     <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
-    <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
+    <FillBar :fraction="view.fraction" :level="view.level" :cells="STORED_BAR_CELLS" />
     <ValueRow label="SPENDABLE" :value="view.spendableText" />
     <ValueRow label="RESERVED" :value="view.reservedText" />
     <SectionDivider />

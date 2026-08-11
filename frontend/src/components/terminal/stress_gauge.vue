@@ -15,12 +15,13 @@
     :aria-label="`${label} ${valueText}`"
   >
     <p class="stress-gauge__kind">{{ label }}</p>
-    <div class="stress-gauge__bar">{{ barText }}</div>
+    <div class="stress-gauge__bar" :data-level="level">{{ barText }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import {computed} from 'vue'
+import type {ReadingLevel} from '@/view/view_model'
 
 const FILLED_GLYPH = '█'
 const EMPTY_GLYPH = '░'
@@ -32,6 +33,7 @@ const props = defineProps<{
   valueText: string // The reading, already formatted with its unit; names the gauge
   fraction: number // Stress against MaxStress, 0 to 1
   safeFraction: number // SafeStress against MaxStress
+  level: ReadingLevel // Which colour to band in; the marker is what it is banded on
 }>()
 
 // The marker overwrites the cell it lands on rather than taking one of its own, so
@@ -59,13 +61,13 @@ const barText = computed(() => {
 
 /* The outlined rectangle of §14, drawn as an outline so the gauge still occupies
    exactly one character cell. Its own GaugeCells width rather than the card's, so the
-   bar is the same size wherever it is put. The frame is the console's and the fill is
-   the reading's, so the two take different colours (assets/styles.css). */
+   bar is the same size wherever it is put. The frame is the console's and stays white
+   whatever the fill is doing; the fill is the reading, so it takes the colour data-level
+   bands it in and declares none here, which would outrank assets/styles.css. */
 .stress-gauge__bar {
     width: calc(var(--cell-width) * var(--gauge-cells));
     height: var(--cell-height);
     outline: 1px solid var(--fg-faint);
-    color: var(--data);
     line-height: var(--cell-height);
     white-space: pre;
 }

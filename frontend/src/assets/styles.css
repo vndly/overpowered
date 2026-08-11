@@ -40,6 +40,12 @@
     --data: #39ff14;
     --data-dim: rgba(57, 255, 20, 0.55);
 
+    /* The middle of the three colours a bar bands through (ui_ux.md §4): CP437's own
+       bright yellow, so the three come out of the same palette as the interface font.
+       Red is --alert below rather than a second red — a bar past its threshold is the
+       same news the alerts panel is printing in words. */
+    --caution: #ffff55;
+
     /* The alerts panel, and nothing else on the screen (ui_ux.md §20). Both are the
        CP437 palette's own reds, the palette the interface font comes out of: the bright
        one for a line on black, the dark one for the inverted line an urgent alert
@@ -98,6 +104,27 @@ body {
 :focus-visible {
     outline: 2px solid var(--fg);
     outline-offset: 0;
+}
+
+/* ============================================
+   Reading levels
+   ============================================ */
+
+/* What a banded bar is drawn in (ui_ux.md §4). The view model decides the band and sets
+   it as data-level, because which end of a store hurts is a rule of the game; this is the
+   one place the three bands are given their colours, rather than the mapping being
+   repeated in every bar that draws one. A banded bar declares no colour of its own, so
+   nothing scoped is competing with these. */
+[data-level='safe'] {
+    color: var(--data);
+}
+
+[data-level='caution'] {
+    color: var(--caution);
+}
+
+[data-level='danger'] {
+    color: var(--alert);
 }
 
 /* ============================================

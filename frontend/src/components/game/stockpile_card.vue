@@ -6,7 +6,7 @@
     <EquipmentIcon component="stockpile" />
     <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
-    <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
+    <FillBar :fraction="view.fraction" :level="view.level" :cells="STORED_BAR_CELLS" />
     <ValueRow class="stockpile-card__price" label="PRICE" :value="view.priceText" />
     <div class="stockpile-card__purchase">
       <NumericStepper

@@ -24,6 +24,30 @@ const STRESS_UNITS: Record<StressKind, string> = {
   vibration: 'mm/s',
 }
 
+/**
+ * How near the threshold that punishes it a reading comes before its bar cautions, as a
+ * fraction of that bar's own scale. One margin for the whole interface, so yellow means
+ * the same distance from trouble wherever it is drawn (ui_ux.md §4).
+ */
+const CAUTION_MARGIN = 0.15
+
+const DEPLETED_THRESHOLD = 0.1 // Stockpile fill below which the chain is about to stop
+const WEAR_CAUTION = 0.25 // Wear worth watching; it is shed far slower than it is taken on
+const WEAR_DANGER = 0.5 // Wear at which a trip is close enough to be worth acting on
+
+/**
+ * Where a reading stands against whatever punishes it: nothing to do, close enough to
+ * watch, or already costing the player something. The view model decides it rather than
+ * the bar that draws it, because which end of a store hurts is a rule of the game.
+ */
+export type ReadingLevel = 'safe' | 'caution' | 'danger'
+
+const LEVEL_RANK: Record<ReadingLevel, number> = {
+  safe: 0,
+  caution: 1,
+  danger: 2,
+}
+
 /** How one machine's throughput is written; everything else it reads from the engine. */
 interface MachineSpec {
   title: string
@@ -54,6 +78,7 @@ export interface StorageViewBase {
   title: string
   storedText: string // Contents against Capacity, with its unit
   fraction: number // What the fill bar draws; the STORED row carries the exact figure
+  level: ReadingLevel // The colour that bar takes; each store is banded on its own ends
   upgradeGainText: string // Capacity the next upgrade adds, signed and with its unit
   upgradeCostText: string
   upgradeAffordable: boolean
@@ -90,8 +115,10 @@ export interface MachineView {
   stressText: string // Value with its unit; the gauge is drawn, so this names it
   stressFraction: number // Stress against MaxStress, 0 to 1
   safeFraction: number // SafeStress against MaxStress
+  stressLevel: ReadingLevel // The colour the gauge takes, banded on the SafeStress marker
   wearFraction: number
   wearPercentText: string // The wear bar is a drawing; this is the reading behind it
+  wearLevel: ReadingLevel // The colour that bar takes, banded on how near a trip is
   capacityUpgradeGainText: string // What the next upgrade adds, signed and with its unit
   capacityUpgradeCostText: string
   capacityUpgradeAffordable: boolean
@@ -155,8 +182,74 @@ function clamp(value: number, minimum: number, maximum: number): number {
 }
 
 /**
+ * @param value - The reading to band
+ * @param caution - Where it becomes worth watching
+ * @param danger - Where it starts costing the player something
+ * @returns Where a reading that is punished as it rises stands
+ */
+function bandRising(value: number, caution: number, danger: number): ReadingLevel {
+  if (value >= danger) {
+    return 'danger'
+  } else if (value >= caution) {
+    return 'caution'
+  } else {
+    return 'safe'
+  }
+}
+
+/**
+ * @param value - The reading to band
+ * @param caution - Where it becomes worth watching
+ * @param danger - Where it starts costing the player something
+ * @returns Where a reading that is punished as it falls stands
+ */
+function bandFalling(value: number, caution: number, danger: number): ReadingLevel {
+  if (value <= danger) {
+    return 'danger'
+  } else if (value <= caution) {
+    return 'caution'
+  } else {
+    return 'safe'
+  }
+}
+
+/**
+ * @param first - One of the two bands
+ * @param second - The other
+ * @returns The worse of them, for a store that is punished at both ends
+ */
+function worseLevel(first: ReadingLevel, second: ReadingLevel): ReadingLevel {
+  return LEVEL_RANK[first] >= LEVEL_RANK[second] ? first : second
+}
+
+/**
+ * The Silo is punished at one end only: above BacklogThreshold the Pulverizer grinding
+ * into it heats, while a Silo running low costs the Boiler throughput but no wear.
+ * @param silo - The store to band
+ * @returns Where its bar stands
+ */
+function siloLevel(silo: Storage): ReadingLevel {
+  return bandRising(silo.fill, BACKLOG_THRESHOLD - CAUTION_MARGIN, BACKLOG_THRESHOLD)
+}
+
+/**
+ * The Tank is punished at both ends: above BacklogThreshold the Boiler pushing into it
+ * strains, and below StarveThreshold the Turbine draining it vibrates. So its bar is green
+ * in the middle, which is the only bar on the screen that reads that way.
+ * @param tank - The store to band
+ * @returns Where its bar stands
+ */
+function tankLevel(tank: Storage): ReadingLevel {
+  return worseLevel(
+    bandRising(tank.fill, BACKLOG_THRESHOLD - CAUTION_MARGIN, BACKLOG_THRESHOLD),
+    bandFalling(tank.fill, STARVE_THRESHOLD + CAUTION_MARGIN, STARVE_THRESHOLD),
+  )
+}
+
+/**
  * @param title - The card's title
  * @param storage - The store to read
+ * @param level - Where its fill stands against the ends that punish it
  * @param unit - Unit its Contents and Capacity are quoted in
  * @param format - How a value in that unit is written
  * @param spendableEnergy - MWh available for upgrades
@@ -165,6 +258,7 @@ function clamp(value: number, minimum: number, maximum: number): number {
 function buildStorageView(
   title: string,
   storage: Storage,
+  level: ReadingLevel,
   unit: string,
   format: (value: number) => string,
   spendableEnergy: number,
@@ -175,6 +269,7 @@ function buildStorageView(
     title: title,
     storedText: `${format(storage.contents)} / ${format(storage.capacity)} ${unit}`,
     fraction: clamp(storage.fill, 0, 1),
+    level: level,
     upgradeGainText: `+${format(storage.capacityGain)} ${unit}`,
     upgradeCostText: `${formatEnergy(cost)} MWh`,
     upgradeAffordable: cost <= spendableEnergy,
@@ -184,11 +279,12 @@ function buildStorageView(
 /**
  * @param title - The card's title
  * @param storage - The buffer to read
+ * @param level - Where its fill stands against the ends that punish it
  * @param spendableEnergy - MWh available for upgrades
  * @returns The Silo or Tank card
  */
-function buildBufferView(title: string, storage: Storage, spendableEnergy: number): BufferView {
-  return buildStorageView(title, storage, 't', formatMass, spendableEnergy)
+function buildBufferView(title: string, storage: Storage, level: ReadingLevel, spendableEnergy: number): BufferView {
+  return buildStorageView(title, storage, level, 't', formatMass, spendableEnergy)
 }
 
 /**
@@ -198,9 +294,12 @@ function buildBufferView(title: string, storage: Storage, spendableEnergy: numbe
  */
 function buildStockpileView(engine: GameEngine, purchaseKilograms: number): StockpileView {
   const cost = purchaseKilograms * engine.market.pricePerKilogram
+  // The Stockpile has no strain rule, so its bar is banded on the one thing running out
+  // of coal does: it stops the Pulverizer, and with it the whole chain
+  const level = bandFalling(engine.stockpile.fill, DEPLETED_THRESHOLD + CAUTION_MARGIN, DEPLETED_THRESHOLD)
 
   return {
-    ...buildStorageView('STOCKPILE', engine.stockpile, 't', formatMass, engine.spendableEnergy),
+    ...buildStorageView('STOCKPILE', engine.stockpile, level, 't', formatMass, engine.spendableEnergy),
     priceText: `${formatPrice(engine.market.price)} MWh/t`,
     purchaseKilograms: purchaseKilograms,
     purchaseAmountText: `${formatMass(purchaseKilograms)} t`,
@@ -214,8 +313,14 @@ function buildStockpileView(engine: GameEngine, purchaseKilograms: number): Stoc
  * @returns The Battery card
  */
 function buildBatteryView(engine: GameEngine): BatteryView {
+  // Banded on MinimumReserve rather than on empty: at the floor there is nothing left to
+  // spend and the alerts panel is already saying LOW BATTERY. Taken as a fraction of
+  // Capacity so the band moves with the reserve, which is live (specs.md §Spendable energy)
+  const reserveFraction = clamp(engine.minimumReserve / engine.battery.capacity, 0, 1)
+  const level = bandFalling(engine.battery.fill, reserveFraction + CAUTION_MARGIN, reserveFraction)
+
   return {
-    ...buildStorageView('BATTERY', engine.battery, 'MWh', formatEnergy, engine.spendableEnergy),
+    ...buildStorageView('BATTERY', engine.battery, level, 'MWh', formatEnergy, engine.spendableEnergy),
     spendableText: `${formatEnergy(engine.spendableEnergy)} MWh`,
     reservedText: `${formatEnergy(engine.minimumReserve)} MWh`,
     netFlowText: `${formatPower(engine.ledger.netFlow, true)} MW`,
@@ -232,6 +337,9 @@ function buildBatteryView(engine: GameEngine): BatteryView {
 function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, spendableEnergy: number): MachineView {
   const capacityCost = machine.capacityUpgrade.cost
   const efficiencyCost = machine.efficiencyUpgrade.cost
+  const stress = machine.stress(strain)
+  const stressFraction = clamp(stress / machine.maxStress, 0, 1)
+  const safeFraction = clamp(machine.safeStress / machine.maxStress, 0, 1)
 
   return {
     title: spec.title,
@@ -241,11 +349,14 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
     settingText: formatSetting(machine.setting),
     settingSteps: machine.settingSteps,
     stressLabel: STRESS_LABELS[machine.stressKind],
-    stressText: `${formatStress(machine.stress(strain))} ${STRESS_UNITS[machine.stressKind]}`,
-    stressFraction: clamp(machine.stress(strain) / machine.maxStress, 0, 1),
-    safeFraction: clamp(machine.safeStress / machine.maxStress, 0, 1),
+    stressText: `${formatStress(stress)} ${STRESS_UNITS[machine.stressKind]}`,
+    stressFraction: stressFraction,
+    safeFraction: safeFraction,
+    // The marker is the threshold, so the gauge reddens exactly where wear starts
+    stressLevel: bandRising(stressFraction, safeFraction - CAUTION_MARGIN, safeFraction),
     wearFraction: clamp(machine.wear, 0, 1),
     wearPercentText: formatPercent(machine.wear),
+    wearLevel: bandRising(machine.wear, WEAR_CAUTION, WEAR_DANGER),
     capacityUpgradeGainText: `+${spec.format(machine.capacityGain)} ${spec.unit}`,
     capacityUpgradeCostText: `${formatEnergy(capacityCost)} MWh`,
     capacityUpgradeAffordable: capacityCost <= spendableEnergy,
@@ -373,8 +484,8 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
     peakStoredText: `${formatEnergy(engine.ledger.peakContents)} MWh`,
     bestResultText: bestResult === null ? null : `${formatEnergy(bestResult)} MWh`,
     stockpile: buildStockpileView(engine, purchaseKilograms),
-    silo: buildBufferView('SILO', engine.silo, engine.spendableEnergy),
-    tank: buildBufferView('TANK', engine.tank, engine.spendableEnergy),
+    silo: buildBufferView('SILO', engine.silo, siloLevel(engine.silo), engine.spendableEnergy),
+    tank: buildBufferView('TANK', engine.tank, tankLevel(engine.tank), engine.spendableEnergy),
     battery: buildBatteryView(engine),
     pulverizer: buildMachineView(PULVERIZER_SPEC, engine.pulverizer, engine.pulverizerStrain, engine.spendableEnergy),
     boiler: buildMachineView(BOILER_SPEC, engine.boiler, engine.boilerStrain, engine.spendableEnergy),

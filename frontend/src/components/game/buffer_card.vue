@@ -5,7 +5,7 @@
     <EquipmentIcon :component="component" />
     <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
-    <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
+    <FillBar :fraction="view.fraction" :level="view.level" :cells="STORED_BAR_CELLS" />
     <div class="buffer-card__upgrades">
       <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />

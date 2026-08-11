@@ -222,18 +222,35 @@ What shipped: the same two-value monochrome, with the two values split by role r
 }
 ```
 
-This is still one accent on black for everything the plant runs on, and the split is the one an instrument panel makes between its printed legend and its lit readout — so the rules below hold unchanged: no color-coded state, no heat map, and warnings still carry rank by inversion, blinking, symbols and words. The alerts panel is the one thing outside the two values, and it is set out below. Where any other section of this document names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which of the two anything takes.
+The console stays one accent on black, and the split is the one an instrument panel makes between its printed legend and its lit readout. Where any other section of this document names green for something the list above does not cover — a border, an arrow, a grid line, an icon — read it as the console color. This section is the authority on which color anything takes.
 
-Yellow is reserved for a later pass on values and indicators, and is not in the interface yet. Red is in, in one place: the alerts panel writes every alert in it ([§20](#20-alerts-panel)). Nothing else on the screen may take it, so red on this interface means one thing — the plant is interrupting.
+## Banded bars
+
+The bars are the exception, and the only one. Every bar drawn on a card is banded: it is green while there is nothing to do, yellow as it comes up on the threshold that punishes it, and red past it. Nothing else on the screen bands — a value, a label, a border, a button and an arrow all keep the colors above however badly the plant is running.
 
 ```css
 :root {
-  --alert: #ff5555;                       /* an alert on the console's black */
-  --alert-inverted: #aa0000;              /* the same words on an inverted line */
+  --data: #39ff14;                        /* safe    — the readout's own green */
+  --caution: #ffff55;                     /* caution — CP437's bright yellow */
+  --alert: #ff5555;                       /* danger  — the alerts panel's red */
 }
 ```
 
-Both are the CP437 palette's own reds, the palette the interface font comes out of, and there are two because an urgent alert blinks between black and white and one red cannot stay legible on both.
+This overrides the recommendation above, which asked for no color-coded state and no heat map, and it spends the yellow that section held back. What it does not spend is the meaning of red: four of the six bars go red on a threshold the alerts panel announces in the same breath — `SILO FULL`, `TANK LOW`, `TANK FULL`, `LOW BATTERY`, `HIGH TEMPERATURE`, `HIGH PRESSURE`, `HIGH VIBRATION` — so a red bar and a red alert line are the same news in two forms rather than two different reds. The Stockpile and the wear bars are the two that redden ahead of their alert rather than with it, because by the time `STOCKPILE EMPTY` prints or a machine trips, the decision that caused it was taken some seconds ago. There is no heat map — a bar takes one color across its whole width, never a gradient, and there are three bands rather than a ramp.
+
+Which end of a bar is punished is a rule of the game, not a property of the bar, so each one is banded on its own thresholds and the view model decides ([§10](#10-storage-cards), [§12](#12-machine-cards), [§14](#14-stress-gauge)). Green means the same thing on all six: this is fine. `CautionMargin` is 0.15 of full scale, and five of the six bars take it, so yellow means the same distance from trouble on all five. The wear bar is the one exception and bands earlier, for the reason [§12](#12-machine-cards) gives.
+
+Color is never the only carrier. Every banded bar has its figure written out beside it or behind it as an `aria-label`, and every threshold a band marks is announced in words by the alerts panel ([§28](#28-accessibility)).
+
+The alerts panel keeps a second red, because an urgent alert blinks between black and white and one red cannot stay legible on both:
+
+```css
+:root {
+  --alert-inverted: #aa0000;              /* an alert's words on an inverted line */
+}
+```
+
+Both reds are the CP437 palette's own, the palette the interface font comes out of, and `--caution` is its bright yellow. The three bands are one palette, not three picked colors.
 
 Warnings should preferably use:
 
@@ -244,6 +261,8 @@ Warnings should preferably use:
 - labels such as WARNING or LOW
 
 instead of red/yellow.
+
+What shipped: all of these, and they still carry the rank. An urgent alert inverts and blinks, a tripped machine inverts its whole card, and every threshold a bar bands on is also named in words. The bands are added on top of that and carry nothing by themselves.
 
 ---
 
@@ -514,6 +533,21 @@ The fill bar is 20 characters wide, so one character is 5% of `Capacity`, and it
 
 What shipped: the card's full 28 characters on all four stores, so one character is 1/28 of `Capacity`. A bar that stops short of the card it is drawn in reads as a bar that is not full, and four stores drawn to two different widths read as two different scales. Nothing on a bar has to land on an exact character any more, now that the strain marks are gone (see [Strain markers](#strain-markers)).
 
+Each of the four is banded ([§4](#4-color-system)) on the end that costs the player something, which is not the same end on all four:
+
+| Store | Green | Yellow | Red | Why |
+|---|---|---|---|---|
+| `STOCKPILE` | above 0.25 | 0.25 down to 0.10 | at or below 0.10 | Running out stops the Pulverizer, and with it the chain |
+| `SILO` | below 0.55 | 0.55 up to 0.70 | at or above `BacklogThreshold` | A backed-up Silo heats the Pulverizer grinding into it |
+| `TANK` | 0.45 to 0.55 | either approach | at or beyond `StarveThreshold` / `BacklogThreshold` | Full strains the Boiler, empty vibrates the Turbine |
+| `BATTERY` | more than 0.15 above the reserve | within 0.15 of it | at or below the reserve | At the floor there is nothing left to spend, and the run cannot restart |
+
+The Battery's three figures are fills, not MWh: `MinimumReserve` is taken as a fraction of `Capacity` and the bands sit against that, so a bar drawn 1/28 to the character bands on what it is drawing.
+
+The Tank is the one bar on the screen that is green in the middle, because it is the one store with a threshold at each end. The Battery's band moves with `MinimumReserve`, which is live — a player who raises the reserve watches the red band come up with it.
+
+A full `STOCKPILE`, `SILO` or `TANK` is not a win condition and a full `BATTERY` is, so none of them is banded on how full it is. They are banded on how close they are to costing something.
+
 ## Strain markers
 
 The Silo and Tank fill bars carry tick marks for the points at which a neighbouring machine begins to wear:
@@ -642,6 +676,7 @@ What changed from the layout above it, and nothing else moves:
 - `CLEAN TO` goes with it. The gauge's `SAFE` marker is that ceiling drawn instead of written: the fill left of the marker accrues no wear, and the marker holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear.
 - The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).
 - The note beneath the bar is dropped with it. It read `TRIPS IN {n}S` while wear was growing, `CLEARS IN {n}S` while it was shedding, `CLEAN` at zero and `HOLDING` at neither: a countdown that changed its wording four ways under a bar that was already moving. What it answered — how long can this Setting be held — is what the bar and its rate of travel show.
+- Both bars are banded ([§4](#4-color-system)). The wear bar is green below 0.25, yellow to 0.50 and red above it — earlier than the two thresholds either side of it would suggest, because wear is shed far slower than it is taken on. The Pulverizer sheds at 0.008/s what it can take on at 0.1/s, so a bar that only reddened near the trip would be warning the player after the decision was already made.
 
 A tripped machine replaces its `OUTPUT` row with `REPAIR {n}S`, inverted, inside a card whose border fills in to a solid green frame. State is never signalled by brightness alone (§28), and a trip is the loudest thing that happens to a machine, so it is the one place a card inverts.
 
@@ -730,6 +765,8 @@ Do not use:
 
 The most important requirement is immediate readability.
 
+What shipped: none of the four, but the gauge is banded ([§4](#4-color-system)) and the marker is what it is banded on. The fill is green up to `CautionMargin` short of the `SAFE` marker, yellow over that last stretch, and red from the marker rightward — where `Stress` is above `SafeStress` and the machine is taking wear. This is three flat bands and one color across the whole fill, not a ramp: the gauge still reads as a bar rather than as a heat map, and the marker still says where the line is for a player who cannot separate the colors. The outline stays the console's white whatever the fill is doing, because the frame is not a reading.
+
 ---
 
 # 15. Battery Card
@@ -798,6 +835,10 @@ Avoid:
 - animated gradients
 - glossy fills
 - bouncing transitions
+
+What shipped: CP437 blocks, `█` for a full cell, `▓` for a half and `░` for an empty one, and none of the four above. A bar carries no gradient and no animation; what moves is the fill, and what changes with it is the one color the whole bar is drawn in ([§4](#4-color-system)).
+
+Six bars are banded — the four store bars, the wear bar on each machine card, and the stress gauge. The run header's progress bar is not: it measures how far the run has come rather than how close something is to going wrong, and there is no reading of it that means trouble. It stays green from empty to won.
 
 ---
 

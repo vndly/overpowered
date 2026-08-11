@@ -34,13 +34,14 @@
       :value-text="view.stressText"
       :fraction="view.stressFraction"
       :safe-fraction="view.safeFraction"
+      :level="view.stressLevel"
     />
     <!-- The bar is the whole reading now that no percentage stands beside it, so the
          pair is named as the drawing it is: read aloud, WEAR and a row of blocks say
          nothing, and role="img" puts the figure back (ui_ux.md §28) -->
     <div class="machine-card__wear machine-card__reading" role="img" :aria-label="`WEAR ${view.wearPercentText}%`">
       <p>WEAR</p>
-      <FillBar :fraction="view.wearFraction" :cells="WEAR_BAR_CELLS" />
+      <FillBar :fraction="view.wearFraction" :level="view.wearLevel" :cells="WEAR_BAR_CELLS" />
     </div>
     <div class="machine-card__upgrades">
       <SectionLabel label="UPGRADES" />
