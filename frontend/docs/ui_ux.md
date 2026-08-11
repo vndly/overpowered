@@ -21,7 +21,7 @@ What the mockup gets right and should be followed:
 - the overall composition — header, one-row production chain, four-panel lower dashboard
 - the seven cards in one row with arrows between them — though they now all take the same width, rather than the mockup's narrower storage cards (see [General Layout](#5-general-layout))
 - the internal card order: title, icon, divider, values, controls, divider, upgrades
-- the inline `[-] value [+]` stepper, the outlined buttons, the horizontal stress gauge — though the gauge's `SAFE` and `MAX` labels are dropped, and only its marker survives (see [§14](#14-stress-gauge))
+- the inline `[-] value [+]` stepper, the outlined buttons, the horizontal stress gauge — though the gauge's `SAFE` and `MAX` labels are dropped, and so is its marker: the colour band carries `SAFE` now (see [§14](#14-stress-gauge))
 - the primitive instrumentation look of the net-flow graph
 - black background, thin borders, and a palette held to the minimum — though the mockup's single green is now split by [Color System](#4-color-system)
 
@@ -673,7 +673,7 @@ What changed from the layout above it, and nothing else moves:
 - `OUTPUT` sits under `CAPACITY` rather than at the foot of the card: what the machine is doing is read against what it is rated for, and the pair above the `SETTING` is what the player steps the `SETTING` to change.
 - The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets, and what it buys was never on this card: `specs.md` makes Efficiency divide what a machine *consumes* at a given `SETTING`, not what it produces, so `OUTPUT` — `Capacity × Setting` — does not move when one is bought. Where the gain does show is off the card, and it differs by machine: the Pulverizer's and the Boiler's electricity draw reach the dashboard's `CONSUMPTION` and `NET FLOW`, the Boiler's powder draw shows as a Silo that empties slower, and the Turbine's steam draw as a Tank that does — the Turbine draws no electricity at all, so none of its Efficiency reaches the dashboard. On the card only the figure beside the upgrade moves, which is the cost of dropping the row.
 - The card carries two bars and no numbers off them. The `STRESS` row under the gauge is dropped — the gauge already draws where the machine is running between `SafeStress` and `MaxStress`, and a figure beside it is the same fact twice, in a unit the player never sets anything in.
-- `CLEAN TO` goes with it. The gauge's `SAFE` marker is that ceiling drawn instead of written: the fill left of the marker accrues no wear, and the marker holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear.
+- `CLEAN TO` goes with it. The gauge is that ceiling drawn instead of written: green fill accrues no wear, and the point the colour turns holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear. (This read off the gauge's `SAFE` marker until the gauge was banded and the marker dropped — see [§14](#14-stress-gauge).)
 - The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).
 - The note beneath the bar is dropped with it. It read `TRIPS IN {n}S` while wear was growing, `CLEARS IN {n}S` while it was shedding, `CLEAN` at zero and `HOLDING` at neither: a countdown that changed its wording four ways under a bar that was already moving. What it answered — how long can this Setting be held — is what the bar and its rate of travel show.
 - Both bars are banded ([§4](#4-color-system)). The wear bar is the one bar with no threshold to sit a margin off — it runs from clean to tripped and every point on it is worse than the last — so it is split in equal thirds instead: green below 1/3, yellow to 2/3, red above. Red still arrives well before the trip, which matters because wear is shed far slower than it is taken on: the Pulverizer sheds at 0.008/s what it can take on at 0.1/s, so a bar that only reddened at the trip would be reporting the decision rather than warning of it.
@@ -682,7 +682,7 @@ A tripped machine replaces its `OUTPUT` row with `REPAIR {n}S`, inverted, inside
 
 `CLEAN TO` is the highest `SETTING` that accrues no wear right now. It is not a constant — it falls as the store beside the machine moves toward its strain threshold, so it can come down to meet a `SETTING` the player never touched. Render it as a live value and let it move.
 
-It shipped that way and was then dropped, as above. The rule it named is still on the card: a machine wears whenever its fill is right of the gauge's `SAFE` marker, and a strained store pushes the fill right without the `SETTING` moving. The player reads the ceiling off the gauge and finds it by stepping, rather than being quoted a number to two decimals.
+It shipped that way and was then dropped, as above. The rule it named is still on the card: a machine wears whenever its gauge is red, and a strained store turns the gauge red without the `SETTING` moving. The player reads the ceiling off the gauge and finds it by stepping, rather than being quoted a number to two decimals.
 
 Use the component-specific stress names:
 
@@ -734,9 +734,13 @@ SAFE                      MAX
 
 The gauge is 20 characters wide, so one character is 5% of `MaxStress`, and the `SAFE` marker overwrites the character it lands on rather than taking one of its own — a gauge that shifted by a character as the fill passed its marker would be unreadable.
 
-What shipped: 28 characters, the card's full width, so one character is 1/28 of `MaxStress`. The gauge carries no marks that have to land on exact characters, and it is the reading now that the `STRESS` row beneath it is gone ([§12](#12-machine-cards)) — so it is drawn at the size of a reading. The marker still overwrites its character, and the fill still pegs at the right-hand end.
+What shipped: 28 characters, the card's full width, so one character is 1/28 of `MaxStress`. The gauge carries no marks that have to land on exact characters, and it is the reading now that the `STRESS` row beneath it is gone ([§12](#12-machine-cards)) — so it is drawn at the size of a reading. The fill still pegs at the right-hand end.
 
-The `SAFE` and `MAX` labels above the bar are dropped with it. A bar filling left to right has its ends where every other bar in the interface has them, and the marker is the only thing on the gauge that has to be found — naming the two ends spent a line of the card on what the drawing already says. The marker keeps its meaning from the alerts panel, which says the same news in words when the fill crosses it ([§20](#20-alerts-panel)).
+The `SAFE` and `MAX` labels above the bar are dropped. A bar filling left to right has its ends where every other bar in the interface has them, and naming the two ends spent a line of the card on what the drawing already says.
+
+The `SAFE` marker went with them once the gauge was banded. The band turns red at exactly the character the marker stood on, so the two were drawing the same line twice — and the colour draws it better: the marker said *there is a line here*, while the colour says *which side of it you are on*, which is the question the player is actually asking. A gauge with both read as a bar with a scratch in it. So the gauge is now an unbroken run of blocks that changes colour where the machine starts taking wear, and it is the one bar in the interface where the band replaced a mark rather than being added to a plain one.
+
+What that costs is a fixed reference: the marker held still while the fill moved under strain, and a player could watch the gap close. The colour turns at the same point but shows no distance to it — the yellow band is what is left of that warning, and it opens `CautionMargin` short of the line. The wording is still exact in the alerts panel, which prints `HIGH TEMPERATURE`, `HIGH PRESSURE` or `HIGH VIBRATION` the moment the fill crosses ([§20](#20-alerts-panel)), so the crossing is never carried by colour alone.
 
 The gauge should communicate:
 
@@ -745,6 +749,8 @@ The gauge should communicate:
 - maximum region
 
 The `SAFE` marker is fixed but the fill is not bounded by `MAX`: a machine straining against a backed-up or empty store can read past its maximum. Peg the fill at the right-hand end rather than letting it overflow the gauge.
+
+The pegging shipped and the marker did not, as above; the band carries `SAFE` instead.
 
 Recommended visual construction:
 
@@ -765,7 +771,7 @@ Do not use:
 
 The most important requirement is immediate readability.
 
-What shipped: none of the four, but the gauge is banded ([§4](#4-color-system)) and the marker is what it is banded on. The fill is green up to `CautionMargin` short of the `SAFE` marker, yellow over that last stretch, and red from the marker rightward — where `Stress` is above `SafeStress` and the machine is taking wear. This is three flat bands and one color across the whole fill, not a ramp: the gauge still reads as a bar rather than as a heat map, and the marker still says where the line is for a player who cannot separate the colors. The outline stays the console's white whatever the fill is doing, because the frame is not a reading.
+What shipped: none of the four, but the gauge is banded ([§4](#4-color-system)) on `SafeStress`. The fill is green up to `CautionMargin` short of it, yellow over that last stretch, and red from it rightward — where `Stress` is above `SafeStress` and the machine is taking wear. This is three flat bands and one color across the whole fill, not a ramp: the gauge reads as a bar rather than as a heat map. The outline stays the console's white whatever the fill is doing, because the frame is not a reading.
 
 ---
 

@@ -33,7 +33,6 @@
       :label="view.stressLabel"
       :value-text="view.stressText"
       :fraction="view.stressFraction"
-      :safe-fraction="view.safeFraction"
       :level="view.stressLevel"
     />
     <!-- The bar is the whole reading now that no percentage stands beside it, so the

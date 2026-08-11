@@ -118,8 +118,7 @@ export interface MachineView {
   stressLabel: string // TEMPERATURE | PRESSURE | VIBRATION
   stressText: string // Value with its unit; the gauge is drawn, so this names it
   stressFraction: number // Stress against MaxStress, 0 to 1
-  safeFraction: number // SafeStress against MaxStress
-  stressLevel: ReadingLevel // The colour the gauge takes, banded on the SafeStress marker
+  stressLevel: ReadingLevel // The colour the gauge takes; it turns at SafeStress
   wearFraction: number
   wearPercentText: string // The wear bar is a drawing; this is the reading behind it
   wearLevel: ReadingLevel // The colour that bar takes, banded on how near a trip is
@@ -355,8 +354,8 @@ function buildMachineView(spec: MachineSpec, machine: Machine, strain: number, s
     stressLabel: STRESS_LABELS[machine.stressKind],
     stressText: `${formatStress(stress)} ${STRESS_UNITS[machine.stressKind]}`,
     stressFraction: stressFraction,
-    safeFraction: safeFraction,
-    // The marker is the threshold, so the gauge reddens exactly where wear starts
+    // Nothing is drawn at SafeStress any more, so the colour is what says where it is:
+    // the gauge turns red exactly where the machine starts taking wear
     stressLevel: bandRising(stressFraction, safeFraction - CAUTION_MARGIN, safeFraction),
     wearFraction: clamp(machine.wear, 0, 1),
     wearPercentText: formatPercent(machine.wear),
