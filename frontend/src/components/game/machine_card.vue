@@ -11,7 +11,7 @@
     :class="{'machine-card--tripped': view.repairText !== null}"
   >
     <EquipmentIcon :component="component" />
-    <SectionDivider />
+    <SectionDivider spaced />
     <ValueRow label="CAPACITY" :value="view.capacityText" />
     <ValueRow class="machine-card__reading" label="EFFICIENCY" :value="view.efficiencyText" />
     <div class="machine-card__setting machine-card__reading">
@@ -50,7 +50,7 @@
         :disabled="!view.capacityUpgradeAffordable"
         @press="emit('upgradeCapacity')"
       />
-      <ValueRow label="EFFICIENCY" :value="view.efficiencyUpgradeGainText" />
+      <ValueRow class="machine-card__upgrade-break" label="EFFICIENCY" :value="view.efficiencyUpgradeGainText" />
       <TerminalButton
         :label="view.efficiencyUpgradeCostText"
         :aria-label="`UPGRADE EFFICIENCY: ${view.efficiencyUpgradeCostText}`"
@@ -107,9 +107,11 @@ const emit = defineEmits<{
     height: calc(var(--cell-height) * 2);
 }
 
-/* Twelve cells holds both buttons, their gaps and the Setting between them */
+/* Fifteen cells: four for each square button, two for each of the two gaps around the
+   Setting, and three for the Setting itself, which is always a digit, a point and a
+   digit */
 .machine-card__stepper {
-    width: calc(var(--cell-width) * 12);
+    width: calc(var(--cell-width) * 15);
 }
 
 /* The label on its own line above the bar, so the bar spans the card like the
@@ -140,8 +142,20 @@ const emit = defineEmits<{
    the chain however tall a card's readings make it (ui_ux.md §25). A blank line
    opens it rather than a rule (ui_ux.md §8) */
 .machine-card__upgrades {
+    display: flex;
     flex: none;
+    flex-direction: column;
+    /* A price is read off the row above it, so each button stands a little off its
+       label rather than butting straight against it */
+    gap: var(--space-1);
     margin-top: auto;
     padding-top: var(--cell-height);
+}
+
+/* A machine buys two different things down here, so the second upgrade opens on a
+   blank line: run together, the four rows read as one list of prices rather than as
+   two things to choose between. The section's own gap makes up part of the line. */
+.machine-card__upgrade-break {
+    margin-top: calc(var(--cell-height) - var(--space-1));
 }
 </style>

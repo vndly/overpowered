@@ -2,6 +2,7 @@
 <template>
   <button
     class="terminal-button"
+    :class="{'terminal-button--square': square}"
     type="button"
     :style="{width: buttonWidth}"
     :aria-disabled="disabled"
@@ -17,9 +18,11 @@ import {computed} from 'vue'
 const props = withDefaults(defineProps<{
   label: string
   disabled?: boolean
+  square?: boolean // As wide as it is tall, for a one-glyph label; overrides widthCells
   widthCells?: number // Label width in character cells; 0 fills the container
 }>(), {
   disabled: false,
+  square: false,
   widthCells: 0,
 })
 
@@ -28,6 +31,10 @@ const emit = defineEmits<{
 }>()
 
 const buttonWidth = computed(() => {
+  if (props.square) {
+    return undefined // Left to the aspect ratio, which takes it from the height
+  }
+
   if (props.widthCells <= 0) {
     return '100%'
   }
@@ -70,6 +77,13 @@ function onClick(event: MouseEvent): void {
     cursor: pointer;
     /* Mechanical, not animated (ui_ux.md §22) */
     transition: background-color 60ms linear, color 60ms linear;
+}
+
+/* A square key, taken from the height rather than measured out in character cells: the
+   two-cell height is what every button in the interface already shares, so a stepper's
+   [-] and [+] come out as squares of it however the padding around a label is set. */
+.terminal-button--square {
+    aspect-ratio: 1;
 }
 
 .terminal-button:not([aria-disabled='true']):hover {

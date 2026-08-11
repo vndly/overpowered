@@ -8,7 +8,7 @@
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
     <EquipmentIcon component="battery" />
-    <SectionDivider />
+    <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
     <FillBar :fraction="view.fraction" :cells="STORED_BAR_CELLS" />
     <ValueRow label="SPENDABLE" :value="view.spendableText" />
@@ -55,7 +55,12 @@ const emit = defineEmits<{
    the chain however tall a card's readings make it (ui_ux.md §25). A blank line
    opens it rather than a rule (ui_ux.md §8) */
 .battery-card__upgrades {
+    display: flex;
     flex: none;
+    flex-direction: column;
+    /* A price is read off the row above it, so each button stands a little off its
+       label rather than butting straight against it */
+    gap: var(--space-1);
     margin-top: auto;
     padding-top: var(--cell-height);
 }

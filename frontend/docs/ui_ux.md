@@ -388,6 +388,8 @@ or
 dashed green line
 ```
 
+The rule closing the head of a card — the one under the equipment drawing — carries a blank line beneath it, so the first reading is not read as sitting on the rule. It is the only rule that does, and it is set once in `components/terminal/section_divider.vue` rather than per card: the seven cards stand side by side, and their heads have to come to the same height or their readings stop lining up across the chain (§25).
+
 The upgrade section at the foot of a card is the exception: a blank line opens it, not a rule of its own. Its title carries the rule instead — centred on its line with a hairline running out to either edge, drawn by `components/terminal/section_label.vue`. It comes to two character cells: the title's own line, with half a cell of air above and below so the break reads as a break rather than as one more row. The title is turned down a step so it reads as quieter than the readings above it. A separate rule as well would crowd a card this compact.
 
 Inside that section each upgrade is a value row naming what it buys, and a button carrying only the price:
@@ -397,6 +399,8 @@ Inside that section each upgrade is a value row naming what it buys, and a butto
 CAPACITY     +0.50 t
 [    0.02 MWh      ]
 ```
+
+A quarter-cell of air stands between every row of the section, so a price is read off the label above it rather than butting straight against it. Where a card offers two upgrades, the second opens on a blank line: run together, the four rows read as one list of prices rather than as two things to choose between.
 
 The gain is right-aligned into the same numeric column as every other reading on the card, and neither figure is a constant — a capacity upgrade multiplies capacity, so its gain grows with each level bought, and an efficiency upgrade closes a share of the remaining gap, so its gain shrinks. Both are read live from the view model. Name and gain will not fit beside the price on a storage card, which is why the price stands alone.
 
@@ -666,8 +670,8 @@ SETTING      [-] 0.80 [+]
 
 UX requirements:
 
-- minus and plus controls must be obvious
-- value remains visible at all times
+- minus and plus controls must be obvious, and are square: a one-glyph label is given the button's own height as its width, so the two keys read as a pair of keys rather than as two narrow buttons
+- value remains visible at all times, with two character cells of air on either side of it so the figure stands clear of the two keys moving it
 - controls should respond immediately
 - button press may briefly invert colors
 - optionally support click-and-hold

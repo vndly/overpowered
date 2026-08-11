@@ -7,7 +7,7 @@
     <TerminalButton
       label="-"
       :aria-label="`DECREASE ${label}`"
-      :width-cells="1"
+      square
       :disabled="disabledDown"
       @press="onPress(-1, $event)"
       @pointerdown="onPointerDown(-1, $event)"
@@ -20,7 +20,7 @@
     <TerminalButton
       label="+"
       :aria-label="`INCREASE ${label}`"
-      :width-cells="1"
+      square
       :disabled="disabledUp"
       @press="onPress(1, $event)"
       @pointerdown="onPointerDown(1, $event)"
@@ -153,11 +153,14 @@ onUnmounted(stopRepeat)
 </script>
 
 <style scoped>
+/* Two character cells of air on either side of the value, so the figure the player is
+   moving stands clear of the two keys moving it rather than reading as one word with
+   them (ui_ux.md §13) */
 .numeric-stepper {
     display: flex;
     flex: none;
     align-items: center;
-    gap: var(--space-1);
+    gap: calc(var(--cell-width) * 2);
     height: calc(var(--cell-height) * 2);
 }
 
