@@ -32,8 +32,12 @@ const STRESS_UNITS: Record<StressKind, string> = {
 const CAUTION_MARGIN = 0.15
 
 const DEPLETED_THRESHOLD = 0.1 // Stockpile fill below which the chain is about to stop
-const WEAR_CAUTION = 0.25 // Wear worth watching; it is shed far slower than it is taken on
-const WEAR_DANGER = 0.5 // Wear at which a trip is close enough to be worth acting on
+
+// Wear has no threshold to sit a margin off — it runs from clean to tripped — so its bar
+// is split in equal thirds rather than banded on one, and the bar reads as what fraction
+// of a trip has been used up
+const WEAR_CAUTION = 1 / 3
+const WEAR_DANGER = 2 / 3
 
 /**
  * Where a reading stands against whatever punishes it: nothing to do, close enough to
