@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "atomic-prototype"
+    "default": "atomic-prototype",
+    "local": "atomic-prototype",
+    "remote": "atomic-prototype"
   }
 }
