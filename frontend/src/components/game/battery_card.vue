@@ -1,20 +1,16 @@
-<!-- The Battery, the store the run is scored on (ui_ux.md §15). It reads out more than
-     the other stores because it answers two questions the others do not: how much of
-     what is stored can actually be spent, and which way the plant is running right now.
+<!-- The Battery, the store the run is scored on (ui_ux.md §15). It reads STORED and its
+     bar and nothing else: SPENDABLE, RESERVED and NET FLOW are dropped, so the card
+     carries the same readings as the Silo and the Tank.
 
-     RESERVED is live. It grows once a restart would cost more than the flat fraction of
-     Capacity, so a player who raises the Settings can watch the floor come up to meet
-     them (specs.md §Spendable energy). It is never drawn as a constant. -->
+     What still sets it apart is not what it prints but where its bar turns colour. The
+     band sits on MinimumReserve rather than on empty (view_model.ts), because at the
+     floor there is nothing left to spend. -->
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
     <EquipmentIcon component="battery" />
     <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
     <FillBar :fraction="view.fraction" :level="view.level" :cells="STORED_BAR_CELLS" />
-    <ValueRow label="SPENDABLE" :value="view.spendableText" />
-    <ValueRow label="RESERVED" :value="view.reservedText" />
-    <SectionDivider />
-    <ValueRow label="NET FLOW" :value="view.netFlowText" />
     <div class="battery-card__upgrades">
       <SectionLabel label="UPGRADES" />
       <ValueRow label="CAPACITY" :value="view.upgradeGainText" />

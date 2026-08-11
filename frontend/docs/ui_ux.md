@@ -810,6 +810,15 @@ The upgrade section follows [§8](#8-card-style) like every other card: a blank 
 
 Do not introduce a separate accent color.
 
+What shipped: `STORED`, its bar, and the upgrade section. The three readings under the bar are dropped, and with them the rule that separated the last of them:
+
+- `NET FLOW` was the same figure twice. The lower dashboard's Power Summary ([§18](#18-power-summary)) already reads it off the same ledger, with `AVERAGE` and `PEAK` beside it and a minute of it drawn in the Net Flow Graph ([§19](#19-net-flow-graph)) — four places to read the plant's direction, of which the card was the least informative.
+- `SPENDABLE` and `RESERVED` go with it. They split `STORED` into two figures, and `STORED` is on the card above them; where the reserve shows now is in the bar, which bands ([§4](#4-color-system)) on `MinimumReserve` rather than on empty, and in the alerts panel, which says `LOW BATTERY` at the same point.
+
+The cost is that `MinimumReserve` is no longer written anywhere. A player can see that the floor is close, and watch it come up under a raised `SETTING`, but cannot read what it is — see [§21](#21-buttons) for what that takes out of a disabled button's explanation.
+
+This leaves the Battery reading exactly what the Silo and the Tank read, against the emphasis this section asks for. The emphasis it keeps is positional: the Battery ends the chain, and the header states its contents against `TargetEnergy` ([§6](#6-header)).
+
 ---
 
 # 16. Progress Bars
@@ -1005,7 +1014,9 @@ dim green text
 black background
 ```
 
-The disabled border keeps its solid stroke and only dims. This is a deliberate exception to §28, which forbids a state told apart by brightness alone. A dashed border was used here first; the judgment against it is that a chain of cards whose buttons break into dashes as costs rise reads as a damaged frame rather than as controls out of reach. The exception is narrow: a button is disabled because its cost is above `SpendableEnergy`, which the Battery card states outright, so the state is legible from the numbers as well as from the dimming.
+The disabled border keeps its solid stroke and only dims. This is a deliberate exception to §28, which forbids a state told apart by brightness alone. A dashed border was used here first; the judgment against it is that a chain of cards whose buttons break into dashes as costs rise reads as a damaged frame rather than as controls out of reach.
+
+The exception rested on the numbers backing up the dimming: a button is disabled because its cost is above `SpendableEnergy`, which the Battery card used to state outright. It no longer does ([§15](#15-battery-card)), so what a player can now check the price against is the Battery's `STORED` and the colour of its bar — enough to see that a purchase is out of reach near the floor, not enough to work out the margin exactly. The dimming carries more of the state than it did. Every disabled button still keeps its label and its price, and the accessible name is unaffected, so the state is stated in the accessibility tree even where it is only dimmed on screen.
 
 A disabled button keeps its label and its place in the tab order. It carries `aria-disabled="true"` rather than the `disabled` attribute, so a player can reach it and read the price they cannot yet pay instead of finding a dimmed mystery.
 

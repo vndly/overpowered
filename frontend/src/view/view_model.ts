@@ -100,12 +100,8 @@ export interface StockpileView extends StorageViewBase {
 /** The Silo and the Tank, which read out no more than any other store. */
 export type BufferView = StorageViewBase
 
-/** The Battery, which also answers what of its contents can be spent. */
-export interface BatteryView extends StorageViewBase {
-  spendableText: string
-  reservedText: string
-  netFlowText: string
-}
+/** The Battery, which reads out no more than any other store; only its band differs. */
+export type BatteryView = StorageViewBase
 
 /** One machine card. The three differ only in the text this carries. */
 export interface MachineView {
@@ -322,12 +318,7 @@ function buildBatteryView(engine: GameEngine): BatteryView {
   const reserveFraction = clamp(engine.minimumReserve / engine.battery.capacity, 0, 1)
   const level = bandFalling(engine.battery.fill, reserveFraction + CAUTION_MARGIN, reserveFraction)
 
-  return {
-    ...buildStorageView('BATTERY', engine.battery, level, 'MWh', formatEnergy, engine.spendableEnergy),
-    spendableText: `${formatEnergy(engine.spendableEnergy)} MWh`,
-    reservedText: `${formatEnergy(engine.minimumReserve)} MWh`,
-    netFlowText: `${formatPower(engine.ledger.netFlow, true)} MW`,
-  }
+  return buildStorageView('BATTERY', engine.battery, level, 'MWh', formatEnergy, engine.spendableEnergy)
 }
 
 /**
