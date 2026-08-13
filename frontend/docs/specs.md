@@ -6,7 +6,7 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 | Type     | Parameter    | Unit | Description                          | Value |
 | -------- | ------------ | ---- | ------------------------------------ | ----: |
-| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |   190 |
+| Constant | TargetEnergy | MWh  | Stored energy that wins the run      |   210 |
 | Constant | TimeLimit    | s    | Time available to reach TargetEnergy |   600 |
 
 - The win is checked against `Battery Contents` — energy that has been generated and then spent is not banked. Reaching the target requires a Battery `Capacity` of at least `TargetEnergy`.
@@ -16,15 +16,15 @@ A game is a single timed run. The player wins by raising the Battery's stored en
 
 `TargetEnergy` is set to roughly 80% of the peak achievable under strong play with these parameters, and must be re-measured whenever the economy is retuned.
 
-The current value was measured with [`simulator/`](../simulator/), which implements this document. The coal price is a function of run time alone, so a greedy reinvestment policy has exactly one run in it and there is no distribution to take: the best **converging** policy of 5,184 swept reaches a **peak of 239 MWh**, and 190 is 80% of that. Candidate targets as shares of that peak, which is what `measure.py` prints:
+The current value was measured with [`simulator/`](../simulator/), which implements this document. The coal price is a function of run time alone, so a greedy reinvestment policy has exactly one run in it and there is no distribution to take: the best **converging** policy of 5,184 swept reaches a **peak of 263 MWh**, and 210 is 80% of that. Candidate targets as shares of that peak, which is what `measure.py` prints:
 
-| TargetEnergy      | 120 | 145 | 165 | 180 | 190 | 215 | 240 |
+| TargetEnergy      | 130 | 160 | 185 | 195 | 210 | 235 | 265 |
 | ----------------- | --: | --: | --: | --: | --: | --: | --: |
 | Share of the peak | 50% | 60% | 70% | 75% | 80% | 90% | 100% |
 
 **This number has a wider error bar than any before it, and the reason is structural.** Two caveats attach to it, and the second is the serious one.
 
-The first is the usual one: the policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 239 and the target errs towards the generous.
+The first is the usual one: the policy measured is a strong heuristic rather than proven-optimal play, so the true peak sits at or above 263 and the target errs towards the generous.
 
 The second is that most policies do not converge. Because no single purchase raises the chain's rate — only a whole round does, see [The round](#the-round) — income moves in steps, and every purchase shifts the ratios the next one is judged on. A marginal upgrade landing one second earlier compounds for the rest of the run. Measured across `DeltaTimeSeconds` of 0.2, 0.1 and 0.05, most swept policies move their peak by more than 100%, and the highest-scoring ones move it most: they are the ones running their stores closest to empty, which is exactly where a discrete step stops resolving the chain. `measure.py` therefore discards any policy whose peak moves by more than 10% and walks down its shortlist to the best one that holds still. 284 is that policy; the discarded ones reached several times it.
 
@@ -177,8 +177,10 @@ This is the fact the whole cost structure is built on, and it is the reason `Cos
 
 | Capacity / Flow CostGrowth | 1.30 / 1.70 | 1.32 / 1.73 | 1.38 / 1.82 | **1.40 / 1.85** | 1.42 / 1.88 | 1.44 / 1.92 |
 | -------------------------- | ----------: | ----------: | ----------: | --------------: | ----------: | ----------: |
-| Best converging peak (MWh) |        none |        none |        none |         **239** |         162 |          88 |
+| Best converging peak (MWh) |        none |        none |        none |         **263** |         162 |          88 |
 | What the strongest policies do | run away | run away | run away | converge | converge | converge |
+
+Only the 1.40 column has been re-swept since coal purchases became immediate; the others established where the cliff is and have not been re-run. What is claimed here is the shape, not the four losing figures.
 
 **1.40 is the cheapest price at which the strongest policies stop running away**, and therefore the largest measurable game this economy has. Below it the top policies reach tens of thousands of MWh while their peaks swing by 100% to 200% with the simulation step: a number, but not a measurement. Above it the run simply gets smaller.
 
@@ -241,9 +243,10 @@ Against a rising coal price the three machine tracks do different jobs, and the 
 - **Efficiency buys survival.** It adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds as the price climbs — see [The coal market](#the-coal-market).
 - **Tolerance buys permission to be unbalanced.** It is the only answer to a wearing machine, because there is no throttle to back off with. What it costs is Efficiency, so a plant that survives every drift is a plant that earns less per tonne.
 
-  **Tolerance is currently a trap, and this is unresolved.** `measure.py` runs the winning policy against a copy of itself that never buys the track, and the copy does *better* — 802 MWh against 284. Efficiency compounds into every tonne bought for the rest of the run; the wear Tolerance prevents costs a repair and some downtime. At the current `TolerancePenalty` of 0.08 the second is nowhere near worth the first, so the correct play is to eat the trips.
+  **Tolerance earns its place, but only just, and only since two other rules changed.** `measure.py` runs the winning policy against a copy of itself that never buys the track. Under an earlier build — coal metered into the Stockpile over time, and a Pulverizer that was throttled by the Stockpile's `Flow` without straining from it — the copy did *better*, 802 MWh against 284: Efficiency compounds into every tonne for the rest of the run, while the wear Tolerance prevents costs one repair. The correct play was to eat the trips, which left the only answer to a wearing machine as the worst purchase in the game.
 
-  That is a real defect in the economy, not a measurement artefact, and it undoes the reason the track exists: it was added because with no throttle a wearing machine has no other answer. Either the penalty has to come off Efficiency and onto something that does not compound, or a trip has to cost enough that avoiding it pays. Both are design changes and neither is made here.
+  Making purchases immediate and making the Stockpile's `Flow` strain the machine it starves flipped it. The same comparison now reads **174 MWh against 263 — a 34% penalty for never buying it**. That is a real margin rather than a comfortable one, and it is worth re-running after any economy change: this track has been on the wrong side of zero before.
+
 - **Store Capacity buys time.** More seconds of mismatch before a strain threshold is crossed, and more room to bank material deliberately.
 - **Store Flow buys rate.** It is the only store track that raises what the plant delivers, and under contention it has to be bought twice over.
 

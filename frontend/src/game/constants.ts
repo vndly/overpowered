@@ -5,7 +5,7 @@
  */
 
 // Objective — specs.md §Objective
-export const TARGET_ENERGY = 190 // MWh of stored energy that wins the run
+export const TARGET_ENERGY = 210 // MWh of stored energy that wins the run
 export const TIME_LIMIT = 600 // Seconds available to reach it
 
 // Simulation — specs.md §Simulation step. The spec never fixes DeltaTimeSeconds; 0.05 is

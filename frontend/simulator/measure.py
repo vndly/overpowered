@@ -43,8 +43,8 @@ SHORTLIST = 40
 
 # best policies from the last full sweep; --quick starts here instead of re-sweeping.
 KNOWN_BEST = [
-    dict(headroom=0.85, buffer=15.0, flow_edge=1.00, eff_bias=0.5,
-         batt_at=0.85, wear_at=0.35, t_stop=500.0),
+    dict(headroom=0.95, buffer=10.0, flow_edge=1.00, eff_bias=0.5,
+         batt_at=0.70, wear_at=0.20, t_stop=380.0),
 ]
 
 DT = 0.1
