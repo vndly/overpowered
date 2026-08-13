@@ -231,7 +231,7 @@ export class GameEngine {
     // before any storage moves. Each machine takes the worse of the store's fill and the
     // share of its request a flow cap took away.
     this.strains = {
-      pulverizer: this.strainOf(this.backlogPressure(this.silo), 1 - siloFlow),
+      pulverizer: this.strainOf(this.backlogPressure(this.silo), Math.max(1 - supplyFlow, 1 - siloFlow)),
       boiler: this.strainOf(this.backlogPressure(this.tank), Math.max(1 - siloFlow, 1 - tankFlow)),
       turbine: this.strainOf(this.starvePressure(this.tank), Math.max(1 - tankFlow, 1 - batteryFlow)),
     }

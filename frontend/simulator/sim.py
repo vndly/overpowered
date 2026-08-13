@@ -457,7 +457,9 @@ def run(pol, dt=0.2):
             return 1.0 if rate <= 0 else min(1.0, s.contents[key] / (rate * dt))
 
         rat = {
-            'P': 0.0 if tripped['P'] else min(er, held('stock', r['raw']), f_silo),
+            'P': 0.0 if tripped['P'] else min(er, held('stock', r['raw']),
+                                              1.0 if r['raw'] <= 0 else min(1.0, s.store_flow('stock') / r['raw']),
+                                              f_silo),
             'B': 0.0 if tripped['B'] else min(er, held('silo', r['fuel']), f_silo, f_tank),
             'T': 0.0 if tripped['T'] else min(held('tank', r['tsteam']), f_tank, f_batt),
         }
@@ -465,7 +467,10 @@ def run(pol, dt=0.2):
         # Strain: the worse of the store's fill and the share of its request a flow cap
         # took away. Read before the storage writes below, like every other step input.
         press = wear_pressure(s)
-        unmet = {'P': 1 - f_silo, 'B': max(1 - f_silo, 1 - f_tank), 'T': max(1 - f_tank, 1 - f_batt)}
+        f_stock = 1.0 if r['raw'] <= 0 else min(1.0, s.store_flow('stock') / r['raw'])
+        unmet = {'P': max(1 - f_stock, 1 - f_silo),
+                 'B': max(1 - f_silo, 1 - f_tank),
+                 'T': max(1 - f_tank, 1 - f_batt)}
         strain = {k: STRAIN_GAIN * max(press[k], unmet[k]) for k in MACHINE_KEYS}
 
         made_mwh = r['power'] * rat['T'] * dt / 3600.0

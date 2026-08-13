@@ -587,7 +587,7 @@ function alertRules(engine: GameEngine): AlertRule[] {
       raised: flow.battery < 1,
     },
     {
-      text: 'DELIVERY LIMIT',
+      text: 'STOCKPILE FLOW LIMIT',
       urgent: false,
       raised: flow.stockpile < 1,
     },

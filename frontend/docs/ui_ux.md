@@ -1058,11 +1058,13 @@ HIGH VIBRATION
 Four more fire on a store's `Flow` rather than on its fill:
 
 ```text
+STOCKPILE FLOW LIMIT
 SILO FLOW LIMIT
 TANK FLOW LIMIT
 CHARGE LIMIT
-DELIVERY LIMIT
 ```
+
+One per capped store, each naming the store rather than the machine, because the store is what the player buys to fix it. `CHARGE LIMIT` is the Battery's, named for the one direction it caps.
 
 These are what a single stress gauge cannot say. A machine held back by a store's `Flow` reads exactly like one grinding into a full store — both are the machine out of step with the chain, and `Strain` takes the worse of the two ([`specs.md` §Buffers and strain](specs.md#buffers-and-strain)) — but the answers differ: buy `FLOW`, or buy the stage that is out of step. The panel is where that distinction is carried, in words, because adding a second gauge to say it would put two bars on a card to report one problem.
 
