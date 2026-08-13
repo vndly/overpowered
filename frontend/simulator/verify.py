@@ -1,13 +1,18 @@
 """Checks that the simulator is sound before any number from it is believed.
 
   1. Opening state -- the values the simulator starts from must match ../docs/specs.md.
-  2. Clean ceilings -- slack and fully strained, against the figures the spec quotes.
-  3. Max stress at MaxSetting -- what folding the old control constants had to preserve.
-  4. Energy balance -- everything generated must end up banked, drawn by a machine,
+  2. The opening imbalance -- the Pulverizer runs a third ahead of the Boiler's draw on
+     purpose, and the Boiler is matched to the Turbine. That is the run's first problem
+     and the shape of it is asserted, not left to drift with a capacity edit.
+  3. Flow headroom -- every store's Flow must carry what passes through it at the opening,
+     and the Silo and Tank must carry it twice over, because they contend.
+  4. Wear onset -- the store fill at which each machine starts to take wear, against the
+     figures the spec quotes.
+  5. Energy balance -- everything generated must end up banked, drawn by a machine,
      spent on coal, or spent on an upgrade. A non-zero residual means the model is
      inventing or losing energy somewhere.
-  5. Step-size convergence -- results must not depend on DeltaTimeSeconds.
-  6. Restart floor -- MinimumReserve must never sit below what a restart costs.
+  6. Step-size convergence -- results must not depend on DeltaTimeSeconds.
+  7. Restart floor -- MinimumReserve must never sit below what a restart costs.
 
     python3 verify.py
 """
@@ -15,47 +20,50 @@ import statistics as st
 
 import sim
 
-POL = dict(ride=1.75, backoff='all', slack=2.00, t_stop=440.0,
-           wear_hi=0.85, wear_lo=0.15, buffer=3.0)
+# The policy the checks are driven by has to keep real buffers and real flow headroom.
+# It is not chosen to score well: it is chosen because a plant run with its stores close
+# to empty is one where `contents / (rate x dt)` becomes the binding term every step, and
+# a run in that regime reports the size of the step rather than the state of the game.
+POL = dict(headroom=0.85, buffer=15.0, flow_edge=1.30, eff_bias=2.0,
+           batt_at=0.70, wear_at=0.20, t_stop=500.0)
 
-def stress(m, strain):
-    return m['base'] + m['rng'] * sim.START_SETTING * (1 + strain)
+s0 = sim.State()
+r0 = s0.rates()
 
-
-# opening values as printed in ../docs/specs.md, at the starting Setting of 0.6.
-# Every store starts empty, so the Pulverizer and Boiler open with no backlog while the
-# Turbine opens at full Starve -- which is why its Vibration begins well above SafeVibration.
+# opening values as printed in ../docs/specs.md. Every machine runs at its Capacity, and
+# the Tank opens at StarveThreshold, so no machine opens under any strain at all.
 SPEC_OPENING = {
-    'Pulverizer Output':    (lambda s: sim.START_SETTING * s.capP, 4.80),
-    'Pulverizer raw draw':  (lambda s: sim.START_SETTING * s.capP / sim.PULV_YIELD, 5.05),
-    'Pulverizer power':     (lambda s: sim.START_SETTING * s.capP * sim.P['cons'] / s.effP, 0.69),
-    'Boiler Output':        (lambda s: sim.START_SETTING * s.capB, 30.00),
-    'Boiler fuel draw':     (lambda s: sim.START_SETTING * s.capB / (sim.STEAM_YIELD * s.effB), 4.29),
-    'Boiler power':         (lambda s: sim.START_SETTING * s.capB * sim.B['cons'] / s.effB, 4.29),
-    'Turbine Output':       (lambda s: sim.START_SETTING * s.capT, 30.00),
-    'Turbine steam draw':   (lambda s: sim.START_SETTING * s.capT * sim.T['cons'] / s.effT, 26.57),
-    'Pulverizer Strain':    (lambda s: s.strains()[0], 0.0),
-    'Boiler Strain':        (lambda s: s.strains()[1], 0.0),
-    'Turbine Strain':       (lambda s: s.strains()[2], 1.25),
-    'Temperature':          (lambda s: stress(sim.P, s.strains()[0]), 66.0),
-    'Pressure':             (lambda s: stress(sim.B, s.strains()[1]), 84.8),
-    'Vibration':            (lambda s: stress(sim.T, s.strains()[2]), 9.1),
-    'MinimumReserve':       (lambda s: s.capBatt * sim.RESERVE_FRACTION, 1.0),
+    'Pulverizer Output':    (r0['powder'], 4.00),
+    'Pulverizer raw draw':  (r0['raw'], 4.21),
+    'Pulverizer power':     (r0['elec_p'], 0.57),
+    'Boiler Output':        (r0['steam'], 21.00),
+    'Boiler fuel draw':     (r0['fuel'], 3.00),
+    'Boiler power':         (r0['elec_b'], 3.00),
+    'Turbine Output':       (r0['power'], 23.70),
+    'Turbine steam draw':   (r0['tsteam'], 20.99),
+    'Pulverizer Strain':    (sim.wear_pressure(s0)['P'] * sim.STRAIN_GAIN, 0.0),
+    'Boiler Strain':        (sim.wear_pressure(s0)['B'] * sim.STRAIN_GAIN, 0.0),
+    'Turbine Strain':       (sim.wear_pressure(s0)['T'] * sim.STRAIN_GAIN, 0.0),
+    'Temperature':          (sim.P['nom'], 70.0),
+    'Pressure':             (sim.B['nom'], 100.0),
+    'Vibration':            (sim.T['nom'], 5.0),
+    'NetFlow':              (r0['power'] - r0['elec_p'] - r0['elec_b'], 20.13),
+    'MinimumReserve':       (s0.store_cap('batt') * sim.RESERVE_FRACTION, 1.0),
 }
 
-# The clean ceilings quoted throughout the spec, slack store and fully strained.
-SPEC_CEILINGS = {
-    'Pulverizer ceiling':   (0, 0.667, 0.296),
-    'Boiler ceiling':       (1, 0.694, 0.309),
-    'Turbine ceiling':      (2, 0.833, 0.370),
+# Stress at full strain, which is what a saturated store does to the machine beside it.
+# The Pulverizer reads past its own maximum and the gauge simply pegs there.
+SPEC_FULL_STRAIN = {
+    'Pulverizer at full strain': (sim.P['nom'] * (1 + sim.STRAIN_GAIN), 157.5),
+    'Boiler at full strain':     (sim.B['nom'] * (1 + sim.STRAIN_GAIN), 225.0),
+    'Turbine at full strain':    (sim.T['nom'] * (1 + sim.STRAIN_GAIN), 11.25),
 }
 
-# Each machine must still reach exactly MaxStress at MaxSetting with a slack store, which
-# is what folding the old starting control into the range constant was chosen to preserve.
-SPEC_MAX_STRESS = {
-    'Pulverizer at MaxSetting': (sim.P, 150.0),
-    'Boiler at MaxSetting':     (sim.B, 236.0),
-    'Turbine at MaxSetting':    (sim.T, 13.0),
+# The store fill at which each machine's stress reaches SafeStress and wear begins.
+SPEC_ONSET = {
+    'Pulverizer wears above Silo': ('P', 'backlog', 0.751),
+    'Boiler wears above Tank':     ('B', 'backlog', 0.748),
+    'Turbine wears below Tank':    ('T', 'starve', 0.228),
 }
 
 failures = []
@@ -63,61 +71,86 @@ failures = []
 
 def check(name, got, want, tol):
     ok = abs(got - want) <= tol
-    print(f'  {"ok  " if ok else "FAIL"} {name:27} got {got:10.4f}  spec {want}')
+    print(f'  {"ok  " if ok else "FAIL"} {name:29} got {got:11.4f}  spec {want}')
     if not ok:
         failures.append(name)
 
 
 print('OPENING STATE vs ../docs/specs.md')
-s0 = sim.State()
-for name, (fn, want) in SPEC_OPENING.items():
-    check(name, fn(s0), want, max(0.005, abs(want) * 0.002))
+for name, (got, want) in SPEC_OPENING.items():
+    check(name, got, want, max(0.005, abs(want) * 0.002))
 
-print('\nCLEAN CEILINGS vs ../docs/specs.md')
+print('\nTHE OPENING IMBALANCE (surplus as a share of the stage below)')
+# The Pulverizer overproduces by design: the Silo gains a kilogram a second and backs up
+# about seventy seconds in, which is the run's first decision. The Boiler is matched to
+# the Turbine, so there is exactly one problem on screen rather than three.
+check('Pulverizer over Boiler draw', r0['powder'] / r0['fuel'] - 1, 1 / 3, 0.005)
+check('Boiler vs Turbine draw', r0['steam'] / r0['tsteam'] - 1, 0.0, 0.001)
+check('seconds to Silo backlog',
+      sim.BACKLOG_THRESHOLD * sim.STORE['silo']['cap'] / (r0['powder'] - r0['fuel']), 70.0, 1.0)
 
+print('\nFLOW HEADROOM AT THE OPENING (multiple of what passes through)')
+for key, demand, floor in (('stock', r0['raw'], 1.0),
+                           ('silo', r0['powder'] + r0['fuel'], 1.0),
+                           ('tank', r0['steam'] + r0['tsteam'], 1.0),
+                           ('batt', r0['power'], 1.0)):
+    ratio = s0.store_flow(key) / demand
+    ok = ratio >= floor
+    print(f'  {"ok  " if ok else "FAIL"} {key:29} carries {ratio:8.3f}x its opening rate')
+    if not ok:
+        failures.append(key + ' flow')
 
-def at(silo_fill, tank_fill):
-    s = sim.State()
-    s.silo, s.tank = s.capSilo * silo_fill, s.capTank * tank_fill
-    return s
+print('\nWEAR ONSET vs ../docs/specs.md (store fill where stress reaches SafeStress)')
+for name, (key, kind, want) in SPEC_ONSET.items():
+    limits = {'P': sim.P, 'B': sim.B, 'T': sim.T}[key]
+    pressure = (s0.safe[key] / limits['nom'] - 1) / sim.STRAIN_GAIN
+    fill = (sim.BACKLOG_THRESHOLD + pressure * (1 - sim.BACKLOG_THRESHOLD) if kind == 'backlog'
+            else sim.STARVE_THRESHOLD * (1 - pressure))
+    check(name, fill, want, 0.002)
 
-
-# No single state strains all three: the Boiler needs a full Tank and the Turbine an empty
-# one, so each machine is put at full strain in a state of its own.
-slack = at(0.5, 0.5)
-full_strain = {0: at(1.0, 0.5), 1: at(0.5, 1.0), 2: at(0.5, 0.0)}
-for name, (i, want_slack, want_strained) in SPEC_CEILINGS.items():
-    check(name + ' slack', slack.ceilings()[i], want_slack, 0.002)
-    check(name + ' strained', full_strain[i].ceilings()[i], want_strained, 0.002)
-
-print('\nMAX STRESS AT MaxSetting (slack store)')
-for name, (m, want) in SPEC_MAX_STRESS.items():
-    check(name, m['base'] + m['rng'] * sim.MAX_SETTING, want, 0.05)
+print('\nSTRESS AT FULL STRAIN')
+for name, (got, want) in SPEC_FULL_STRAIN.items():
+    check(name, got, want, max(0.005, abs(want) * 0.002))
 
 print('\nENERGY BALANCE')
 s = sim.run(POL, 0.1)
 lhs = sim.STARTING_CHARGE + s.generated
-rhs = s.batt + s.machine_use + s.coal_cost + s.spent
+rhs = s.contents['batt'] + s.machine_use + s.coal_cost + s.spent
 print(f'  in  : start {sim.STARTING_CHARGE:.2f} + stored {s.generated:.2f} = {lhs:.2f} MWh')
-print(f'  out : final {s.batt:.2f} + machines {s.machine_use:.2f} + coal {s.coal_cost:.2f}'
-      f' + upgrades {s.spent:.2f} = {rhs:.2f} MWh')
+print(f'  out : final {s.contents["batt"]:.2f} + machines {s.machine_use:.2f} + coal '
+      f'{s.coal_cost:.2f} + upgrades {s.spent:.2f} = {rhs:.2f} MWh')
 check('residual', lhs - rhs, 0.0, 1e-6)
 print(f'  (discarded by a full Battery: {s.clipped:.2f} MWh)')
 
-print('\nSTEP-SIZE CONVERGENCE')
-# A run is sensitive to dt because purchases are discrete: a marginal upgrade can fire
-# one second earlier and compound. Nothing averages that out now that a policy has one
-# run in it, so the peak is held to a looser bound than the build, which is the
-# structural check -- the same plant reached by a slightly different path.
+print('\nSTEP-SIZE CONVERGENCE (a plant that is never upgraded)')
+# This is the engine's property, and it is the only one this file can assert. A plant
+# held at one configuration must produce the same energy however finely the run is
+# stepped: the throughput of the chain is a rate, not an artefact of the discretisation.
+#
+# A run that *buys* is a different matter and is deliberately not asserted here. With no
+# throttle, no single purchase raises the chain's rate -- only a whole round does -- so
+# income moves in steps and every purchase shifts the ratios the next one is judged on.
+# A marginal upgrade landing one second earlier compounds for the rest of the run, and
+# nothing averages that out now a policy has one run in it. The spread below is what that
+# costs, and it is why measure.py discards any policy whose peak moves with the step.
+static = sim.purchase
+sim.purchase = lambda s, pol: None
+flat = {dt: sim.run(POL, dt) for dt in (0.4, 0.2, 0.1, 0.05)}
+sim.purchase = static
+for dt, r in flat.items():
+    print(f'  dt={dt:<5} generated {r.generated:9.3f}   coal {r.coal_cost:8.3f}')
+
+banked = [flat[dt].generated for dt in (0.2, 0.1, 0.05)]
+check('generated spread, dt<=0.2', (max(banked) - min(banked)) / st.mean(banked), 0.0, 1e-4)
+
+print('\nPURCHASE-TIMING SENSITIVITY (reported, not asserted)')
 runs = {dt: sim.run(POL, dt) for dt in (0.4, 0.2, 0.1, 0.05)}
 for dt, r in runs.items():
-    print(f'  dt={dt:<5} peak {r.peak:7.2f}   upgrade levels {sum(r.levels.values()):6.0f}')
+    print(f'  dt={dt:<5} peak {r.peak:9.2f}   upgrade levels {sum(r.levels.values()):6.0f}')
 
 fine = [0.2, 0.1, 0.05]     # dt=0.4 is too coarse to use and is reported for contrast
 peaks = [runs[dt].peak for dt in fine]
-check('peak spread, dt<=0.2', (max(peaks) - min(peaks)) / st.mean(peaks), 0.0, 0.06)
-lvls = [sum(runs[dt].levels.values()) for dt in fine]
-check('build spread, dt<=0.2', (max(lvls) - min(lvls)) / st.mean(lvls), 0.0, 0.02)
+print(f'  peak spread over dt<=0.2: {(max(peaks) - min(peaks)) / st.mean(peaks):.1%}')
 
 print('\nRESTART FLOOR (MinimumReserve must never sit below a restart)')
 r = sim.run(POL, 0.1)

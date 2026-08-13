@@ -6,6 +6,10 @@ re-measured whenever the economy is retuned. Strong play is approximated here by
 greedy reinvestment policy whose knobs are swept; the peak it reaches is a lower
 bound on true optimal play, so a target derived from it errs towards the generous.
 
+Machines have no throttle. Every machine runs at its Capacity, so a run is decided
+entirely by what is bought and when: the only lever on stress is how far out of step
+the chain is, and the only answer to a wearing machine is a purchase.
+
 Every constant below is taken from the spec. When the spec changes, change them here
 and re-run `measure.py`.
 """
@@ -13,45 +17,100 @@ import copy
 import itertools
 
 TIME_LIMIT = 600.0
-MAX_SETTING = 2.0
 
-# cap: base Capacity | base/rng/safe/mx: the stress curve | cons: BaseConsumption
-# wg/wr: WearGrowth, WearRecovery | rep: RepairSeconds
-P = dict(cap=8.0,  base=30.0, rng=60.0,  safe=70.0, mx=150.0, cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
-B = dict(cap=50.0, base=20.0, rng=108.0, safe=95.0, mx=236.0, cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
-T = dict(cap=50.0, base=1.0,  rng=6.0,   safe=6.0,  mx=13.0,  cons=0.62, wg=0.067, wr=0.020, rep=20.0)
+# cap: base Capacity | nom: stress running clean | safe/safe_hi/safe_lo: the Tolerance
+# band | mx: MaxStress | cons: BaseConsumption | wg/wr: WearGrowth, WearRecovery
+# | rep: RepairSeconds
+P = dict(cap=4.00,  nom=70.0,  safe=85.0,  safe_hi=140.0, safe_lo=45.0, mx=150.0,
+         cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
+B = dict(cap=21.00, nom=100.0, safe=120.0, safe_hi=220.0, safe_lo=70.0, mx=236.0,
+         cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
+T = dict(cap=23.70, nom=5.0,   safe=6.5,   safe_hi=12.0,  safe_lo=3.5,  mx=13.0,
+         cons=0.62, wg=0.067, wr=0.020, rep=20.0)
 
 PULV_YIELD, STEAM_YIELD = 0.95, 10.0
-MAX_EFF, UPGRADE_GAIN, CAPACITY_GROWTH = 0.95, 0.25, 1.5
+MAX_EFF, MIN_EFF, UPGRADE_GAIN, TOLERANCE_GAIN = 0.95, 0.40, 0.25, 0.25
+CAPACITY_GROWTH, FLOW_GROWTH = 1.5, 2.25
 RESERVE_FRACTION, STARTUP_SECONDS, RESTART_MULTIPLE, STARTING_CHARGE = 0.10, 30.0, 2.0, 4.0
 START_PRICE, PRICE_GROWTH = 1.0, 1.06
-START_SETTING, START_EFFICIENCY = 0.6, 0.70
+START_EFFICIENCY = 0.70
 
-# Strain: a machine out of step with the chain runs hotter than its Setting alone implies.
+# The penalty legs. Each purchase closes this share of the gap between the stat it
+# penalises and that stat's floor, so no track can ever drive a stat to nothing:
+#   machine   Capacity -> SafeStress -> Efficiency -> CapacityFactor -> ...
+#   storage   Capacity <-> FlowFactor
+CAP_ON_SAFE, TOL_ON_EFF, EFF_ON_CAP = 0.10, 0.08, 0.06
+STORE_CAP_ON_FLOW, STORE_FLOW_ON_CAP = 0.10, 0.10
+CAP_FACTOR_FLOOR, FLOW_FACTOR_FLOOR = 0.55, 0.55
+
+# Strain: a machine out of step with the chain runs hotter than running clean implies.
 # The Pulverizer and Boiler push into the store below them and strain when it backs up; the
-# Turbine draws from the store above it and strains when that runs dry. See "Buffers and
-# strain" in ../docs/specs.md.
+# Turbine draws from the store above it and strains when that runs dry. A machine held
+# below its request by a store's flow cap strains by the share of the request it lost.
+# See "Buffers and strain" in ../docs/specs.md.
 STRAIN_GAIN, BACKLOG_THRESHOLD, STARVE_THRESHOLD = 1.25, 0.70, 0.30
+
+# Storage: base Capacity and base Flow. Material stores are kg and kg/s; the Battery is
+# MWh and MW. The Silo and Tank contend -- in + out must fit inside one Flow -- while the
+# Stockpile caps only the draw out to the Pulverizer and the Battery only the charge in.
+# A coal purchase lands whole and at once, so nothing rate-limits what enters a Stockpile.
+# The Silo is deliberately small and deliberately tight. The chain does not open matched:
+# the Pulverizer makes 4.00 kg/s of powder against a 3.00 kg/s draw, so the Silo gains a
+# kilogram a second and crosses BacklogThreshold about seventy seconds in. Its Flow carries
+# the opening rate with 7% to spare, so the first Pulverizer capacity upgrade breaks it.
+STORE = {
+    'stock': dict(cap=500.0,  flow=12.0),
+    'silo':  dict(cap=100.0,  flow=7.5),
+    'tank':  dict(cap=1500.0, flow=48.0),
+    'batt':  dict(cap=10.0,   flow=28.0),
+}
+# The Tank opens half full. Everything downstream of an empty Tank is a Turbine at full
+# strain with no throttle to answer it, which is a run lost before the player has touched
+# anything; opening exactly on STARVE_THRESHOLD leaves it on the line its own bar bands on.
+TANK_START_FILL = 0.5
+
+
+def gap_up(value, ceiling, share):
+    """Close `share` of the distance to a ceiling. Approaches it, never reaches it."""
+    return value + (ceiling - value) * share
+
+
+def gap_down(value, floor, share):
+    """Close `share` of the distance to a floor. Approaches it, never reaches it."""
+    return value - (value - floor) * share
 
 
 def backlog(contents, capacity):
-    """Strain multiplier for a machine pushing into `contents` of `capacity`."""
+    """Pressure on a machine pushing into `contents` of `capacity`, 0 to 1."""
     fill = 0.0 if capacity <= 0 else contents / capacity
-    return STRAIN_GAIN * max(0.0, min(1.0, (fill - BACKLOG_THRESHOLD) / (1 - BACKLOG_THRESHOLD)))
+    return max(0.0, min(1.0, (fill - BACKLOG_THRESHOLD) / (1 - BACKLOG_THRESHOLD)))
 
 
 def starve(contents, capacity):
-    """Strain multiplier for a machine drawing from `contents` of `capacity`."""
+    """Pressure on a machine drawing from `contents` of `capacity`, 0 to 1."""
     fill = 0.0 if capacity <= 0 else contents / capacity
-    return STRAIN_GAIN * max(0.0, min(1.0, (STARVE_THRESHOLD - fill) / STARVE_THRESHOLD))
+    return max(0.0, min(1.0, (STARVE_THRESHOLD - fill) / STARVE_THRESHOLD))
 
 
 # upgrade track -> (BaseCost, CostGrowth)
+#
+# Every track is priced far more gently than it was when a throttle existed. Raising the
+# chain's rate by one step now takes a level on each of seven stages rather than a single
+# purchase, so a growth rate that was a brake on one upgrade is a wall in front of a round
+# of them: at the old 1.70 the second round is already unaffordable and the plant sits at
+# its opening capacity, drifting out of balance, for the rest of the run.
 COST = {
-    'capP': (0.02, 1.70), 'capB': (0.02, 1.70), 'capT': (0.02, 1.70),
-    'stock': (0.02, 1.55), 'silo': (0.02, 1.55), 'tank': (0.02, 1.55), 'batt': (0.02, 1.55),
+    'capP': (0.02, 1.40), 'capB': (0.02, 1.40), 'capT': (0.02, 1.40),
     'effP': (0.05, 1.30), 'effB': (0.05, 1.30), 'effT': (0.05, 1.30),
+    'tolP': (0.04, 1.35), 'tolB': (0.04, 1.35), 'tolT': (0.04, 1.35),
+    'capStock': (0.02, 1.40), 'capSilo': (0.02, 1.40),
+    'capTank': (0.02, 1.40), 'capBatt': (0.02, 1.40),
+    'flowStock': (0.02, 1.85), 'flowSilo': (0.02, 1.85),
+    'flowTank': (0.02, 1.85), 'flowBatt': (0.02, 1.85),
 }
+
+MACHINE_KEYS = ('P', 'B', 'T')
+STORE_KEYS = ('stock', 'silo', 'tank', 'batt')
 
 
 class State:
@@ -59,227 +118,311 @@ class State:
 
     def __init__(self):
         self.t = 0.0
-        self.capP, self.capB, self.capT = P['cap'], B['cap'], T['cap']
-        self.capStock, self.capSilo, self.capTank, self.capBatt = 1000.0, 500.0, 3000.0, 10.0
-        self.effP = self.effB = self.effT = START_EFFICIENCY
-        self.stock = self.silo = self.tank = 0.0
-        self.batt = STARTING_CHARGE
-        self.wear = {'P': 0.0, 'B': 0.0, 'T': 0.0}
-        self.repair = {'P': 0.0, 'B': 0.0, 'T': 0.0}
+        # machines: geometric capacity times a factor the Efficiency track erodes
+        self.cap_lvl = {k: 0 for k in MACHINE_KEYS}
+        self.cap_factor = {k: 1.0 for k in MACHINE_KEYS}
+        self.eff = {k: START_EFFICIENCY for k in MACHINE_KEYS}
+        self.safe = {'P': P['safe'], 'B': B['safe'], 'T': T['safe']}
+        # storage: the same shape, one factor each way
+        self.store_cap_lvl = {k: 0 for k in STORE_KEYS}
+        self.store_flow_lvl = {k: 0 for k in STORE_KEYS}
+        self.store_cap_factor = {k: 1.0 for k in STORE_KEYS}
+        self.store_flow_factor = {k: 1.0 for k in STORE_KEYS}
+
+        self.contents = {'stock': 0.0, 'silo': 0.0,
+                         'tank': STORE['tank']['cap'] * TANK_START_FILL,
+                         'batt': STARTING_CHARGE}
+        self.wear = {k: 0.0 for k in MACHINE_KEYS}
+        self.repair = {k: 0.0 for k in MACHINE_KEYS}
         self.levels = {k: 0 for k in COST}
-        self.last_elec, self.last_raw = (0.0, 0.0), 0.0
+        self.last_elec, self.last_raw = 0.0, 0.0
         # outcome and energy accounting, so a run can be audited for conservation
         self.peak = STARTING_CHARGE
-        self.trips = {'P': 0, 'B': 0, 'T': 0}
+        self.trips = {k: 0 for k in MACHINE_KEYS}
         self.spent = self.coal_cost = self.generated = self.machine_use = self.clipped = 0.0
         self.stalled = False
+
+    # --- derived component values -------------------------------------------
+
+    def cap(self, key):
+        base = {'P': P, 'B': B, 'T': T}[key]['cap']
+        return base * CAPACITY_GROWTH ** self.cap_lvl[key] * self.cap_factor[key]
+
+    def store_cap(self, key):
+        return (STORE[key]['cap'] * CAPACITY_GROWTH ** self.store_cap_lvl[key]
+                * self.store_cap_factor[key])
+
+    def store_flow(self, key):
+        return (STORE[key]['flow'] * FLOW_GROWTH ** self.store_flow_lvl[key]
+                * self.store_flow_factor[key])
+
+    def fill(self, key):
+        capacity = self.store_cap(key)
+        return 0.0 if capacity <= 0 else self.contents[key] / capacity
+
+    # --- requested rates, all from start-of-step state ----------------------
+
+    def rates(self):
+        """Every rate the chain requests when nothing is throttling it."""
+        powder = self.cap('P')
+        raw = powder / PULV_YIELD
+        steam = self.cap('B')
+        fuel = steam / (STEAM_YIELD * self.eff['B'])
+        power = self.cap('T')
+        tsteam = power * T['cons'] / self.eff['T']
+        elec_p = powder * P['cons'] / self.eff['P']
+        elec_b = steam * B['cons'] / self.eff['B']
+        return dict(raw=raw, powder=powder, fuel=fuel, steam=steam,
+                    tsteam=tsteam, power=power, elec_p=elec_p, elec_b=elec_b)
 
     def price(self):
         return START_PRICE * PRICE_GROWTH ** (self.t / 60.0)
 
     def startup_energy(self):
-        return sum(self.last_elec) * STARTUP_SECONDS / 3600.0
+        return self.last_elec * STARTUP_SECONDS / 3600.0
 
     def reserve(self):
         """MinimumReserve. The two terms scale with different things -- the first with
         Battery capacity, the second with machine consumption -- and taking the larger is
         what stops the upgrade floor sinking below the coal floor. Below that crossover a
         player could spend to the reserve and find no coal affordable at any price."""
-        return max(self.capBatt * RESERVE_FRACTION, self.startup_energy() * RESTART_MULTIPLE)
+        return max(self.store_cap('batt') * RESERVE_FRACTION,
+                   self.startup_energy() * RESTART_MULTIPLE)
 
     def spendable(self):
-        return max(0.0, self.batt - self.reserve())
-
-    def strains(self):
-        """Strain on each machine from the store it is fighting."""
-        return (backlog(self.silo, self.capSilo),
-                backlog(self.tank, self.capTank),
-                starve(self.tank, self.capTank))
-
-    def ceilings(self, strained=True):
-        """Wear-free Setting ceiling for each machine.
-
-        Strained is what the player reads off the card and throttles against. The
-        slack-store ceiling is what an upgrade decision should be judged against instead:
-        a store that happens to be backed up this second is a balance problem, and buying
-        capacity is the wrong answer to it.
-        """
-        sP, sB, sT = self.strains() if strained else (0.0, 0.0, 0.0)
-        return ((P['safe'] - P['base']) / (P['rng'] * (1 + sP)),
-                (B['safe'] - B['base']) / (B['rng'] * (1 + sB)),
-                (T['safe'] - T['base']) / (T['rng'] * (1 + sT)))
-
-    def ratios(self):
-        """sP/sT and sB/sT for a chain matched to the Turbine's draw."""
-        rB = self.capT * T['cons'] / (self.effT * self.capB)
-        rP = self.capT * T['cons'] / (self.effT * STEAM_YIELD * self.effB * self.capP)
-        return rP, rB
+        return max(0.0, self.contents['batt'] - self.reserve())
 
     def cost_of(self, track):
         base, growth = COST[track]
         return base * growth ** self.levels[track]
 
+    # --- upgrades -----------------------------------------------------------
+
     def apply(self, track):
-        self.batt -= self.cost_of(track)
+        self.contents['batt'] -= self.cost_of(track)
         self.spent += self.cost_of(track)
         self.levels[track] += 1
-        if track == 'capP': self.capP *= CAPACITY_GROWTH
-        elif track == 'capB': self.capB *= CAPACITY_GROWTH
-        elif track == 'capT': self.capT *= CAPACITY_GROWTH
-        elif track == 'stock': self.capStock *= CAPACITY_GROWTH
-        elif track == 'silo': self.capSilo *= CAPACITY_GROWTH
-        elif track == 'tank': self.capTank *= CAPACITY_GROWTH
-        elif track == 'batt': self.capBatt *= CAPACITY_GROWTH
-        elif track == 'effP': self.effP += (MAX_EFF - self.effP) * UPGRADE_GAIN
-        elif track == 'effB': self.effB += (MAX_EFF - self.effB) * UPGRADE_GAIN
-        elif track == 'effT': self.effT += (MAX_EFF - self.effT) * UPGRADE_GAIN
+        kind, who = track[:3], track[3:]
+
+        if kind == 'cap' and who in MACHINE_KEYS:
+            self.cap_lvl[who] += 1
+            limits = {'P': P, 'B': B, 'T': T}[who]
+            self.safe[who] = gap_down(self.safe[who], limits['safe_lo'], CAP_ON_SAFE)
+        elif kind == 'eff':
+            self.eff[who] = gap_up(self.eff[who], MAX_EFF, UPGRADE_GAIN)
+            self.cap_factor[who] = gap_down(self.cap_factor[who], CAP_FACTOR_FLOOR, EFF_ON_CAP)
+        elif kind == 'tol':
+            limits = {'P': P, 'B': B, 'T': T}[who]
+            self.safe[who] = gap_up(self.safe[who], limits['safe_hi'], TOLERANCE_GAIN)
+            self.eff[who] = gap_down(self.eff[who], MIN_EFF, TOL_ON_EFF)
+        elif kind == 'cap':
+            key = who[0].lower() + who[1:]
+            self.store_cap_lvl[key] += 1
+            self.store_flow_factor[key] = gap_down(
+                self.store_flow_factor[key], FLOW_FACTOR_FLOOR, STORE_CAP_ON_FLOW)
+        elif kind == 'flo':
+            key = track[4].lower() + track[5:]
+            self.store_flow_lvl[key] += 1
+            self.store_cap_factor[key] = gap_down(
+                self.store_cap_factor[key], CAP_FACTOR_FLOOR, STORE_FLOW_ON_CAP)
 
 
-def income(s, sT, price):
-    """Steady-state MWh/s for a matched chain held at Turbine Setting sT."""
-    rP, rB = s.ratios()
-    sP, sB = sT * rP, sT * rB
-    pEl = sP * s.capP * P['cons'] / s.effP
-    bEl = sB * s.capB * B['cons'] / s.effB
-    raw = sP * s.capP / PULV_YIELD
-    return (sT * s.capT - pEl - bEl) / 3600.0 - raw / 1000.0 * price
+def flow_shares(s, r):
+    """The fraction of its request each store's Flow can carry.
+
+    The Silo and Tank divide one Flow between what enters and what leaves, so both sides
+    are scaled by the same share; the Stockpile and Battery cap one direction only.
+    """
+    def share(key, demand):
+        return 1.0 if demand <= 0 else min(1.0, s.store_flow(key) / demand)
+
+    return (share('silo', r['powder'] + r['fuel']),
+            share('tank', r['steam'] + r['tsteam']),
+            share('batt', r['power']))
+
+
+def steady(s):
+    """Sustained run ratio of each machine, cascaded down the chain.
+
+    Nothing throttles, so a machine runs at its Capacity unless something takes the rate
+    away from it: a flow cap, or a stage above it that cannot supply what it asks for. An
+    oversized machine is therefore worth nothing and still costs everything -- an oversized
+    Pulverizer buys and grinds coal the Boiler never burns.
+    """
+    r = s.rates()
+    f_silo, f_tank, f_batt = flow_shares(s, r)
+    supply = 1.0 if r['raw'] <= 0 else min(1.0, s.store_flow('stock') / r['raw'])
+
+    ratP = min(1.0, supply, f_silo)
+    fed_b = 1.0 if r['fuel'] <= 0 else min(1.0, r['powder'] * ratP / r['fuel'])
+    ratB = min(1.0, f_silo, f_tank, fed_b)
+    fed_t = 1.0 if r['tsteam'] <= 0 else min(1.0, r['steam'] * ratB / r['tsteam'])
+    ratT = min(1.0, f_tank, f_batt, fed_t)
+    return r, ratP, ratB, ratT
+
+
+def ceilings(s):
+    """What each stage of the chain could carry on its own, in Turbine MW, in chain order.
+
+    Every stage is a `min`, so in a matched chain no single purchase raises the rate at
+    all: each one is worth exactly nothing until the rest of the round follows it. A policy
+    that priced upgrades one at a time would buy none of them and sit at its opening
+    capacity for the whole run. Comparing stage ceilings instead is what turns that into
+    the ladder a player climbs, and it also says which end to climb from -- the smallest
+    ceiling wins, and a tie goes to the most upstream stage, so a round opens at the
+    Pulverizer and the surplus banks in the Silo. Opening it at the Turbine would drain
+    the Tank instead, straining the one machine that generates.
+    """
+    to_mw = s.eff['T'] / T['cons']                      # kg/s of steam -> MW
+    powder_to_mw = STEAM_YIELD * s.eff['B'] * to_mw     # kg/s of powder -> MW
+    return [
+        (s.store_flow('stock') * PULV_YIELD * powder_to_mw, 'flowStock'),
+        (s.cap('P') * powder_to_mw, 'capP'),
+        (s.store_flow('silo') / 2.0 * powder_to_mw, 'flowSilo'),
+        (s.cap('B') * to_mw, 'capB'),
+        (s.store_flow('tank') / 2.0 * to_mw, 'flowTank'),
+        (s.cap('T'), 'capT'),
+        (s.store_flow('batt'), 'flowBatt'),
+    ]
+
+
+def binding(s):
+    """The stage holding the chain back, most upstream first on a tie."""
+    return min(ceilings(s), key=lambda c: c[0])[1]
+
+
+def deliverable(s):
+    """Sustained Turbine MW the chain can actually carry."""
+    r, _, _, ratT = steady(s)
+    return r['power'] * ratT
+
+
+def income(s, price):
+    """Steady-state MWh/s, at the rate the chain can actually carry."""
+    r, ratP, ratB, ratT = steady(s)
+    net_power = r['power'] * ratT - r['elec_p'] * ratP - r['elec_b'] * ratB
+    return net_power / 3600.0 - r['raw'] * ratP / 1000.0 * price
 
 
 def clone_with(s, track):
     c = copy.copy(s)
-    c.levels = dict(s.levels)
-    c.batt = s.batt + 1e9          # bypass the affordability check inside apply
+    for name in ('cap_lvl', 'cap_factor', 'eff', 'safe', 'store_cap_lvl',
+                 'store_flow_lvl', 'store_cap_factor', 'store_flow_factor', 'levels'):
+        setattr(c, name, dict(getattr(s, name)))
+    c.contents = dict(s.contents)
+    c.contents['batt'] += 1e9      # bypass the affordability check inside apply
     c.apply(track)
     return c
 
 
-def deliverable(s, sT):
-    """Largest Turbine Setting the chain can actually feed while staying matched.
-    Clamping sP/sB independently instead would starve the Turbine."""
-    rP, rB = s.ratios()
-    return min(sT, MAX_SETTING, MAX_SETTING / rB, MAX_SETTING / rP)
-
-
 # --- policy -----------------------------------------------------------------
 # A policy is a dict of knobs, swept by measure.py:
-#   ride     ride Setting as a multiple of the Turbine's clean ceiling
-#   backoff  'all' drops far enough to heal every machine, 'turbine' only the Turbine
-#   wear_hi  back off once any machine's wear passes this
-#   wear_lo  resume riding once every machine is below this
-#   slack    how far above its own ceiling an upstream machine may sit before
-#            capacity or control is bought for it
-#   buffer   seconds of downstream flow each store is sized and filled to
-#   t_stop   stop upgrading and bank from here on
+#   headroom  keep each machine's stress this far under SafeStress before buying Tolerance
+#   buffer    seconds of downstream flow each store is sized and filled to
+#   flow_edge keep each store's Flow this multiple of the rate passing through it
+#   t_stop    stop upgrading and bank from here on
 
-def band(want, capacity):
-    """Pull a store's target fill inside the strain-free band.
-
-    Sizing a store purely as seconds of downstream flow was enough when fill had no
-    consequence. It is not any more: the same seconds are a smaller fraction of every
-    capacity upgrade, so a target left alone drifts under StarveThreshold and strains the
-    machine drawing from it. A player who could not hold the band would be a weak player,
-    and a weak policy measures the wrong TargetEnergy.
-    """
-    margin = 0.05
-    lo = capacity * (STARVE_THRESHOLD + margin)
-    hi = capacity * (BACKLOG_THRESHOLD - margin)
-    return min(max(want, lo), hi)
-
-
-def settings(s, pol, mode):
-    ceilP, ceilB, ceilT = s.ceilings()
-    rP, rB = s.ratios()
-    if mode == 'ride':
-        sT = pol['ride'] * ceilT
-    elif pol['backoff'] == 'all':
-        sT = min(ceilT, ceilB / rB, ceilP / rP) * 0.97
-    else:
-        sT = ceilT * 0.97
-    sT = deliverable(s, sT)
-
-    # Overproduce only by what is needed to close a buffer gap, then fall back to matched.
-    # A flat percentage boost never switches off in a matched chain, because the stage
-    # below consumes the surplus and the buffer never fills. The boost also stops at the
-    # clean ceiling: refilling a store is not worth wearing the machine out, and
-    # deliberate redlining is the ride mode's job.
-    REFILL = 60.0
-    tSteam = sT * s.capT * T['cons'] / s.effT
-    want_tank = band(tSteam * pol['buffer'], s.capTank)
-    boost = (tSteam + max(0.0, want_tank - s.tank) / REFILL) / s.capB
-    sB = min(max(tSteam / s.capB, min(boost, ceilB)), MAX_SETTING)
-
-    bFuel = sB * s.capB / (STEAM_YIELD * s.effB)
-    want_silo = band(bFuel * pol['buffer'], s.capSilo)
-    boost = (bFuel + max(0.0, want_silo - s.silo) / REFILL) / s.capP
-    sP = min(max(bFuel / s.capP, min(boost, ceilP)), MAX_SETTING)
-    return sP, sB, sT
+def wear_pressure(s):
+    """Pressure on each machine from the store it is fighting, ignoring flow."""
+    return {
+        'P': backlog(s.contents['silo'], s.store_cap('silo')),
+        'B': backlog(s.contents['tank'], s.store_cap('tank')),
+        'T': starve(s.contents['tank'], s.store_cap('tank')),
+    }
 
 
 def purchase(s, pol):
-    ceilP, ceilB, ceilT = s.ceilings(strained=False)
-    rP, rB = s.ratios()
-    rideT = deliverable(s, pol['ride'] * ceilT)
-    price = s.price()
+    def afford(tr):
+        return s.cost_of(tr) <= s.spendable()
 
-    # Battery capacity on demand only: buying it early raises MinimumReserve and locks up
-    # the upgrade budget, so lift the ceiling when it actually binds.
-    if s.batt > 0.85 * s.capBatt and s.cost_of('batt') <= s.spendable():
-        s.apply('batt'); return
+    # Battery capacity is the ceiling on everything the run is for, and a Battery that
+    # fills is a Turbine generating into nothing. It is still not bought early for its own
+    # sake -- every level raises MinimumReserve and locks up the upgrade budget -- so the
+    # trigger is a fill fraction, and how far ahead of the energy to buy is a policy knob.
+    if s.fill('batt') > pol['batt_at'] and afford('capBatt'):
+        s.apply('capBatt'); return
     if s.t >= pol['t_stop']:
         return
 
-    def afford(tr): return s.cost_of(tr) <= s.spendable()
+    r, ratP, ratB, ratT = steady(s)
 
-    # An upstream machine that cannot physically reach the matched Setting starves the
-    # chain, so capacity there is mandatory whatever the slack knob says.
-    for setting, capt in ((rideT * rB, 'capB'), (rideT * rP, 'capP')):
-        if setting > 1.9 and afford(capt): s.apply(capt); return
+    def track(kind, key):
+        return kind + key[0].upper() + key[1:]
 
-    # headroom: keep the upstream machines near their own ceilings at the ride point.
-    # Capacity is now the only lever for this -- there is no control track to raise the
-    # ceiling, so the required Setting has to come down instead.
-    for setting, ceil, capt in ((rideT * rB, ceilB, 'capB'),
-                                (rideT * rP, ceilP, 'capP')):
-        if setting > ceil * pol['slack'] and afford(capt): s.apply(capt); return
+    # A store whose Flow cannot carry what passes through it throttles the whole chain,
+    # and under contention the through-rate is counted twice. Buy it back first. The
+    # demand is the unthrottled request, not the throttled rate -- sizing Flow to what the
+    # cap is already allowing would leave it exactly where it is forever.
+    through = {
+        'stock': r['raw'],
+        'silo': r['powder'] + r['fuel'],
+        'tank': r['steam'] + r['tsteam'],
+        'batt': r['power'],
+    }
+    for key, need in through.items():
+        if s.store_flow(key) < need * pol['flow_edge'] and afford(track('flow', key)):
+            s.apply(track('flow', key)); return
 
-    # storage that has become too small for the flow through it
-    raw = rideT * rP * s.capP / PULV_YIELD
-    fuel = rideT * rB * s.capB / (STEAM_YIELD * s.effB)
-    steam = rideT * s.capT * T['cons'] / s.effT
-    for need, cap, tr in ((raw * pol['buffer'], s.capStock, 'stock'),
-                          (fuel * pol['buffer'], s.capSilo, 'silo'),
-                          (steam * pol['buffer'], s.capTank, 'tank')):
-        if cap < need and afford(tr): s.apply(tr); return
+    # storage that has become too small to buffer the flow through it
+    for key, rate in (('stock', r['raw'] * ratP), ('silo', r['fuel'] * ratB),
+                      ('tank', r['tsteam'] * ratT)):
+        if s.store_cap(key) < rate * pol['buffer'] and afford(track('cap', key)):
+            s.apply(track('cap', key)); return
 
-    # Everything else by marginal income per MWh, gated on paying itself back in time.
-    # Each candidate is valued at the ride point it would actually permit: holding the
-    # ride point fixed makes capT look free, when buying it past capB/capP throttles the
-    # Turbine instead, and a run then buys capacity it can never feed.
-    base = income(s, rideT, price)
+    # A machine running close to its SafeStress has nowhere to go when the chain drifts,
+    # and with no throttle there is nothing to do about it afterwards. Wear that is already
+    # on the clock is the more urgent of the two, so it is checked first.
+    limits = {'P': P, 'B': B, 'T': T}
+    for key in MACHINE_KEYS:
+        if s.wear[key] > pol['wear_at'] and afford('tol' + key):
+            s.apply('tol' + key); return
+    for key, pressure in wear_pressure(s).items():
+        stress = limits[key]['nom'] * (1 + STRAIN_GAIN * pressure)
+        if stress > s.safe[key] * pol['headroom'] and afford('tol' + key):
+            s.apply('tol' + key); return
+
+    # Efficiency that pays for itself right now. effP and effB cut what a given output
+    # costs, so they show a gain on their own; effT cuts steam per MW, which is worth
+    # nothing until the Turbine is large enough to use the steam it frees, so it is priced
+    # on the ladder below instead.
+    base = income(s, s.price())
     best, best_score = None, 0.0
-    for tr in ('capT', 'capB', 'capP', 'effT', 'effB', 'effP'):
-        if not afford(tr): continue
-        c = clone_with(s, tr)
-        gain = income(c, deliverable(c, pol['ride'] * c.ceilings(strained=False)[2]), price) - base
-        if gain <= 0: continue
+    for tr in ('effB', 'effP'):
+        if not afford(tr):
+            continue
+        gain = income(clone_with(s, tr), s.price()) - base
+        if gain <= 0:
+            continue
         cost = s.cost_of(tr)
-        if cost / gain > (pol['t_stop'] - s.t): continue
-        if gain / cost > best_score: best, best_score = tr, gain / cost
-    if best: s.apply(best)
+        if cost / gain > (pol['t_stop'] - s.t):
+            continue
+        if gain / cost > best_score:
+            best, best_score = tr, gain / cost
+    if best:
+        s.apply(best); return
+
+    # The ladder: buy whichever stage of the chain has the lowest ceiling.
+    step = binding(s)
+    if step == 'capT' and s.eff['T'] < MAX_EFF and s.cost_of('effT') <= s.cost_of('capT') * pol['eff_bias']:
+        step = 'effT'
+    if afford(step):
+        s.apply(step)
 
 
 def buy_coal(s):
     startup = s.startup_energy()
-    floor = startup if s.stock < 0.2 * s.capStock else max(startup, s.reserve())
-    budget = max(0.0, s.batt - floor)
+    floor = startup if s.fill('stock') < 0.2 else max(startup, s.reserve())
+    budget = max(0.0, s.contents['batt'] - floor)
     # coal that cannot be burned before the timer is pure loss against the peak
     burnable = s.last_raw * max(0.0, TIME_LIMIT - s.t)
+    held = s.contents['stock']
     price = s.price()
-    kg = min(s.capStock - s.stock, budget / price * 1000.0, max(0.0, burnable - s.stock))
-    if kg <= 0: return
-    s.batt -= kg / 1000.0 * price
+    kg = min(s.store_cap('stock') - held, budget / price * 1000.0, max(0.0, burnable - held))
+    if kg <= 0:
+        return
+    s.contents['batt'] -= kg / 1000.0 * price
     s.coal_cost += kg / 1000.0 * price
-    s.stock += kg
+    s.contents['stock'] += kg
 
 
 def run(pol, dt=0.2):
@@ -288,54 +431,66 @@ def run(pol, dt=0.2):
     The coal price is a function of `t` alone, so a policy has exactly one run in it:
     what used to be a distribution over market seeds is now a single number."""
     s = State()
-    mode, next_decision = 'ride', 0.0
+    next_decision = 0.0
     for _ in range(int(TIME_LIMIT / dt)):
-        if max(s.wear.values()) > pol['wear_hi']: mode = 'back'
-        elif max(s.wear.values()) < pol['wear_lo']: mode = 'ride'
-        sP, sB, sT = settings(s, pol, mode)
-
-        pEl = sP * s.capP * P['cons'] / s.effP
-        bEl = sB * s.capB * B['cons'] / s.effB
-        s.last_elec, s.last_raw = (pEl, bEl), sP * s.capP / PULV_YIELD
+        r = s.rates()
+        s.last_elec, s.last_raw = r['elec_p'] + r['elec_b'], r['raw']
 
         if s.t >= next_decision:
             purchase(s, pol)
             buy_coal(s)
             next_decision += 1.0
+            r = s.rates()
 
-        tripped = {k: s.repair[k] > 0 for k in 'PBT'}
-        req = ((0.0 if tripped['P'] else pEl) + (0.0 if tripped['B'] else bEl)) * dt / 3600.0
-        er = 1.0 if req <= 0 else min(1.0, s.batt / req)
+        tripped = {k: s.repair[k] > 0 for k in MACHINE_KEYS}
 
-        pRaw = sP * s.capP / PULV_YIELD
-        bFuel = sB * s.capB / (STEAM_YIELD * s.effB)
-        tSteam = sT * s.capT * T['cons'] / s.effT
-        ratP = 0.0 if tripped['P'] else min(er, 1.0 if pRaw <= 0 else min(1.0, s.stock / (pRaw * dt)))
-        ratB = 0.0 if tripped['B'] else min(er, 1.0 if bFuel <= 0 else min(1.0, s.silo / (bFuel * dt)))
-        ratT = 0.0 if tripped['T'] else (1.0 if tSteam <= 0 else min(1.0, s.tank / (tSteam * dt)))
+        # electricity is shared in proportion to demand; a tripped machine requests none
+        req = ((0.0 if tripped['P'] else r['elec_p'])
+               + (0.0 if tripped['B'] else r['elec_b'])) * dt / 3600.0
+        er = 1.0 if req <= 0 else min(1.0, s.contents['batt'] / req)
 
-        # read before the storage writes below: strain is start-of-step state like every
-        # other input to a step, so wear does not depend on evaluation order
-        strain = dict(zip('PBT', s.strains()))
+        # Flow reads start-of-step state like everything else, so the split between what
+        # enters a store and what leaves it does not depend on evaluation order.
+        f_silo, f_tank, f_batt = flow_shares(s, r)
 
-        made_mwh = sT * s.capT * ratT * dt / 3600.0
-        used_elec = (pEl * ratP + bEl * ratB) * dt / 3600.0
-        stored = min(made_mwh, s.capBatt - s.batt)
+        def held(key, rate):
+            return 1.0 if rate <= 0 else min(1.0, s.contents[key] / (rate * dt))
+
+        rat = {
+            'P': 0.0 if tripped['P'] else min(er, held('stock', r['raw']), f_silo),
+            'B': 0.0 if tripped['B'] else min(er, held('silo', r['fuel']), f_silo, f_tank),
+            'T': 0.0 if tripped['T'] else min(held('tank', r['tsteam']), f_tank, f_batt),
+        }
+
+        # Strain: the worse of the store's fill and the share of its request a flow cap
+        # took away. Read before the storage writes below, like every other step input.
+        press = wear_pressure(s)
+        unmet = {'P': 1 - f_silo, 'B': max(1 - f_silo, 1 - f_tank), 'T': max(1 - f_tank, 1 - f_batt)}
+        strain = {k: STRAIN_GAIN * max(press[k], unmet[k]) for k in MACHINE_KEYS}
+
+        made_mwh = r['power'] * rat['T'] * dt / 3600.0
+        used_elec = (r['elec_p'] * rat['P'] + r['elec_b'] * rat['B']) * dt / 3600.0
+        stored = min(made_mwh, s.store_cap('batt') - s.contents['batt'])
         s.generated += stored
         s.clipped += made_mwh - stored
         s.machine_use += used_elec
 
-        s.stock -= pRaw * ratP * dt
-        s.silo = s.silo - bFuel * ratB * dt + min(sP * s.capP * ratP * dt, s.capSilo - s.silo)
-        s.tank = s.tank - tSteam * ratT * dt + min(sB * s.capB * ratB * dt, s.capTank - s.tank)
-        s.batt = max(0.0, s.batt - used_elec + stored)
-        s.stock, s.silo, s.tank = max(0.0, s.stock), max(0.0, s.silo), max(0.0, s.tank)
-        s.peak = max(s.peak, s.batt)
+        s.contents['stock'] -= r['raw'] * rat['P'] * dt
+        s.contents['silo'] += (min(r['powder'] * rat['P'] * dt,
+                                   s.store_cap('silo') - s.contents['silo'])
+                               - r['fuel'] * rat['B'] * dt)
+        s.contents['tank'] += (min(r['steam'] * rat['B'] * dt,
+                                   s.store_cap('tank') - s.contents['tank'])
+                               - r['tsteam'] * rat['T'] * dt)
+        s.contents['batt'] = max(0.0, s.contents['batt'] - used_elec + stored)
+        for key in ('stock', 'silo', 'tank'):
+            s.contents[key] = max(0.0, s.contents[key])
+        s.peak = max(s.peak, s.contents['batt'])
 
-        for key, m, setting, rat in (('P', P, sP, ratP), ('B', B, sB, ratB), ('T', T, sT, ratT)):
-            stress = m['base'] + m['rng'] * setting * (1 + strain[key])
-            ex = max(0.0, min(1.0, (stress - m['safe']) / (m['mx'] - m['safe'])))
-            rate = -m['wr'] if (s.repair[key] > 0 or ex == 0) else m['wg'] * ex * ex * rat
+        for key, m in (('P', P), ('B', B), ('T', T)):
+            stress = m['nom'] * (1 + strain[key])
+            ex = max(0.0, min(1.0, (stress - s.safe[key]) / (m['mx'] - s.safe[key])))
+            rate = -m['wr'] if (s.repair[key] > 0 or ex == 0) else m['wg'] * ex * ex * rat[key]
             s.wear[key] = max(0.0, min(1.0, s.wear[key] + rate * dt))
             if s.repair[key] > 0:
                 s.repair[key] -= dt
@@ -344,7 +499,7 @@ def run(pol, dt=0.2):
 
         s.t += dt
 
-        if s.batt <= 0 and s.stock <= 0 and s.silo <= 0 and s.tank <= 0:
+        if all(s.contents[k] <= 0 for k in STORE_KEYS):
             s.stalled = True
             break
     return s

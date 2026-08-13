@@ -11,16 +11,17 @@ import type {StressKind} from '@/game/types'
 export class Turbine extends Machine {
   readonly stressKind: StressKind = 'vibration'
   readonly baseConsumption = TURBINE.baseConsumption
-  readonly baseStress = TURBINE.baseStress
-  readonly stressRange = TURBINE.stressRange
-  readonly safeStress = TURBINE.safeStress
+  readonly baseCapacity = TURBINE.capacity
+  readonly nominalStress = TURBINE.nominalStress
+  readonly maxTolerance = TURBINE.maxTolerance
+  readonly minTolerance = TURBINE.minTolerance
   readonly maxStress = TURBINE.maxStress
   readonly wearGrowth = TURBINE.wearGrowth
   readonly wearRecovery = TURBINE.wearRecovery
   readonly repairSeconds = TURBINE.repairSeconds
 
   constructor() {
-    super(TURBINE.capacity, TURBINE.efficiency)
+    super(TURBINE.efficiency, TURBINE.safeStress)
   }
 
   /** The Turbine consumes no electricity. */
@@ -35,6 +36,6 @@ export class Turbine extends Machine {
 
   /** Steam drawn from the Tank, kg/s. */
   get steamConsumption(): number {
-    return (this.setting * this.capacity * this.baseConsumption) / this.efficiency
+    return (this.capacity * this.baseConsumption) / this.efficiency
   }
 }

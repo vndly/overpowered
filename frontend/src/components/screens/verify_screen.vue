@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import {CoalMarket} from '@/game/coal_market'
-import {DELTA_TIME_SECONDS, MARKET, MAX_SETTING_STEPS, SECONDS_PER_MINUTE, STARTING_CHARGE, TIME_LIMIT} from '@/game/constants'
+import {BACKLOG_THRESHOLD, DELTA_TIME_SECONDS, MARKET, SECONDS_PER_MINUTE, STARTING_CHARGE, STARVE_THRESHOLD, STRAIN_GAIN, TIME_LIMIT} from '@/game/constants'
 import {GameEngine} from '@/game/game_engine'
 import type {ScriptedRunResult} from '@/game/scripted_run'
 import {runScript} from '@/game/scripted_run'
@@ -34,8 +34,10 @@ const VALUE_WIDTH = 10
 // the printed value: half of the last digit, or 0.2% for the larger numbers.
 const OPENING_TOLERANCE_FLOOR = 0.005
 const OPENING_TOLERANCE_FRACTION = 0.002
-const CEILING_TOLERANCE = 0.002
-const MAX_STRESS_TOLERANCE = 0.05
+const ONSET_TOLERANCE = 0.002
+const FULL_STRAIN_TOLERANCE = 0.05
+const MATCH_TOLERANCE = 0.001
+const BACKLOG_TOLERANCE = 0.005
 const RESIDUAL_TOLERANCE = 1e-6
 const CONVERGENCE_TOLERANCE = 0.06
 
@@ -44,7 +46,6 @@ const CONVERGENCE_TOLERANCE = 0.06
 const PRICE_TOLERANCE = 1e-6
 
 const STATIC_SEED = 0 // The static checks read a state, never a run
-const SLACK_FILL = 0.5 // A store sitting clear of both strain thresholds
 const BALANCE_SEED = 1
 const BALANCE_STEP_SECONDS = 0.1
 const CONVERGENCE_SEEDS = 16
@@ -212,98 +213,170 @@ function opening(name: string, got: number, expected: number): Check {
 }
 
 /**
- * A fresh engine whose buffers have been placed by hand.
- * @param siloFill - Silo fill fraction
- * @param tankFill - Tank fill fraction
- * @returns An engine that has not been stepped
- */
-function stateWith(siloFill: number, tankFill: number): GameEngine {
-  const engine = new GameEngine(STATIC_SEED)
-
-  engine.silo.contents = engine.silo.capacity * siloFill
-  engine.tank.contents = engine.tank.capacity * tankFill
-  return engine
-}
-
-/**
- * The 15 opening rows of specs.md, at the starting Setting of 0.6.
- * Every store starts empty, so the Pulverizer and Boiler open with no backlog while the
- * Turbine opens at full Starve — which is why its Vibration begins above SafeVibration.
+ * The opening rows of specs.md.
+ * Every machine runs at its Capacity, and the Tank opens at StarveThreshold, so no
+ * machine opens under any strain at all — the run starts matched and clean.
  * @returns The group
  */
 function openingGroup(): CheckGroup {
   const engine = new GameEngine(STATIC_SEED)
-  const pulverizerStrain = engine.pulverizerStrain
-  const boilerStrain = engine.boilerStrain
-  const turbineStrain = engine.turbineStrain
+  const pulverizerStrain = engine.pulverizerStrain.value
+  const boilerStrain = engine.boilerStrain.value
+  const turbineStrain = engine.turbineStrain.value
+  const netFlow = engine.turbine.powerOutput
+    - engine.pulverizer.electricConsumption - engine.boiler.electricConsumption
 
   return {
     title: 'OPENING STATE vs docs/specs.md',
     notes: [],
     checks: [
-      opening('Pulverizer Output', engine.pulverizer.pulverizedOutput, 4.8),
-      opening('Pulverizer raw draw', engine.pulverizer.rawCoalConsumption, 5.05),
-      opening('Pulverizer power', engine.pulverizer.electricConsumption, 0.69),
-      opening('Boiler Output', engine.boiler.steamOutput, 30),
-      opening('Boiler fuel draw', engine.boiler.fuelConsumption, 4.29),
-      opening('Boiler power', engine.boiler.electricConsumption, 4.29),
-      opening('Turbine Output', engine.turbine.powerOutput, 30),
-      opening('Turbine steam draw', engine.turbine.steamConsumption, 26.57),
+      opening('Pulverizer Output', engine.pulverizer.pulverizedOutput, 4),
+      opening('Pulverizer raw draw', engine.pulverizer.rawCoalConsumption, 4.21),
+      opening('Pulverizer power', engine.pulverizer.electricConsumption, 0.57),
+      opening('Boiler Output', engine.boiler.steamOutput, 21),
+      opening('Boiler fuel draw', engine.boiler.fuelConsumption, 3),
+      opening('Boiler power', engine.boiler.electricConsumption, 3),
+      opening('Turbine Output', engine.turbine.powerOutput, 23.7),
+      opening('Turbine steam draw', engine.turbine.steamConsumption, 20.99),
       opening('Pulverizer Strain', pulverizerStrain, 0),
       opening('Boiler Strain', boilerStrain, 0),
-      opening('Turbine Strain', turbineStrain, 1.25),
-      opening('Temperature', engine.pulverizer.stress(pulverizerStrain), 66),
-      opening('Pressure', engine.boiler.stress(boilerStrain), 84.8),
-      opening('Vibration', engine.turbine.stress(turbineStrain), 9.1),
+      opening('Turbine Strain', turbineStrain, 0),
+      opening('Temperature', engine.pulverizer.stress(pulverizerStrain), 70),
+      opening('Pressure', engine.boiler.stress(boilerStrain), 100),
+      opening('Vibration', engine.turbine.stress(turbineStrain), 5),
+      opening('NetFlow', netFlow, 20.13),
       opening('MinimumReserve', engine.minimumReserve, 1),
     ],
   }
 }
 
 /**
- * The clean ceilings specs.md quotes, with a slack store and at full strain.
- * No single state strains all three: the Boiler needs a full Tank and the Turbine an
- * empty one, so each machine is put at full strain in a state of its own.
+ * The Pulverizer runs a third ahead of the Boiler's draw on purpose, so the Silo gains a
+ * kilogram a second and backs up about seventy seconds in — the run's first decision. The
+ * Boiler is matched to the Turbine, so there is exactly one problem on screen rather than
+ * three. See specs.md §The opening imbalance.
  * @returns The group
  */
-function ceilingGroup(): CheckGroup {
-  const slack = stateWith(SLACK_FILL, SLACK_FILL)
-  const siloFull = stateWith(1, SLACK_FILL)
-  const tankFull = stateWith(SLACK_FILL, 1)
-  const tankEmpty = stateWith(SLACK_FILL, 0)
+function matchedGroup(): CheckGroup {
+  const engine = new GameEngine(STATIC_SEED)
+  const powderSurplus = engine.pulverizer.pulverizedOutput / engine.boiler.fuelConsumption - 1
+  const steamSurplus = engine.boiler.steamOutput / engine.turbine.steamConsumption - 1
+  const surplusRate = engine.pulverizer.pulverizedOutput - engine.boiler.fuelConsumption
 
   return {
-    title: 'CLEAN CEILINGS vs docs/specs.md',
+    title: 'THE OPENING IMBALANCE (surplus over the stage below)',
     notes: [],
     checks: [
-      near('Pulverizer ceiling slack', slack.pulverizer.cleanCeiling(slack.pulverizerStrain), 0.667, CEILING_TOLERANCE),
-      near('Pulverizer ceiling strained', siloFull.pulverizer.cleanCeiling(siloFull.pulverizerStrain), 0.296, CEILING_TOLERANCE),
-      near('Boiler ceiling slack', slack.boiler.cleanCeiling(slack.boilerStrain), 0.694, CEILING_TOLERANCE),
-      near('Boiler ceiling strained', tankFull.boiler.cleanCeiling(tankFull.boilerStrain), 0.309, CEILING_TOLERANCE),
-      near('Turbine ceiling slack', slack.turbine.cleanCeiling(slack.turbineStrain), 0.833, CEILING_TOLERANCE),
-      near('Turbine ceiling strained', tankEmpty.turbine.cleanCeiling(tankEmpty.turbineStrain), 0.37, CEILING_TOLERANCE),
+      near('Pulverizer over Boiler draw', powderSurplus, 1 / 3, BACKLOG_TOLERANCE),
+      near('Boiler vs Turbine draw', steamSurplus, 0, MATCH_TOLERANCE),
+      near('seconds to Silo backlog',
+        BACKLOG_THRESHOLD * engine.silo.capacity / surplusRate, 70, 1),
     ],
   }
 }
 
 /**
- * Each machine must still reach exactly its MaxStress at MaxSetting with a slack store.
+ * Every store's Flow must carry what passes through it at the opening, and the two
+ * contended stores must carry it twice over — specs.md §Storage flow.
  * @returns The group
  */
-function maxStressGroup(): CheckGroup {
-  const engine = stateWith(SLACK_FILL, SLACK_FILL)
-
-  engine.setSettingSteps('pulverizer', MAX_SETTING_STEPS)
-  engine.setSettingSteps('boiler', MAX_SETTING_STEPS)
-  engine.setSettingSteps('turbine', MAX_SETTING_STEPS)
+function flowGroup(): CheckGroup {
+  const engine = new GameEngine(STATIC_SEED)
+  const demands: [string, number, number][] = [
+    [
+      'Stockpile delivery',
+      engine.stockpile.flow,
+      engine.pulverizer.rawCoalConsumption,
+    ],
+    [
+      'Silo contended',
+      engine.silo.flow,
+      engine.pulverizer.pulverizedOutput + engine.boiler.fuelConsumption,
+    ],
+    [
+      'Tank contended',
+      engine.tank.flow,
+      engine.boiler.steamOutput + engine.turbine.steamConsumption,
+    ],
+    [
+      'Battery charge',
+      engine.battery.flow,
+      engine.turbine.powerOutput,
+    ],
+  ]
 
   return {
-    title: 'MAX STRESS AT MaxSetting (slack store)',
+    title: 'FLOW HEADROOM AT THE OPENING (multiple of what passes through)',
+    notes: [],
+    checks: demands.map(([
+      name,
+      flow,
+      demand,
+    ]) => {
+      const ratio = flow / demand
+
+      return {
+        name: name,
+        got: ratio.toFixed(3),
+        expected: '>= 1',
+        passed: ratio >= 1,
+      }
+    }),
+  }
+}
+
+/**
+ * The store fill at which each machine's stress reaches SafeStress and wear begins.
+ * With no throttle, Strain is the only term that raises stress, so this fill is the whole
+ * of what "running clean" means — specs.md §Buffers and strain.
+ * @param machine - The machine's nominal stress and its SafeStress
+ * @returns The fill its pressure reaches SafeStress at
+ */
+function onsetPressure(nominalStress: number, safeStress: number): number {
+  return (safeStress / nominalStress - 1) / STRAIN_GAIN
+}
+
+/**
+ * @returns The group
+ */
+function onsetGroup(): CheckGroup {
+  const engine = new GameEngine(STATIC_SEED)
+  const backlogFill = (pressure: number): number =>
+    BACKLOG_THRESHOLD + pressure * (1 - BACKLOG_THRESHOLD)
+  const starveFill = (pressure: number): number => STARVE_THRESHOLD * (1 - pressure)
+
+  return {
+    title: 'WEAR ONSET vs docs/specs.md (store fill where wear begins)',
     notes: [],
     checks: [
-      near('Pulverizer at MaxSetting', engine.pulverizer.stress(engine.pulverizerStrain), 150, MAX_STRESS_TOLERANCE),
-      near('Boiler at MaxSetting', engine.boiler.stress(engine.boilerStrain), 236, MAX_STRESS_TOLERANCE),
-      near('Turbine at MaxSetting', engine.turbine.stress(engine.turbineStrain), 13, MAX_STRESS_TOLERANCE),
+      near('Pulverizer above Silo',
+        backlogFill(onsetPressure(engine.pulverizer.nominalStress, engine.pulverizer.safeStress)),
+        0.751, ONSET_TOLERANCE),
+      near('Boiler above Tank',
+        backlogFill(onsetPressure(engine.boiler.nominalStress, engine.boiler.safeStress)),
+        0.748, ONSET_TOLERANCE),
+      near('Turbine below Tank',
+        starveFill(onsetPressure(engine.turbine.nominalStress, engine.turbine.safeStress)),
+        0.228, ONSET_TOLERANCE),
+    ],
+  }
+}
+
+/**
+ * Stress at full strain, which is what a saturated store does to the machine beside it.
+ * The Pulverizer reads past its own maximum and the gauge simply pegs there.
+ * @returns The group
+ */
+function fullStrainGroup(): CheckGroup {
+  const engine = new GameEngine(STATIC_SEED)
+
+  return {
+    title: 'STRESS AT FULL STRAIN',
+    notes: [],
+    checks: [
+      near('Pulverizer at full strain', engine.pulverizer.stress(STRAIN_GAIN), 157.5, FULL_STRAIN_TOLERANCE),
+      near('Boiler at full strain', engine.boiler.stress(STRAIN_GAIN), 225, FULL_STRAIN_TOLERANCE),
+      near('Turbine at full strain', engine.turbine.stress(STRAIN_GAIN), 11.25, FULL_STRAIN_TOLERANCE),
     ],
   }
 }
@@ -339,11 +412,11 @@ function balanceGroup(): CheckGroup {
  * @param deltaSeconds - The step size to run at
  * @returns What that step size produced
  */
-function summarizeStep(deltaSeconds: number): StepSummary {
+function summarizeStep(deltaSeconds: number, upgrades: boolean): StepSummary {
   const runs: ScriptedRunResult[] = []
 
   for (let seed = 0; seed < CONVERGENCE_SEEDS; seed += 1) {
-    runs.push(runScript(seed, deltaSeconds))
+    runs.push(runScript(seed, deltaSeconds, upgrades))
   }
 
   return {
@@ -356,6 +429,8 @@ function summarizeStep(deltaSeconds: number): StepSummary {
 }
 
 /**
+ * @param deltaSeconds - The step size to run at
+ * @param upgrades - Whether the runs buy upgrades
  * @param summary - The step size to describe
  * @returns One reported line of the convergence table
  */
@@ -368,22 +443,33 @@ function summaryNote(summary: StepSummary): string {
 }
 
 /**
- * Results must not depend on DeltaTimeSeconds. What converges is the continuous flow of
- * the run: peak stored energy and the count of upgrades bought are reported but not
- * asserted, because this script banks nothing above its opening charge and makes only
- * about sixteen discrete purchases, so one purchase landing a second earlier moves the
- * count by six percent — see docs/plan.md, Stage 3.
+ * The engine's own property, and the only one this screen can assert: a plant held at one
+ * configuration must produce the same energy however finely the run is stepped, because
+ * the throughput of the chain is a rate rather than an artefact of the discretisation.
+ *
+ * A run that buys is deliberately not asserted. With no throttle, no single purchase
+ * raises the chain's rate — only a whole round does — so income moves in steps and every
+ * purchase shifts the ratios the next one is judged on. One marginal upgrade landing a
+ * second earlier compounds for the rest of the run. That spread is reported below it, so
+ * the size of the effect is on the screen rather than merely asserted away.
  * @returns The group
  */
 function convergenceGroup(): CheckGroup {
-  const contrast = summarizeStep(CONTRAST_STEP)
-  const fine = CONVERGENCE_STEPS.map(summarizeStep)
-  const notes = [
-    contrast,
-    ...fine,
-  ].map(summaryNote)
+  const steps = [
+    CONTRAST_STEP,
+    ...CONVERGENCE_STEPS,
+  ]
+  const held = steps.map(step => summarizeStep(step, false))
+  const buying = steps.map(step => summarizeStep(step, true))
+  const fine = held.slice(1)
+  const notes = held.map(summaryNote)
 
-  notes.push('(peak and levels are reported, not asserted — see docs/plan.md, Stage 3)')
+  notes.push('(a plant that is never upgraded — the rates alone)')
+  notes.push('')
+  notes.push('the same script buying upgrades, reported and not asserted:')
+  notes.push(...buying.map(summaryNote))
+  notes.push(`  purchase-timing spread, dt<=0.2: ${(relativeSpread(buying.slice(1).map(summary => summary.medianGenerated)) * 100).toFixed(1)}%`)
+
   return {
     title: 'STEP-SIZE CONVERGENCE',
     notes: notes,
@@ -424,7 +510,11 @@ function stallGroup(): CheckGroup {
   const empty = new GameEngine(STATIC_SEED)
   const withSteam = new GameEngine(STATIC_SEED)
 
+  // Every store has to be emptied by hand now that the Tank opens at StarveThreshold
+  // rather than empty (specs.md §Tank) — a run no longer starts one purchase away from
+  // the stall condition, and the check has to build the state it is asserting on.
   empty.battery.contents = 0
+  empty.tank.contents = 0
   empty.start()
   empty.step(DELTA_TIME_SECONDS)
 
@@ -494,8 +584,10 @@ function buildReport(): {groups: {title: string,
 summary: string} {
   const groups = [
     openingGroup(),
-    ceilingGroup(),
-    maxStressGroup(),
+    matchedGroup(),
+    flowGroup(),
+    onsetGroup(),
+    fullStrainGroup(),
     balanceGroup(),
     convergenceGroup(),
     restartFloorGroup(),

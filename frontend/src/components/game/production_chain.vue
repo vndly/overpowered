@@ -8,38 +8,53 @@
       @step-amount="emit('stepPurchaseAmount', $event)"
       @fill-amount="emit('fillPurchaseAmount')"
       @buy="emit('buyCoal')"
-      @upgrade="emit('purchaseUpgrade', 'stockpile_capacity')"
+      @upgrade-capacity="emit('purchaseUpgrade', 'stockpile_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'stockpile_flow')"
     />
     <FlowArrow />
     <MachineCard
       :view="view.pulverizer"
       component="pulverizer"
-      @step="emit('stepSetting', 'pulverizer', $event)"
       @upgrade-capacity="emit('purchaseUpgrade', 'pulverizer_capacity')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'pulverizer_efficiency')"
+      @upgrade-tolerance="emit('purchaseUpgrade', 'pulverizer_tolerance')"
     />
     <FlowArrow />
-    <BufferCard :view="view.silo" component="silo" @upgrade="emit('purchaseUpgrade', 'silo_capacity')" />
+    <BufferCard
+      :view="view.silo"
+      component="silo"
+      @upgrade-capacity="emit('purchaseUpgrade', 'silo_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'silo_flow')"
+    />
     <FlowArrow />
     <MachineCard
       :view="view.boiler"
       component="boiler"
-      @step="emit('stepSetting', 'boiler', $event)"
       @upgrade-capacity="emit('purchaseUpgrade', 'boiler_capacity')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'boiler_efficiency')"
+      @upgrade-tolerance="emit('purchaseUpgrade', 'boiler_tolerance')"
     />
     <FlowArrow />
-    <BufferCard :view="view.tank" component="tank" @upgrade="emit('purchaseUpgrade', 'tank_capacity')" />
+    <BufferCard
+      :view="view.tank"
+      component="tank"
+      @upgrade-capacity="emit('purchaseUpgrade', 'tank_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'tank_flow')"
+    />
     <FlowArrow />
     <MachineCard
       :view="view.turbine"
       component="turbine"
-      @step="emit('stepSetting', 'turbine', $event)"
       @upgrade-capacity="emit('purchaseUpgrade', 'turbine_capacity')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'turbine_efficiency')"
+      @upgrade-tolerance="emit('purchaseUpgrade', 'turbine_tolerance')"
     />
     <FlowArrow />
-    <BatteryCard :view="view.battery" @upgrade="emit('purchaseUpgrade', 'battery_capacity')" />
+    <BatteryCard
+      :view="view.battery"
+      @upgrade-capacity="emit('purchaseUpgrade', 'battery_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'battery_flow')"
+    />
   </section>
 </template>
 
@@ -49,7 +64,7 @@ import BufferCard from '@/components/game/buffer_card.vue'
 import MachineCard from '@/components/game/machine_card.vue'
 import StockpileCard from '@/components/game/stockpile_card.vue'
 import FlowArrow from '@/components/terminal/flow_arrow.vue'
-import type {MachineId, UpgradeTrackId} from '@/game/types'
+import type {UpgradeTrackId} from '@/game/types'
 import type {GameView} from '@/view/view_model'
 
 defineProps<{
@@ -60,7 +75,6 @@ const emit = defineEmits<{
   stepPurchaseAmount: [direction: number]
   fillPurchaseAmount: []
   buyCoal: []
-  stepSetting: [machine: MachineId, direction: number]
   purchaseUpgrade: [track: UpgradeTrackId]
 }>()
 </script>

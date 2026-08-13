@@ -2,8 +2,7 @@ import type {ShallowRef} from 'vue'
 import {onMounted, onUnmounted, shallowRef} from 'vue'
 import {DELTA_TIME_SECONDS} from '@/game/constants'
 import {GameEngine} from '@/game/game_engine'
-import type {Machine} from '@/game/machine'
-import type {MachineId, UpgradeTrackId} from '@/game/types'
+import type {UpgradeTrackId} from '@/game/types'
 import type {GameView} from '@/view/view_model'
 import {buildGameView} from '@/view/view_model'
 
@@ -22,7 +21,6 @@ export interface Game {
   view: ShallowRef<GameView>
   startRun: () => void
   newRun: () => void
-  stepSetting: (machine: MachineId, direction: number) => void
   stepPurchaseAmount: (direction: number) => void
   fillPurchaseAmount: () => void
   buyCoal: () => void
@@ -73,21 +71,6 @@ export function useGame(): Game {
    */
   function refresh(): void {
     view.value = buildGameView(engine, purchaseKilograms, bestResult)
-  }
-
-  /**
-   * @param machine - The machine to look up
-   * @returns The machine itself
-   */
-  function machineOf(machine: MachineId): Machine {
-    switch (machine) {
-      case 'pulverizer':
-        return engine.pulverizer
-      case 'boiler':
-        return engine.boiler
-      case 'turbine':
-        return engine.turbine
-    }
   }
 
   /**
@@ -196,10 +179,6 @@ export function useGame(): Game {
       stopLoop()
       engine = new GameEngine(newSeed())
       purchaseKilograms = 0
-      refresh()
-    },
-    stepSetting: (machine: MachineId, direction: number): void => {
-      engine.setSettingSteps(machine, machineOf(machine).settingSteps + direction)
       refresh()
     },
     stepPurchaseAmount: (direction: number): void => {

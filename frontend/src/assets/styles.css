@@ -33,7 +33,6 @@
     /* --fg as a brightness, for the one thing that cannot take a colour: the equipment
        drawings are raster and are tinted by a filter chain rather than a fill
        (components/game/equipment_icon.vue). Moves with --fg or the icons drift off it. */
-    --fg-level: 0.91;
 
     /* Values and their units, the bars that draw them, and the clocks. Nothing that
        merely labels or frames a reading takes these. */

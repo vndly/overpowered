@@ -1,46 +1,37 @@
 import {STARTING_CHARGE} from '@/game/constants'
 import {GameEngine} from '@/game/game_engine'
-import type {MachineId, UpgradeTrackId} from '@/game/types'
+import type {UpgradeTrackId} from '@/game/types'
 
 const ACTION_INTERVAL_SECONDS = 1 // How often the script acts on the plant
-const UPGRADE_INTERVAL_SECONDS = 30 // How often it attempts one upgrade
+const UPGRADE_INTERVAL_SECONDS = 12 // How often it attempts one upgrade
 
-/** The three machines, in chain order. */
-const MACHINES: MachineId[] = [
-  'pulverizer',
-  'boiler',
-  'turbine',
-]
-
-/** Every upgrade track, in the fixed order the script cycles through them. */
+/**
+ * Every upgrade track, in the fixed order the script cycles through them.
+ * The order is deliberately lopsided rather than balanced: it climbs the chain from the
+ * Stockpile down, so the plant spends the run drifting in and out of step with itself.
+ * That is what puts the stores against both their thresholds and the machines into wear,
+ * which a tidy round-robin never would.
+ */
 const UPGRADE_TRACKS: UpgradeTrackId[] = [
   'pulverizer_capacity',
+  'pulverizer_capacity',
+  'silo_flow',
   'boiler_capacity',
+  'tank_flow',
   'turbine_capacity',
+  'battery_flow',
   'stockpile_capacity',
+  'stockpile_flow',
   'silo_capacity',
   'tank_capacity',
   'battery_capacity',
   'pulverizer_efficiency',
   'boiler_efficiency',
   'turbine_efficiency',
+  'pulverizer_tolerance',
+  'boiler_tolerance',
+  'turbine_tolerance',
 ]
-
-/** The Setting changes the script makes, in the order they fire. */
-const SETTING_CHANGES = [
-  {
-    atSeconds: 0,
-    settingSteps: 6, // 0.6, where every run opens
-  },
-  {
-    atSeconds: 120,
-    settingSteps: 18, // 1.8, deep in the wear band: exercises trips and repairs
-  },
-  {
-    atSeconds: 300,
-    settingSteps: 4, // 0.4, below every clean ceiling: exercises wear recovery
-  },
-] as const
 
 /** What one scripted run leaves behind for the verification screen to assert on. */
 export interface ScriptedRunResult {
@@ -53,40 +44,38 @@ export interface ScriptedRunResult {
  * Plays a fixed script against a fresh engine until the run ends.
  * The script is not a strategy and makes no attempt to play well — simulator/sim.py owns
  * the greedy policy, and the player owns the real one. This is a fixture: a deterministic
- * input sequence that touches coal purchases, all ten upgrade tracks, Settings deep in the
- * wear band and Settings back below the clean ceilings, so that properties which must hold
- * under *any* input can be asserted against one reproducible run.
+ * input sequence that touches coal purchases and all seventeen upgrade tracks, in an order
+ * that deliberately runs the chain out of step, so that properties which must hold under
+ * *any* input can be asserted against one reproducible run.
+ *
+ * There is nothing here that moves a machine, because there is nothing to move: machines
+ * have no operating control, so a run is the purchases and their timing and nothing else.
+ * Passing `upgrades: false` buys coal and nothing else, which holds the plant at its
+ * opening configuration for the whole run. That is the only version whose output is a
+ * pure function of the rules: with no throttle, no single purchase raises the chain's
+ * rate — only a whole round does — so a buying run's totals move with when each purchase
+ * happens to land, and a step-size check run against one would be measuring that instead
+ * of the engine.
  * @param seed - Seed for the run; no rule draws from it while every rule is deterministic
  * @param deltaSeconds - Length of each simulation step
+ * @param upgrades - Whether to buy upgrades at all
  * @returns The finished engine and the figures the conservation checks read
  */
-export function runScript(seed: number, deltaSeconds: number): ScriptedRunResult {
+export function runScript(seed: number, deltaSeconds: number, upgrades = true): ScriptedRunResult {
   const engine = new GameEngine(seed)
   let worstReserveGap = engine.startupEnergy - engine.minimumReserve
   let nextActionSeconds = 0
   let nextUpgradeSeconds = 0
-  let changeIndex = 0
   let trackIndex = 0
 
   engine.start()
 
   while (engine.outcome === 'running') {
     if (engine.elapsedSeconds >= nextActionSeconds) {
-      const change = SETTING_CHANGES[changeIndex]
-
-      // Settings move first, so the purchase and the upgrade below see the new draw
-      if (change !== undefined && engine.elapsedSeconds >= change.atSeconds) {
-        for (const machine of MACHINES) {
-          engine.setSettingSteps(machine, change.settingSteps)
-        }
-
-        changeIndex += 1
-      }
-
       // Ask for a full Stockpile; the engine reduces it to what CoalBudget covers
       engine.buyCoal(engine.stockpile.capacity - engine.stockpile.contents)
 
-      if (engine.elapsedSeconds >= nextUpgradeSeconds) {
+      if (upgrades && engine.elapsedSeconds >= nextUpgradeSeconds) {
         const track = UPGRADE_TRACKS[trackIndex]
 
         // A track the run cannot afford is skipped; the cycle advances either way

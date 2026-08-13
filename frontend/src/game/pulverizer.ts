@@ -9,16 +9,17 @@ import type {StressKind} from '@/game/types'
 export class Pulverizer extends Machine {
   readonly stressKind: StressKind = 'temperature'
   readonly baseConsumption = PULVERIZER.baseConsumption
-  readonly baseStress = PULVERIZER.baseStress
-  readonly stressRange = PULVERIZER.stressRange
-  readonly safeStress = PULVERIZER.safeStress
+  readonly baseCapacity = PULVERIZER.capacity
+  readonly nominalStress = PULVERIZER.nominalStress
+  readonly maxTolerance = PULVERIZER.maxTolerance
+  readonly minTolerance = PULVERIZER.minTolerance
   readonly maxStress = PULVERIZER.maxStress
   readonly wearGrowth = PULVERIZER.wearGrowth
   readonly wearRecovery = PULVERIZER.wearRecovery
   readonly repairSeconds = PULVERIZER.repairSeconds
 
   constructor() {
-    super(PULVERIZER.capacity, PULVERIZER.efficiency)
+    super(PULVERIZER.efficiency, PULVERIZER.safeStress)
   }
 
   /** Pulverized coal produced, kg/s. */

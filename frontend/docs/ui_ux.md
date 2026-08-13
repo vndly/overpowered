@@ -449,7 +449,21 @@ The seven equipment illustrations ship as **PNG line drawings**, one per compone
 
 What the raster form costs, and how each cost is paid:
 
-- **They cannot follow `currentColor`.** The drawings are green on transparent, and green now belongs to the readings ([Color System](#4-color-system)) — a drawing is not one. The card recolours them with a filter rather than re-cutting the art: `brightness(0) invert(1) brightness(var(--fg-level))` flattens the strokes and brings them back up to `--fg`, and the alpha channel keeps the silhouette, so one copy of each drawing serves every state.
+- **They cannot follow `currentColor`.** The drawings are green on transparent, and a drawing is not a reading ([Color System](#4-color-system)). They are painted **through their own alpha as a mask** — `mask: url(...)` over a `background` of the state's colour — rather than re-cut or filtered. A filter chain can flatten a drawing to one colour but cannot be aimed at an arbitrary one, and the mask keeps every anti-aliased edge exactly as supplied, so one copy of each drawing serves every state.
+
+## The drawing carries the state
+
+The illustration is the one part of a card that reads from across the row, so it is what says whether the component is doing its job. Three states, and no more, because a glance answers one question:
+
+| State | Colour | A machine | A store |
+|---|---|---|---|
+| stopped | `--fg` white | produced nothing last step — tripped, starved, or unpowered | nothing passed through it |
+| normal | `--data` green | running | in use |
+| critical | `--alert` red | `Wear` past two thirds, which includes tripped | fill in the band its own bar turns red on |
+
+Wear is checked before stopped, so a tripped machine reads red rather than white: it is stopped *because* of the wear, and that is the fact worth carrying. A machine merely starved of input reads white, which is the honest reading — nothing is wrong with it.
+
+This is the only place in the interface where colour is the primary channel, so it is also the only drawing with an `aria-label`: the state is spelled out in words for anyone who cannot use the colour ([§28](#28-accessibility)). White is the console's own colour rather than a fourth hue, which is what keeps the palette at three — a stopped component is the absence of a reading, not a reading of its own.
 - **They cannot be scaled up.** Each drawing is 56–190 px wide, and the icon band is six character cells (96 px) tall so every one renders at or near its native size. Do not enlarge them.
 
 One component, `components/game/equipment_icon.vue`, picks the drawing for a component id; there is no component per icon.
@@ -548,6 +562,28 @@ The Tank is the one bar on the screen that is green in the middle, because it is
 
 A full `STOCKPILE`, `SILO` or `TANK` is not a win condition and a full `BATTERY` is, so none of them is banded on how full it is. They are banded on how close they are to costing something.
 
+What shipped, second pass: every store gained a `FLOW` row under its bar and a second upgrade beside its first.
+
+```text
+STORED      0.10 / 0.10 t
+████████████████████████████
+
+FLOW                 7.50 kg/s
+────────────────────────────
+         UPGRADES
+[CAPACITY   0.02 MWh   ▼FLOW]
+[FLOW       0.02 MWh    ▼CAP]
+
+▲ 0.10 → 0.15 t
+▼ 7.50 → 6.75 kg/s
+```
+
+`FLOW` is the rate material moves through the store, and on the Silo and Tank it covers what enters and what leaves at once — so a matched chain needs twice its through-rate there ([`specs.md` §Storage flow](specs.md#storage-flow)). It is the one reading on a storage card that is not about how much is held, and it is the only storage track that raises what the plant delivers.
+
+The row turns yellow when that `Flow` is actually holding a machine back. A flow-capped store and a backed-up store read identically on the machine's own stress gauge, and they have different answers — buy `FLOW`, or buy the stage that is out of step — so the store says which, on the card the player is looking at, and the alerts panel says it again in words ([§20](#20-alerts-panel)).
+
+The Battery labels the row `CHARGE` rather than `FLOW`, because only one direction is capped: the Turbine charging in. Discharge to the Pulverizer and Boiler is uncapped, which is what keeps a dead run restartable.
+
 ## Strain markers
 
 The Silo and Tank fill bars carry tick marks for the points at which a neighbouring machine begins to wear:
@@ -566,7 +602,7 @@ STORED  0.7 / 1.0 t           STORED  1.4 / 3.0 t
 
 The marks sit on their own line beneath the bar, with a dim legend line under that naming them: printed inline a mark overwrites a fill character, which is the one thing the bar exists to show. Keep the marks in the same green as the bar outline and thinner than the fill blocks. They are a scale, not an alarm; the alarm is the machine card's stress gauge. Without them the player watches a machine start to wear with nothing on screen explaining why, so they are required, not decorative.
 
-What shipped: no marks and no legend. The Silo and the Tank draw a plain fill bar like every other store, and the thresholds are carried in words by the alerts panel instead — `SILO FULL` and `TANK FULL` at `BacklogThreshold`, `TANK LOW` at `StarveThreshold` ([§20](#20-alerts-panel)). Two lines of scale under every buffer bar cost more of the card than they returned: the mark was a tick the player had to learn, the legend a line of prose under a drawing, and both said what the alert says outright. The trade is that a threshold is now announced at the moment it is crossed rather than seen coming — the fill bar still shows the store filling, and the machine card's stress gauge still shows the strain arriving.
+What shipped: no marks and no legend. The Silo and the Tank draw a plain fill bar like every other store, and the thresholds are carried in words by the alerts panel instead — `SILO FULL` and `TANK FULL` past `BacklogThreshold`, `TANK LOW` below `StarveThreshold` ([§20](#20-alerts-panel)). Two lines of scale under every buffer bar cost more of the card than they returned: the mark was a tick the player had to learn, the legend a line of prose under a drawing, and both said what the alert says outright. The trade is that a threshold is now announced at the moment it is crossed rather than seen coming — the fill bar still shows the store filling, and the machine card's stress gauge still shows the strain arriving.
 
 ---
 
@@ -593,7 +629,22 @@ CAPACITY                 +0.5 t
 [          0.02 MWh           ]
 ```
 
-`Capacity` is the Stockpile's only upgrade: `docs/specs.md` states that the coal price cannot be upgraded, because it is set by the market.
+`Capacity` was the Stockpile's only upgrade. The coal price still cannot be upgraded — `docs/specs.md` sets it from the clock — but the store now carries `FLOW` like every other one, and on the Stockpile that rate is the **delivery** of coal that has been bought.
+
+What shipped: a `FLOW` row above `PRICE`, and no delivery of any kind.
+
+```text
+STORED      0.15 / 0.50 t
+████████░░░░░░░░░░░░░░░░░░░░
+
+FLOW                12.0 kg/s
+
+PRICE               1.00 MWh/t
+```
+
+A purchase lands whole, the instant it is made — the player's own action is never metered out, and there is no `INCOMING` row because there is nothing in transit to report. What the `FLOW` row governs is the draw the *other* way, out to the Pulverizer, which makes the Stockpile the first rate in the chain rather than a delay on the buy button. It reads and bands exactly like the Silo's and the Tank's, so all four storage cards carry the same two rows and mean the same two things by them.
+
+An earlier build metered the coal in at this rate and printed an `INCOMING` row beside it. It was dropped: a delay between pressing BUY and seeing the coal is a delay on the one control the player touches most, and it bought nothing the price curve was not already charging for.
 
 Interaction controls should remain rectangular.
 
@@ -694,9 +745,44 @@ TURBINE    → VIBRATION
 
 `TEMP` shipped as `TEMPERATURE`: it is the name of a reading, the card has the width for it, and the other two are not abbreviated.
 
+## What shipped, second pass
+
+The `SETTING` row is gone, and a third upgrade took its place.
+
+```text
+CAPACITY            4.00 kg/s
+
+OUTPUT              4.00 kg/s
+────────────────────────────
+TEMPERATURE
+████████████░░░░░░░░░░░░░░░░
+
+WEAR
+████░░░░░░░░░░░░░░░░░░░░░░░░
+────────────────────────────
+         UPGRADES
+[CAPACITY   0.02 MWh    ▼TOL]
+[EFFICIENCY 0.05 MWh    ▼CAP]
+[TOLERANCE  0.04 MWh    ▼EFF]
+
+▲ 4.00 → 6.00 kg/s
+▼ 85.0 → 81.0 °C
+```
+
+- **There is no operating control at all.** `docs/specs.md` gives machines no `Setting`: `Output` is `Capacity`, and the only thing that can raise a machine's stress is being out of step with the chain around it. What the card poses is therefore a buying question, and the stress gauge is the readout of an unbalanced plant rather than of a throttle the player pushed. [§13](#13-machine-setting-control) is void.
+- **`TOLERANCE` is the third track.** It raises `SafeStress` — the point the gauge turns red — and it is the only purchase that answers a wearing machine directly, because there is no throttle to back off with.
+- **An upgrade is one key, not a row plus a button.** The label, the price and the penalty marker sit on one line because they are one decision; a label row above a separate button made a machine's three tracks read as six things and cost six lines.
+- **Every key names what it costs.** `▼TOL`, `▼CAP`, `▼EFF` are permanent and drawn in `--caution`, not `--alert`: this is the price of a purchase the player is choosing, not a fault. Every track erodes another ([`specs.md` §Every upgrade has a downside](specs.md#every-upgrade-has-a-downside)), and a stat that dropped with nothing on screen explaining it would read as a bug.
+- **The magnitudes appear only while deciding.** Two lines under the keys show the focused track's before-and-after: `▲` for what it buys, `▼` for what it takes. The lines are always reserved, so nothing moves when they fill in and the seven cards keep their keys on one line across the chain ([§25](#25-spacing-and-density)). Printing six figures at rest would make the densest thing in the interface out of the part of it that is idle most of the time.
+- **The arrows carry what the colours carry.** `▲` and `▼` say gain and cost without green and yellow, because state is never signalled by colour alone ([§28](#28-accessibility)). The key's own `aria-label` reads the whole trade, so the two lines are `aria-hidden` rather than read twice.
+
 ---
 
 # 13. Machine Setting Control
+
+**This section is void.** `docs/specs.md` gives machines no operating control: a machine always runs at its `Capacity`, and a run is the purchases the player makes and their timing, nothing else. Nothing below is built, and the stepper it describes survives only on the Stockpile, where it sets how much coal to buy ([§11](#11-stockpile-card)).
+
+It is kept because the reasoning is still the reasoning behind that one remaining stepper, and because the reason it went is worth recording: a `Setting` that ran to twice the rating made overdriving the default way to get meaningful output from a machine, so `Capacity` read as a suggestion rather than as what the player had bought.
 
 Machine setting uses a simple stepper:
 
@@ -770,6 +856,14 @@ Do not use:
 - multi-color heat maps
 
 The most important requirement is immediate readability.
+
+What shipped, second pass: **the gauge is drawn from `NominalStress`, not from zero.**
+
+A machine has no operating control, so it reads its nominal stress whenever nothing is wrong and never travels below it. Scaled from zero, the fill therefore sits a fixed distance along the bar at rest — and with the tuned constants that distance lands inside the caution band, so all three machines opened yellow on a run `docs/specs.md` calls matched and clean. Scaled from nominal the gauge starts empty and fills only as the chain drifts out of step, which is the one thing it now has to report.
+
+The yellow band is a quarter of that green stretch rather than the interface's usual fixed `CautionMargin`. The three clean bands are not the same width — the Boiler's is 0.147 of its gauge, narrower than the margin itself — so a margin measured against the whole scale put the Boiler in caution at rest and left it there for every run it never strained in. Measured against the band, yellow means the same thing on all three: the last quarter of the room you have.
+
+What that costs is that the green stretch is short: `SafeStress` sits about a fifth of the way along on all three machines. That is not the drawing flattering or exaggerating anything — it is how narrow the clean band actually is once `Strain` is the only term that moves the reading, and a gauge that hid it would be the misleading one.
 
 What shipped: none of the four, but the gauge is banded ([§4](#4-color-system)) on `SafeStress`. The fill is green up to `CautionMargin` short of it, yellow over that last stretch, and red from it rightward — where `Stress` is above `SafeStress` and the machine is taking wear. This is three flat bands and one color across the whole fill, not a ramp: the gauge reads as a bar rather than as a heat map. The outline stays the console's white whatever the fill is doing, because the frame is not a reading.
 
@@ -959,7 +1053,18 @@ HIGH PRESSURE
 HIGH VIBRATION
 ```
 
-`SILO FULL`, `TANK FULL`, and `TANK LOW` fire on the strain thresholds rather than on the store actually reaching an end, because that is the point at which they start costing the player something.
+`SILO FULL`, `TANK FULL`, and `TANK LOW` fire on the strain thresholds rather than on the store actually reaching an end, because that is the point at which they start costing the player something. They fire strictly *past* a threshold rather than on it: `Backlog` and `Starve` are both zero exactly at their thresholds, so an alert raised there would announce a cost the player is not yet paying — and the Tank, which opens half full, would raise one on the first frame of every run.
+
+Four more fire on a store's `Flow` rather than on its fill:
+
+```text
+SILO FLOW LIMIT
+TANK FLOW LIMIT
+CHARGE LIMIT
+DELIVERY LIMIT
+```
+
+These are what a single stress gauge cannot say. A machine held back by a store's `Flow` reads exactly like one grinding into a full store — both are the machine out of step with the chain, and `Strain` takes the worse of the two ([`specs.md` §Buffers and strain](specs.md#buffers-and-strain)) — but the answers differ: buy `FLOW`, or buy the stage that is out of step. The panel is where that distinction is carried, in words, because adding a second gauge to say it would put two bars on a card to report one problem.
 
 For higher-priority warnings, use:
 

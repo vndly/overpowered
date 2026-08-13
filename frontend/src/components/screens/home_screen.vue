@@ -21,7 +21,6 @@
       @step-purchase-amount="stepPurchaseAmount($event)"
       @fill-purchase-amount="fillPurchaseAmount()"
       @buy-coal="buyCoal()"
-      @step-setting="stepSetting"
       @purchase-upgrade="purchaseUpgrade($event)"
     />
     <SecondaryDashboard :view="view" :inert="isDialogOpen" />
@@ -52,7 +51,7 @@ import {useGame} from '@/view/use_game'
 import {isGlowVisible, useOptions} from '@/view/use_options'
 
 const {
-  view, startRun, newRun, stepSetting, stepPurchaseAmount, fillPurchaseAmount, buyCoal, purchaseUpgrade,
+  view, startRun, newRun, stepPurchaseAmount, fillPurchaseAmount, buyCoal, purchaseUpgrade,
 } = useGame()
 const {
   options, toggle,
