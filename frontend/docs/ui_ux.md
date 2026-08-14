@@ -104,11 +104,7 @@ Do **not** replace it with a generic modern monospace font unless CP437 is unava
 Recommended fallback stack:
 
 ```css
-font-family:
-  "PxPlus IBM VGA8",
-  "IBM VGA",
-  "Perfect DOS VGA 437",
-  monospace;
+font-family: "PxPlus IBM VGA8", "IBM VGA", "Perfect DOS VGA 437", monospace;
 ```
 
 Where possible, render the bitmap font without smoothing:
@@ -189,7 +185,7 @@ Recommended design tokens:
   --ui-green: #39ff14;
   --ui-green-dim: rgba(57, 255, 20, 0.55);
   --ui-green-faint: rgba(57, 255, 20, 0.25);
-  --ui-green-disabled: rgba(57, 255, 20, 0.30);
+  --ui-green-disabled: rgba(57, 255, 20, 0.3);
 }
 ```
 
@@ -212,12 +208,12 @@ What shipped: the same two-value monochrome, with the two values split by role r
 ```css
 :root {
   --bg: #000000;
-  --fg: #e8e8e8;                          /* the console */
+  --fg: #e8e8e8; /* the console */
   --fg-dim: rgba(232, 232, 232, 0.55);
   --fg-faint: rgba(232, 232, 232, 0.25);
-  --fg-disabled: rgba(232, 232, 232, 0.30);
+  --fg-disabled: rgba(232, 232, 232, 0.3);
 
-  --data: #39ff14;                        /* the readout */
+  --data: #39ff14; /* the readout */
   --data-dim: rgba(57, 255, 20, 0.55);
 }
 ```
@@ -230,9 +226,9 @@ The bars are the exception, and the only one. Every bar drawn on a card is bande
 
 ```css
 :root {
-  --data: #39ff14;                        /* safe    — the readout's own green */
-  --caution: #ffff55;                     /* caution — CP437's bright yellow */
-  --alert: #ff5555;                       /* danger  — the alerts panel's red */
+  --data: #39ff14; /* safe    — the readout's own green */
+  --caution: #ffff55; /* caution — CP437's bright yellow */
+  --alert: #ff5555; /* danger  — the alerts panel's red */
 }
 ```
 
@@ -246,7 +242,7 @@ The alerts panel keeps a second red, because an urgent alert blinks between blac
 
 ```css
 :root {
-  --alert-inverted: #aa0000;              /* an alert's words on an inverted line */
+  --alert-inverted: #aa0000; /* an alert's words on an inverted line */
 }
 ```
 
@@ -455,15 +451,16 @@ What the raster form costs, and how each cost is paid:
 
 The illustration is the one part of a card that reads from across the row, so it is what says whether the component is doing its job. Three states, and no more, because a glance answers one question:
 
-| State | Colour | A machine | A store |
-|---|---|---|---|
-| stopped | `--fg` white | produced nothing last step — tripped, starved, or unpowered | nothing passed through it |
-| normal | `--data` green | running | in use |
-| critical | `--alert` red | `Wear` past two thirds, which includes tripped | fill in the band its own bar turns red on |
+| State    | Colour         | A machine                                                   | A store                                   |
+| -------- | -------------- | ----------------------------------------------------------- | ----------------------------------------- |
+| stopped  | `--fg` white   | produced nothing last step — tripped, starved, or unpowered | nothing passed through it                 |
+| normal   | `--data` green | running                                                     | in use                                    |
+| critical | `--alert` red  | `Wear` past two thirds, which includes tripped              | fill in the band its own bar turns red on |
 
-Wear is checked before stopped, so a tripped machine reads red rather than white: it is stopped *because* of the wear, and that is the fact worth carrying. A machine merely starved of input reads white, which is the honest reading — nothing is wrong with it.
+Wear is checked before stopped, so a tripped machine reads red rather than white: it is stopped _because_ of the wear, and that is the fact worth carrying. A machine merely starved of input reads white, which is the honest reading — nothing is wrong with it.
 
 This is the only place in the interface where colour is the primary channel, so it is also the only drawing with an `aria-label`: the state is spelled out in words for anyone who cannot use the colour ([§28](#28-accessibility)). White is the console's own colour rather than a fourth hue, which is what keeps the palette at three — a stopped component is the absence of a reading, not a reading of its own.
+
 - **They cannot be scaled up.** Each drawing is 56–190 px wide, and the icon band is six character cells (96 px) tall so every one renders at or near its native size. Do not enlarge them.
 
 One component, `components/game/equipment_icon.vue`, picks the drawing for a component id; there is no component per icon.
@@ -549,12 +546,12 @@ What shipped: the card's full 28 characters on all four stores, so one character
 
 Each of the four is banded ([§4](#4-color-system)) on the end that costs the player something, which is not the same end on all four:
 
-| Store | Green | Yellow | Red | Why |
-|---|---|---|---|---|
-| `STOCKPILE` | above 0.25 | 0.25 down to 0.10 | at or below 0.10 | Running out stops the Pulverizer, and with it the chain |
-| `SILO` | below 0.55 | 0.55 up to 0.70 | at or above `BacklogThreshold` | A backed-up Silo heats the Pulverizer grinding into it |
-| `TANK` | 0.45 to 0.55 | either approach | at or beyond `StarveThreshold` / `BacklogThreshold` | Full strains the Boiler, empty vibrates the Turbine |
-| `BATTERY` | more than 0.15 above the reserve | within 0.15 of it | at or below the reserve | At the floor there is nothing left to spend, and the run cannot restart |
+| Store       | Green                            | Yellow            | Red                                                 | Why                                                                     |
+| ----------- | -------------------------------- | ----------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
+| `STOCKPILE` | above 0.25                       | 0.25 down to 0.10 | at or below 0.10                                    | Running out stops the Pulverizer, and with it the chain                 |
+| `SILO`      | below 0.55                       | 0.55 up to 0.70   | at or above `BacklogThreshold`                      | A backed-up Silo heats the Pulverizer grinding into it                  |
+| `TANK`      | 0.45 to 0.55                     | either approach   | at or beyond `StarveThreshold` / `BacklogThreshold` | Full strains the Boiler, empty vibrates the Turbine                     |
+| `BATTERY`   | more than 0.15 above the reserve | within 0.15 of it | at or below the reserve                             | At the floor there is nothing left to spend, and the run cannot restart |
 
 The Battery's three figures are fills, not MWh: `MinimumReserve` is taken as a fraction of `Capacity` and the bands sit against that, so a bar drawn 1/28 to the character bands on what it is drawing.
 
@@ -642,7 +639,7 @@ FLOW                12.0 kg/s
 PRICE               1.00 MWh/t
 ```
 
-A purchase lands whole, the instant it is made — the player's own action is never metered out, and there is no `INCOMING` row because there is nothing in transit to report. What the `FLOW` row governs is the draw the *other* way, out to the Pulverizer, which makes the Stockpile the first rate in the chain rather than a delay on the buy button. It reads and bands exactly like the Silo's and the Tank's, so all four storage cards carry the same two rows and mean the same two things by them.
+A purchase lands whole, the instant it is made — the player's own action is never metered out, and there is no `INCOMING` row because there is nothing in transit to report. What the `FLOW` row governs is the draw the _other_ way, out to the Pulverizer, which makes the Stockpile the first rate in the chain rather than a delay on the buy button. It reads and bands exactly like the Silo's and the Tank's, so all four storage cards carry the same two rows and mean the same two things by them.
 
 An earlier build metered the coal in at this rate and printed an `INCOMING` row beside it. It was dropped: a delay between pressing BUY and seeing the coal is a delay on the one control the player touches most, and it bought nothing the price curve was not already charging for.
 
@@ -722,7 +719,7 @@ What changed from the layout above it, and nothing else moves:
 
 - Every reading opens on a blank line, the spacing [§8](#8-card-style) gives a card's sections and the Stockpile gives its `PRICE`. Run together they read as a table of figures rather than as separate answers.
 - `OUTPUT` sits under `CAPACITY` rather than at the foot of the card: what the machine is doing is read against what it is rated for, and the pair above the `SETTING` is what the player steps the `SETTING` to change.
-- The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets, and what it buys was never on this card: `specs.md` makes Efficiency divide what a machine *consumes* at a given `SETTING`, not what it produces, so `OUTPUT` — `Capacity × Setting` — does not move when one is bought. Where the gain does show is off the card, and it differs by machine: the Pulverizer's and the Boiler's electricity draw reach the dashboard's `CONSUMPTION` and `NET FLOW`, the Boiler's powder draw shows as a Silo that empties slower, and the Turbine's steam draw as a Tank that does — the Turbine draws no electricity at all, so none of its Efficiency reaches the dashboard. On the card only the figure beside the upgrade moves, which is the cost of dropping the row.
+- The `EFFICIENCY` reading is dropped. It is a coefficient the player never sets, and what it buys was never on this card: `specs.md` makes Efficiency divide what a machine _consumes_ at a given `SETTING`, not what it produces, so `OUTPUT` — `Capacity × Setting` — does not move when one is bought. Where the gain does show is off the card, and it differs by machine: the Pulverizer's and the Boiler's electricity draw reach the dashboard's `CONSUMPTION` and `NET FLOW`, the Boiler's powder draw shows as a Silo that empties slower, and the Turbine's steam draw as a Tank that does — the Turbine draws no electricity at all, so none of its Efficiency reaches the dashboard. On the card only the figure beside the upgrade moves, which is the cost of dropping the row.
 - The card carries two bars and no numbers off them. The `STRESS` row under the gauge is dropped — the gauge already draws where the machine is running between `SafeStress` and `MaxStress`, and a figure beside it is the same fact twice, in a unit the player never sets anything in.
 - `CLEAN TO` goes with it. The gauge is that ceiling drawn instead of written: green fill accrues no wear, and the point the colour turns holds still while the fill moves under strain, which is the drift the row existed to show. What the player does about either is the same — bring the `SETTING` down, or take the wear. (This read off the gauge's `SAFE` marker until the gauge was banded and the marker dropped — see [§14](#14-stress-gauge).)
 - The wear bar sits under its label rather than beside it, and spans the card's 28 characters like the Stockpile's does — one character is 1/28 of a trip on all three machines. The percentage beside it is dropped: the bar is the reading, and no other bar in the interface carries a number of its own. The figure stays in the accessibility tree, because the bar itself is a drawing (`role="img"`).
@@ -824,7 +821,7 @@ What shipped: 28 characters, the card's full width, so one character is 1/28 of 
 
 The `SAFE` and `MAX` labels above the bar are dropped. A bar filling left to right has its ends where every other bar in the interface has them, and naming the two ends spent a line of the card on what the drawing already says.
 
-The `SAFE` marker went with them once the gauge was banded. The band turns red at exactly the character the marker stood on, so the two were drawing the same line twice — and the colour draws it better: the marker said *there is a line here*, while the colour says *which side of it you are on*, which is the question the player is actually asking. A gauge with both read as a bar with a scratch in it. So the gauge is now an unbroken run of blocks that changes colour where the machine starts taking wear, and it is the one bar in the interface where the band replaced a mark rather than being added to a plain one.
+The `SAFE` marker went with them once the gauge was banded. The band turns red at exactly the character the marker stood on, so the two were drawing the same line twice — and the colour draws it better: the marker said _there is a line here_, while the colour says _which side of it you are on_, which is the question the player is actually asking. A gauge with both read as a bar with a scratch in it. So the gauge is now an unbroken run of blocks that changes colour where the machine starts taking wear, and it is the one bar in the interface where the band replaced a mark rather than being added to a plain one.
 
 What that costs is a fixed reference: the marker held still while the fill moved under strain, and a player could watch the gap close. The colour turns at the same point but shows no distance to it — the yellow band is what is left of that warning, and it opens `CautionMargin` short of the line. The wording is still exact in the alerts panel, which prints `HIGH TEMPERATURE`, `HIGH PRESSURE` or `HIGH VIBRATION` the moment the fill crosses ([§20](#20-alerts-panel)), so the crossing is never carried by colour alone.
 
@@ -1053,7 +1050,7 @@ HIGH PRESSURE
 HIGH VIBRATION
 ```
 
-`SILO FULL`, `TANK FULL`, and `TANK LOW` fire on the strain thresholds rather than on the store actually reaching an end, because that is the point at which they start costing the player something. They fire strictly *past* a threshold rather than on it: `Backlog` and `Starve` are both zero exactly at their thresholds, so an alert raised there would announce a cost the player is not yet paying — and the Tank, which opens half full, would raise one on the first frame of every run.
+`SILO FULL`, `TANK FULL`, and `TANK LOW` fire on the strain thresholds rather than on the store actually reaching an end, because that is the point at which they start costing the player something. They fire strictly _past_ a threshold rather than on it: `Backlog` and `Starve` are both zero exactly at their thresholds, so an alert raised there would announce a cost the player is not yet paying — and the Tank, which opens half full, would raise one on the first frame of every run.
 
 Four more fire on a store's `Flow` rather than on its fill:
 
@@ -1226,14 +1223,13 @@ Example scanline overlay:
 ```css
 .crt-overlay {
   pointer-events: none;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.10),
-      rgba(0, 0, 0, 0.10) 1px,
-      transparent 1px,
-      transparent 3px
-    );
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 ```
 
@@ -1466,11 +1462,11 @@ Example:
 :root {
   --bg: #000;
   --fg: #e8e8e8;
-  --fg-dim: rgba(232,232,232,.55);
-  --fg-faint: rgba(232,232,232,.25);
+  --fg-dim: rgba(232, 232, 232, 0.55);
+  --fg-faint: rgba(232, 232, 232, 0.25);
 
   --data: #39ff14;
-  --data-dim: rgba(57,255,20,.55);
+  --data-dim: rgba(57, 255, 20, 0.55);
 
   --border: 1px solid var(--fg);
 
