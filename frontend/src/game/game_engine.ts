@@ -45,6 +45,7 @@ export class GameEngine {
   private runOutcome: RunOutcome // Where the run stands
   private strains: Record<'pulverizer' | 'boiler' | 'turbine', Strain>
   private ratios: Record<'stockpile' | 'silo' | 'tank' | 'battery', number>
+  private demanded: Record<'stockpile' | 'silo' | 'tank' | 'battery', number>
   private running: Record<MachineId, number>
 
   constructor(seed: number) {
@@ -73,6 +74,14 @@ export class GameEngine {
       tank: 1,
       battery: 1,
     }
+    // Nothing has been asked of any store yet, which is the one reading that is not 1:
+    // a store nothing is drawing on is not near its cap
+    this.demanded = {
+      stockpile: 0,
+      silo: 0,
+      tank: 0,
+      battery: 0,
+    }
     // Nothing has run yet, and a card that has not started is not working
     this.running = {
       pulverizer: 0,
@@ -97,6 +106,15 @@ export class GameEngine {
    */
   get flowRatios(): Readonly<Record<'stockpile' | 'silo' | 'tank' | 'battery', number>> {
     return this.ratios
+  }
+
+  /**
+   * The throughput each store was asked to move last step, in its own unit per second —
+   * the figure flowRatios is the share of. It is the only thing a store's Flow can be
+   * read against: nothing bounds the Flow itself, since every upgrade multiplies it again.
+   */
+  get flowDemands(): Readonly<Record<'stockpile' | 'silo' | 'tank' | 'battery', number>> {
+    return this.demanded
   }
 
   /** Run time consumed, s. */
@@ -202,11 +220,20 @@ export class GameEngine {
     // Flow. A contended store divides one Flow between what enters and what leaves, so
     // both sides are scaled by the same share; the Stockpile and Battery cap one
     // direction only. All read start-of-step state, so the split does not depend on the
-    // order the machines are evaluated in.
-    const supplyFlow = this.stockpile.flowRatio(rawDraw)
-    const siloFlow = this.silo.flowRatio(powder + fuelDraw)
-    const tankFlow = this.tank.flowRatio(steam + steamDraw)
-    const batteryFlow = this.battery.flowRatio(power)
+    // order the machines are evaluated in. What was asked of each store is kept rather
+    // than discarded, so a card can draw how near its Flow is to being the thing holding
+    // the chain back; both readings then come from the one set of figures.
+    this.demanded = {
+      stockpile: rawDraw,
+      silo: powder + fuelDraw,
+      tank: steam + steamDraw,
+      battery: power,
+    }
+
+    const supplyFlow = this.stockpile.flowRatio(this.demanded.stockpile)
+    const siloFlow = this.silo.flowRatio(this.demanded.silo)
+    const tankFlow = this.tank.flowRatio(this.demanded.tank)
+    const batteryFlow = this.battery.flowRatio(this.demanded.battery)
 
     this.ratios = {
       stockpile: supplyFlow,

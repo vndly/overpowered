@@ -232,9 +232,9 @@ The bars are the exception, and the only one. Every bar drawn on a card is bande
 }
 ```
 
-This overrides the recommendation above, which asked for no color-coded state and no heat map, and it spends the yellow that section held back. What it does not spend is the meaning of red: four of the six bars go red on a threshold the alerts panel announces in the same breath — `SILO FULL`, `TANK LOW`, `TANK FULL`, `LOW BATTERY`, `HIGH TEMPERATURE`, `HIGH PRESSURE`, `HIGH VIBRATION` — so a red bar and a red alert line are the same news in two forms rather than two different reds. The Stockpile and the wear bars are the two that redden ahead of their alert rather than with it, because by the time `STOCKPILE EMPTY` prints or a machine trips, the decision that caused it was taken some seconds ago. There is no heat map — a bar takes one color across its whole width, never a gradient, and there are three bands rather than a ramp.
+This overrides the recommendation above, which asked for no color-coded state and no heat map, and it spends the yellow that section held back. What it does not spend is the meaning of red: five of the seven bars go red on a threshold the alerts panel announces in the same breath — `SILO FULL`, `TANK LOW`, `TANK FULL`, `LOW BATTERY`, `HIGH TEMPERATURE`, `HIGH PRESSURE`, `HIGH VIBRATION`, and the four `FLOW LIMIT` lines — so a red bar and a red alert line are the same news in two forms rather than two different reds. The Stockpile and the wear bars are the two that redden ahead of their alert rather than with it, because by the time `STOCKPILE EMPTY` prints or a machine trips, the decision that caused it was taken some seconds ago. There is no heat map — a bar takes one color across its whole width, never a gradient, and there are three bands rather than a ramp.
 
-Which end of a bar is punished is a rule of the game, not a property of the bar, so each one is banded on its own thresholds and the view model decides ([§10](#10-storage-cards), [§12](#12-machine-cards), [§14](#14-stress-gauge)). Green means the same thing on all six: this is fine. `CautionMargin` is 0.15 of full scale, and the five bars with a threshold to sit it off all take it, so yellow means the same distance from trouble on all five. The wear bar has no such threshold and is split in equal thirds instead ([§12](#12-machine-cards)).
+Which end of a bar is punished is a rule of the game, not a property of the bar, so each one is banded on its own thresholds and the view model decides ([§10](#10-storage-cards), [§12](#12-machine-cards), [§14](#14-stress-gauge)). Green means the same thing on all seven: this is fine. `CautionMargin` is 0.15 of full scale, and the five bars with a threshold to sit it off all take it, so yellow means the same distance from trouble on all five. The wear bar has no such threshold and is split in equal thirds instead ([§12](#12-machine-cards)), and the flow bars run so close to theirs by design that they take a tighter margin of their own ([§10](#10-storage-cards)).
 
 Color is never the only carrier. Every banded bar has its figure written out beside it or behind it as an `aria-label`, and every threshold a band marks is announced in words by the alerts panel ([§28](#28-accessibility)).
 
@@ -562,10 +562,11 @@ A full `STOCKPILE`, `SILO` or `TANK` is not a win condition and a full `BATTERY`
 What shipped, second pass: every store gained a `FLOW` row under its bar and a second upgrade beside its first.
 
 ```text
-STORED      0.10 / 0.10 t
-████████████████████████████
+STORED      0.07 / 0.10 t
+████████████████████░░░░░░░░
 
-FLOW                 7.50 kg/s
+FLOW      7.00 / 7.50 kg/s
+██████████████████████████░░
 ────────────────────────────
          UPGRADES
 [CAPACITY   0.02 MWh   ▼FLOW]
@@ -577,7 +578,11 @@ FLOW                 7.50 kg/s
 
 `FLOW` is the rate material moves through the store, and on the Silo and Tank it covers what enters and what leaves at once — so a matched chain needs twice its through-rate there ([`specs.md` §Storage flow](specs.md#storage-flow)). It is the one reading on a storage card that is not about how much is held, and it is the only storage track that raises what the plant delivers.
 
-The row turns yellow when that `Flow` is actually holding a machine back. A flow-capped store and a backed-up store read identically on the machine's own stress gauge, and they have different answers — buy `FLOW`, or buy the stage that is out of step — so the store says which, on the card the player is looking at, and the alerts panel says it again in words ([§20](#20-alerts-panel)).
+What shipped, third pass: the row is written and drawn exactly as `STORED` is — what the chain is asking of the store against what the store can pass, and a bar of that same fraction. Nothing bounds the `Flow` itself, since every upgrade multiplies it again, so what is being asked of it is the only thing it can be read against. The two bars are different quantities, an amount held and a rate passed, and each row says which; on the Battery they even run opposite ways, since a full `STORED` is the run won while a full `CHARGE` is generation thrown away. Demand past the cap pegs the bar rather than running off the card, the way a machine's stress gauge pegs, and the row keeps printing how far past it went.
+
+The row and its bar turn red when that `Flow` is actually holding a machine back, and yellow within 5% of it. A flow-capped store and a backed-up store read identically on the machine's own stress gauge, and they have different answers — buy `FLOW`, or buy the stage that is out of step — so the store says which, on the card the player is looking at, and the alerts panel says it again in words ([§20](#20-alerts-panel)) at the red point only.
+
+The margin is 5% rather than the `CautionMargin` of [§4](#4-color-system) because a store's `Flow` sits deliberately close to what passes through it: the opening leaves the Silo 1.07× its throughput and the Tank 1.14×, so the interface-wide 15% would open every run with two cards already yellow and leave them there.
 
 The Battery labels the row `CHARGE` rather than `FLOW`, because only one direction is capped: the Turbine charging in. Discharge to the Pulverizer and Boiler is uncapped, which is what keeps a dead run restartable.
 
@@ -1065,7 +1070,7 @@ CHARGE LIMIT
 
 One per capped store, each naming the store rather than the machine, because the store is what the player buys to fix it. `CHARGE LIMIT` is the Battery's, named for the one direction it caps.
 
-These are what a single stress gauge cannot say. A machine held back by a store's `Flow` reads exactly like one grinding into a full store — both are the machine out of step with the chain, and `Strain` takes the worse of the two ([`specs.md` §Buffers and strain](specs.md#buffers-and-strain)) — but the answers differ: buy `FLOW`, or buy the stage that is out of step. The panel is where that distinction is carried, in words, because adding a second gauge to say it would put two bars on a card to report one problem.
+These are what a single stress gauge cannot say. A machine held back by a store's `Flow` reads exactly like one grinding into a full store — both are the machine out of step with the chain, and `Strain` takes the worse of the two ([`specs.md` §Buffers and strain](specs.md#buffers-and-strain)) — but the answers differ: buy `FLOW`, or buy the stage that is out of step. The panel carries that distinction in words, and the store's own `FLOW` bar carries it as a figure ([§10](#10-storage-cards)), reddening on the line these lines print on. The bar is not the machine's problem drawn twice: it is the store's, which is the thing the player buys, and it is the only one of the two that says anything before the limit is reached.
 
 For higher-priority warnings, use:
 

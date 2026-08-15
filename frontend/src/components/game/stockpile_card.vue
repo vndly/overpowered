@@ -4,19 +4,17 @@
 
      A purchase lands whole, the instant it is made. What the store's FLOW governs is the
      other direction: how fast coal can leave again to feed the Pulverizer, which makes it
-     the first rate in the chain rather than a delay on the player's own action. -->
+     the first rate in the chain rather than a delay on the player's own action — so the
+     row reads what the Pulverizer is asking for against what the store can pass, and its
+     bar draws that, exactly as STORED and its own bar do. -->
 <template>
   <TerminalPanel :title="view.title" :width-cells="CARD_CELLS">
     <EquipmentIcon component="stockpile" :status="view.status" />
     <SectionDivider spaced />
     <ValueRow label="STORED" :value="view.storedText" />
-    <FillBar :fraction="view.fraction" :level="view.level" :cells="STORED_BAR_CELLS" />
-    <ValueRow
-      class="stockpile-card__reading"
-      :class="{'stockpile-card__flow--limited': view.flowLimited}"
-      label="FLOW"
-      :value="view.flowText"
-    />
+    <FillBar :fraction="view.fraction" :level="view.level" :cells="BAR_CELLS" />
+    <ValueRow class="stockpile-card__reading" label="FLOW" :value="view.flowText" :level="view.flowLevel" />
+    <FillBar :fraction="view.flowFraction" :level="view.flowLevel" :cells="BAR_CELLS" />
     <ValueRow class="stockpile-card__reading" label="PRICE" :value="view.priceText" />
     <div class="stockpile-card__purchase">
       <NumericStepper
@@ -55,7 +53,7 @@ import ValueRow from '@/components/terminal/value_row.vue'
 import type {StockpileView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const STORED_BAR_CELLS = CARD_CELLS // The bar spans the card: one cell per 1/28 of Capacity
+const BAR_CELLS = CARD_CELLS // Both bars span the card: one cell per 1/28 of the row above
 const MAX_BUTTON_CELLS = 3 // The label's width; the button adds its own padding
 
 const props = defineProps<{
@@ -104,11 +102,5 @@ function onPress(index: number): void {
 
 .stockpile-card__amount {
     flex: 1;
-}
-
-/* A Stockpile that cannot feed the Pulverizer fast enough throttles the whole chain from
-   its first stage, so the figure cautions rather than waiting for the alerts panel */
-.stockpile-card__flow--limited :deep(.value-row__value) {
-    color: var(--caution);
 }
 </style>

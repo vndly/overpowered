@@ -42,6 +42,16 @@ const DEPLETED_THRESHOLD = 0.1 // Stockpile fill below which the chain is about 
  */
 const STRESS_CAUTION_SHARE = 0.25
 
+/**
+ * How near its cap a store's Flow comes before its bar cautions. Much tighter than
+ * CAUTION_MARGIN, because a store's Flow is deliberately close to what passes through it
+ * from the first second of a run: the opening leaves the Silo 1.07× the throughput it
+ * carries and the Tank 1.14× (verify_screen.vue), so a margin of 0.15 would open every
+ * run with two cards already yellow and leave them there, which is the trap the machine
+ * gauges avoid with STRESS_CAUTION_SHARE.
+ */
+const FLOW_CAUTION_MARGIN = 0.05
+
 // Wear has no threshold to sit a margin off — it runs from clean to tripped — so its bar
 // is split in equal thirds rather than banded on one, and the bar reads as what fraction
 // of a trip has been used up
@@ -107,8 +117,9 @@ export interface StorageViewBase {
   storedText: string // Contents against Capacity, with its unit
   fraction: number // What the fill bar draws; the STORED row carries the exact figure
   level: ReadingLevel // The colour that bar takes; each store is banded on its own ends
-  flowText: string // Flow with its unit
-  flowLimited: boolean // Whether that Flow is currently holding a machine back
+  flowText: string // What the store was asked to move against its Flow, with its unit
+  flowFraction: number // What the flow bar draws; the FLOW row carries the exact figures
+  flowLevel: ReadingLevel // The colour that row and bar take, banded on nearing the cap
   capacityUpgrade: UpgradeRowView
   flowUpgrade: UpgradeRowView
 }
@@ -320,7 +331,7 @@ function tankLevel(tank: Storage): ReadingLevel {
  * @param title - The card's title
  * @param storage - The store to read
  * @param level - Where its fill stands against the ends that punish it
- * @param flowRatio - Share of its request the store's Flow carried last step
+ * @param flowDemand - Throughput the store was asked for last step, in its flow unit
  * @param moving - Whether anything passed through it last step
  * @param unit - Unit its Contents and Capacity are quoted in
  * @param flowUnit - Unit its Flow is quoted in
@@ -334,7 +345,7 @@ function buildStorageView(
   title: string,
   storage: Storage,
   level: ReadingLevel,
-  flowRatio: number,
+  flowDemand: number,
   moving: boolean,
   unit: string,
   flowUnit: string,
@@ -344,6 +355,10 @@ function buildStorageView(
 ): StorageViewBase {
   const capacityCost = storage.capacityUpgrade.cost
   const flowCost = storage.flowUpgrade.cost
+  // The share of its Flow the store is being asked for. A store asked for more than it
+  // can pass is at its cap and no further, so the bar pegs there rather than running off
+  // the card — what is past the end is the strain the machine's own gauge is reading.
+  const flowLoad = flowDemand <= 0 ? 0 : clamp(flowDemand / storage.flow, 0, 1)
 
   return {
     title: title,
@@ -351,8 +366,11 @@ function buildStorageView(
     storedText: `${format(storage.contents)} / ${format(storage.capacity)} ${unit}`,
     fraction: clamp(storage.fill, 0, 1),
     level: level,
-    flowText: `${formatFlow(storage.flow)} ${flowUnit}`,
-    flowLimited: flowRatio < 1,
+    flowText: `${formatFlow(flowDemand)} / ${formatFlow(storage.flow)} ${flowUnit}`,
+    flowFraction: flowLoad,
+    // Danger is the cap actually biting, which is the point the alerts panel speaks at;
+    // caution is the approach to it, which nothing said before this bar drew it
+    flowLevel: bandRising(flowLoad, 1 - FLOW_CAUTION_MARGIN, 1),
     capacityUpgrade: {
       label: 'CAPACITY',
       costText: `${formatEnergy(capacityCost)} MWh`,
@@ -376,7 +394,7 @@ function buildStorageView(
  * @param title - The card's title
  * @param storage - The buffer to read
  * @param level - Where its fill stands against the ends that punish it
- * @param flowRatio - Share of its request the store's Flow carried last step
+ * @param flowDemand - Throughput the store was asked for last step, kg/s
  * @param moving - Whether anything passed through it last step
  * @param spendableEnergy - MWh available for upgrades
  * @returns The Silo or Tank card
@@ -385,11 +403,11 @@ function buildBufferView(
   title: string,
   storage: Storage,
   level: ReadingLevel,
-  flowRatio: number,
+  flowDemand: number,
   moving: boolean,
   spendableEnergy: number,
 ): BufferView {
-  return buildStorageView(title, storage, level, flowRatio, moving, 't', 'kg/s', formatMass, formatRate, spendableEnergy)
+  return buildStorageView(title, storage, level, flowDemand, moving, 't', 'kg/s', formatMass, formatRate, spendableEnergy)
 }
 
 /**
@@ -404,7 +422,7 @@ function buildStockpileView(engine: GameEngine, purchaseKilograms: number): Stoc
   const level = bandFalling(engine.stockpile.fill, DEPLETED_THRESHOLD + CAUTION_MARGIN, DEPLETED_THRESHOLD)
 
   return {
-    ...buildStorageView('STOCKPILE', engine.stockpile, level, engine.flowRatios.stockpile,
+    ...buildStorageView('STOCKPILE', engine.stockpile, level, engine.flowDemands.stockpile,
       engine.runRatios.pulverizer > 0, 't', 'kg/s', formatMass, formatRate,
       engine.spendableEnergy),
     priceText: `${formatPrice(engine.market.price)} MWh/t`,
@@ -426,7 +444,7 @@ function buildBatteryView(engine: GameEngine): BatteryView {
   const reserveFraction = clamp(engine.minimumReserve / engine.battery.capacity, 0, 1)
   const level = bandFalling(engine.battery.fill, reserveFraction + CAUTION_MARGIN, reserveFraction)
 
-  return buildStorageView('BATTERY', engine.battery, level, engine.flowRatios.battery,
+  return buildStorageView('BATTERY', engine.battery, level, engine.flowDemands.battery,
     engine.runRatios.turbine > 0, 'MWh', 'MW', formatEnergy, formatPower, engine.spendableEnergy)
 }
 
@@ -633,7 +651,7 @@ function buildAlerts(engine: GameEngine): AlertView[] {
  * @returns A new view model; the previous one is never mutated
  */
 export function buildGameView(engine: GameEngine, purchaseKilograms: number, bestResult: number | null): GameView {
-  const flow = engine.flowRatios
+  const demand = engine.flowDemands
   const run = engine.runRatios
 
   return {
@@ -648,9 +666,9 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
     peakStoredText: `${formatEnergy(engine.ledger.peakContents)} MWh`,
     bestResultText: bestResult === null ? null : `${formatEnergy(bestResult)} MWh`,
     stockpile: buildStockpileView(engine, purchaseKilograms),
-    silo: buildBufferView('SILO', engine.silo, siloLevel(engine.silo), flow.silo,
+    silo: buildBufferView('SILO', engine.silo, siloLevel(engine.silo), demand.silo,
       run.pulverizer > 0 || run.boiler > 0, engine.spendableEnergy),
-    tank: buildBufferView('TANK', engine.tank, tankLevel(engine.tank), flow.tank,
+    tank: buildBufferView('TANK', engine.tank, tankLevel(engine.tank), demand.tank,
       run.boiler > 0 || run.turbine > 0, engine.spendableEnergy),
     battery: buildBatteryView(engine),
     pulverizer: buildMachineView(PULVERIZER_SPEC, engine.pulverizer, engine.pulverizerStrain,

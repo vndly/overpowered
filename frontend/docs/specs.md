@@ -556,7 +556,7 @@ Every card carries the same shape: what the component is doing, then what can be
 │ Silo / Tank / Battery                     │
 ├───────────────────────────────────────────┤
 │ Stored       █░░░░░░░░░ {value} ({fill}%) │
-│ Flow         {value}                      │
+│ Flow         █░░░░░░░░░ {asked} / {value} │
 ├───────────────────────────────────────────┤
 │ Capacity     [{cost} MWh]           ▼FLOW │
 │ Flow         [{cost} MWh]            ▼CAP │
