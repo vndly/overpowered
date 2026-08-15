@@ -24,7 +24,7 @@ const CLEAR: Strain = {
  * It owns the plant, advances it one fixed step at a time, and applies player actions.
  * It imports nothing from Vue — the view model reads it, and no component ever holds it.
  *
- * Machines have no operating control. Every machine runs at its Capacity, so the only
+ * Machines have no operating control. Every machine runs at its Flow, so the only
  * player actions are buying coal and buying upgrades, and the only thing that can make a
  * machine wear is being out of step with the chain around it.
  */
@@ -440,20 +440,20 @@ export class GameEngine {
    */
   private trackFor(track: UpgradeTrackId): UpgradeTrack {
     switch (track) {
-      case 'pulverizer_capacity':
-        return this.pulverizer.capacityUpgrade
+      case 'pulverizer_flow':
+        return this.pulverizer.flowUpgrade
       case 'pulverizer_efficiency':
         return this.pulverizer.efficiencyUpgrade
       case 'pulverizer_tolerance':
         return this.pulverizer.toleranceUpgrade
-      case 'boiler_capacity':
-        return this.boiler.capacityUpgrade
+      case 'boiler_flow':
+        return this.boiler.flowUpgrade
       case 'boiler_efficiency':
         return this.boiler.efficiencyUpgrade
       case 'boiler_tolerance':
         return this.boiler.toleranceUpgrade
-      case 'turbine_capacity':
-        return this.turbine.capacityUpgrade
+      case 'turbine_flow':
+        return this.turbine.flowUpgrade
       case 'turbine_efficiency':
         return this.turbine.efficiencyUpgrade
       case 'turbine_tolerance':
@@ -483,8 +483,8 @@ export class GameEngine {
    */
   private applyUpgrade(track: UpgradeTrackId): void {
     switch (track) {
-      case 'pulverizer_capacity':
-        this.pulverizer.upgradeCapacity()
+      case 'pulverizer_flow':
+        this.pulverizer.upgradeFlow()
         break
       case 'pulverizer_efficiency':
         this.pulverizer.upgradeEfficiency()
@@ -492,8 +492,8 @@ export class GameEngine {
       case 'pulverizer_tolerance':
         this.pulverizer.upgradeTolerance()
         break
-      case 'boiler_capacity':
-        this.boiler.upgradeCapacity()
+      case 'boiler_flow':
+        this.boiler.upgradeFlow()
         break
       case 'boiler_efficiency':
         this.boiler.upgradeEfficiency()
@@ -501,8 +501,8 @@ export class GameEngine {
       case 'boiler_tolerance':
         this.boiler.upgradeTolerance()
         break
-      case 'turbine_capacity':
-        this.turbine.upgradeCapacity()
+      case 'turbine_flow':
+        this.turbine.upgradeFlow()
         break
       case 'turbine_efficiency':
         this.turbine.upgradeEfficiency()

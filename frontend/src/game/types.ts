@@ -11,7 +11,7 @@ export type StorageId = 'stockpile' | 'silo' | 'tank' | 'battery'
 
 /** Every upgrade track that can be purchased — specs.md §Upgrade costs. */
 export type UpgradeTrackId =
-  | `${MachineId}_capacity`
+  | `${MachineId}_flow`
   | `${MachineId}_efficiency`
   | `${MachineId}_tolerance`
   | `${StorageId}_capacity`

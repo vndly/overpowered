@@ -1,4 +1,4 @@
-import {CAPACITY_GROWTH, FACTOR_FLOOR, FLOW_GROWTH, STORAGE_CAPACITY_UPGRADE, STORAGE_FLOW_UPGRADE, STORE_PENALTY} from '@/game/constants'
+import {FACTOR_FLOOR, STORAGE_CAPACITY_GROWTH, STORAGE_CAPACITY_UPGRADE, STORAGE_FLOW_GROWTH, STORAGE_FLOW_UPGRADE, STORE_PENALTY} from '@/game/constants'
 import {gapDown, UpgradeTrack} from '@/game/upgrade_track'
 
 /**
@@ -47,12 +47,12 @@ export class Storage {
 
   /** Maximum that can be stored. */
   get capacity(): number {
-    return this.baseCapacity * CAPACITY_GROWTH ** this.capacityLevel * this.capacityFactor
+    return this.baseCapacity * STORAGE_CAPACITY_GROWTH ** this.capacityLevel * this.capacityFactor
   }
 
   /** Rate material or energy can move through the store, in its own unit per second. */
   get flow(): number {
-    return this.baseFlow * FLOW_GROWTH ** this.flowLevel * this.flowFactor
+    return this.baseFlow * STORAGE_FLOW_GROWTH ** this.flowLevel * this.flowFactor
   }
 
   /** Fill fraction, the input every fill-strain rule reads — specs.md §Buffers and strain. */
@@ -91,23 +91,23 @@ export class Storage {
 
   /** Capacity the next capacity upgrade would add; it grows with every level bought. */
   get capacityGain(): number {
-    return this.capacity * (CAPACITY_GROWTH - 1)
+    return this.capacity * (STORAGE_CAPACITY_GROWTH - 1)
   }
 
   /** Flow the next flow upgrade would add; it grows with every level bought. */
   get flowGain(): number {
-    return this.flow * (FLOW_GROWTH - 1)
+    return this.flow * (STORAGE_FLOW_GROWTH - 1)
   }
 
   /** Flow after the next capacity upgrade, which erodes it to pay for itself. */
   get nextFlowAfterCapacity(): number {
-    return this.baseFlow * FLOW_GROWTH ** this.flowLevel
+    return this.baseFlow * STORAGE_FLOW_GROWTH ** this.flowLevel
       * gapDown(this.flowFactor, FACTOR_FLOOR, STORE_PENALTY)
   }
 
   /** Capacity after the next flow upgrade, which erodes it to pay for itself. */
   get nextCapacityAfterFlow(): number {
-    return this.baseCapacity * CAPACITY_GROWTH ** this.capacityLevel
+    return this.baseCapacity * STORAGE_CAPACITY_GROWTH ** this.capacityLevel
       * gapDown(this.capacityFactor, FACTOR_FLOOR, STORE_PENALTY)
   }
 

@@ -30,7 +30,7 @@ The second is that most policies do not converge. Because no single purchase rai
 
 The engine itself is not in question. A plant that is never upgraded produces the same energy at every step size to within 0.04% — `verify.py` asserts exactly that, and reports the purchase-timing spread separately without asserting on it. What is in question is whether a target measured off a chaotic economy means what a target is supposed to mean.
 
-No earlier value is comparable. Every figure before this one was measured against a plant whose machines carried a player-controlled `Setting`, where a single capacity upgrade could be absorbed by moving a throttle. With the throttle gone, raising the chain's rate takes a level on each of seven stages rather than one purchase — see [The round](#the-round) — and the whole cost structure was re-derived around that.
+No earlier value is comparable. Every figure before this one was measured against a plant whose machines carried a player-controlled `Setting`, where a single flow upgrade could be absorbed by moving a throttle. With the throttle gone, raising the chain's rate takes a level on each of seven stages rather than one purchase — see [The round](#the-round) — and the whole cost structure was re-derived around that.
 
 One rule survives every retune and is worth stating on its own: **a measurement grid must bracket its winner on every axis, not end at it.** Extend an axis; never slide it.
 
@@ -38,7 +38,7 @@ One rule survives every retune and is worth stating on its own: **a measurement 
 
 A run is lost immediately, without waiting for the timer, when the Stockpile, Silo, Tank, and Battery are all empty at the same time. In that state nothing can produce and nothing can be bought, so the run cannot be recovered.
 
-Machines have no throttle, so this is reached by building rather than by operating: the Pulverizer and Boiler draw electricity in proportion to their `Capacity`, and a plant whose front two stages are built far past what the Turbine can convert consumes more than it generates. Buying capacity out of order is what drains the Battery, and it does so quietly, because a bigger plant looks like progress. Ending the run at once states the outcome plainly instead of leaving the player watching a dead plant until the clock expires.
+Machines have no throttle, so this is reached by building rather than by operating: the Pulverizer and Boiler draw electricity in proportion to their `Flow`, and a plant whose front two stages are built far past what the Turbine can convert consumes more than it generates. Buying flow out of order is what drains the Battery, and it does so quietly, because a bigger plant looks like progress. Ending the run at once states the outcome plainly instead of leaving the player watching a dead plant until the clock expires.
 
 ## Production flow
 
@@ -48,7 +48,7 @@ Stockpile -> Pulverizer -> Silo -> Boiler -> Tank -> Turbine -> Battery
 
 The Stockpile, Silo, Tank, and Battery are storage components. Their stored amounts are clamped between zero and their current capacity. Output produced beyond the available storage capacity is silently discarded.
 
-**Machines have no operating control.** A machine always runs, and its `Output` is its `Capacity`. How far it actually runs is set by what reaches it, as described under [Simulation step](#simulation-step):
+**Machines have no operating control.** A machine always runs, and its `Output` is its `Flow` — the rate it is rated for. A machine holds nothing, so it has no `Capacity` at all: that word belongs to the stores, where it is an amount held. How far it actually runs is set by what reaches it, as described under [Simulation step](#simulation-step):
 
 - When a machine's output storage is full, the machine continues running without pausing. It continues consuming its normal inputs and electricity, and any output that cannot be stored is silently discarded.
 - A machine only consumes resources while it is running. The rates in the component tables assume that input, storage flow, and electricity are available.
@@ -69,7 +69,7 @@ Every store has a `Flow`: the rate at which material or energy can move through 
 | Tank      | what enters + leaves    |    yes    |
 | Battery   | charge from the Turbine |    no     |
 
-The Silo and Tank are **contended**: one `Flow` is divided between what enters and what leaves, so a matched chain needs a `Flow` of at least twice its through-rate at each of them. This is what makes `Flow` a standing constraint rather than a threshold crossed once — every machine capacity upgrade immediately makes the stores either side of it inadequate.
+The Silo and Tank are **contended**: one `Flow` is divided between what enters and what leaves, so a matched chain needs a `Flow` of at least twice its through-rate at each of them. This is what makes a store's `Flow` a standing constraint rather than a threshold crossed once — every machine flow upgrade immediately makes the stores either side of it inadequate.
 
 The two endpoints cap one direction only, and neither can block a restart. **A coal purchase lands whole and at once**, so nothing rate-limits what enters a Stockpile — the player's own action is never metered out. The Battery's discharge to the Pulverizer and Boiler is likewise uncapped, so the energy to run a restart is always available at whatever rate the machines want it.
 
@@ -143,7 +143,7 @@ Spending is floored twice, because upgrades and coal need different protections.
 
 **Machines** draw from the full `Contents` and may take it below both floors. The floors restrict discrete spending only; they are not brownout thresholds.
 
-Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. Both are derived from current consumption once the plant is large, so they scale with every capacity upgrade together rather than drifting apart.
+Both floors are denominated in energy rather than coal, so the rising coal price does not break them — it only means the same reserve buys less coal, and a late restart is tighter than an early one. Both are derived from current consumption once the plant is large, so they scale with every flow upgrade together rather than drifting apart.
 
 The floors cannot cover every case, because the player can always build a plant that consumes more than it generates. That is handled as a loss condition rather than a spending rule; see [Stalling](#stalling).
 
@@ -161,7 +161,7 @@ There are seventeen tracks: three on each machine and two on each store.
 
 | Upgrade track                             | BaseCost (MWh) | CostGrowth |
 | ----------------------------------------- | -------------: | ---------: |
-| Capacity (Pulverizer, Boiler, Turbine)    |           0.02 |       1.32 |
+| Flow (Pulverizer, Boiler, Turbine)        |           0.02 |       1.32 |
 | Efficiency (Pulverizer, Boiler, Turbine)  |           0.05 |       1.30 |
 | Tolerance (Pulverizer, Boiler, Turbine)   |           0.04 |       1.35 |
 | Capacity (Stockpile, Silo, Tank, Battery) |           0.02 |       1.32 |
@@ -169,14 +169,14 @@ There are seventeen tracks: three on each machine and two on each store.
 
 #### The round
 
-Every stage of the chain is a `min`. Nothing throttles, so raising what the plant actually delivers means raising **every** stage: the three machine capacities and the four store flows. A single purchase among those seven raises no rate at all — it is worth exactly nothing until the rest of the round follows it.
+Every stage of the chain is a `min`. Nothing throttles, so raising what the plant actually delivers means raising **every** stage: the three machine flows and the four store flows. A single purchase among those seven raises no rate at all — it is worth exactly nothing until the rest of the round follows it.
 
 This is the fact the whole cost structure is built on, and it is the reason `CostGrowth` is gentler than it was when a throttle existed: a growth rate that was a brake on one upgrade is a wall in front of a round of them.
 
-**These four numbers sit on the edge of a cliff, and it is worth stating exactly where the edge is.** Income grows by `CapacityGrowth` per round while a round's cost grows by `CostGrowth`, so the ramp is governed by the ratio between them and compounds either way — there is nothing in the design damping it. Swept over the full 5,184-policy grid, holding everything else fixed:
+**These four numbers sit on the edge of a cliff, and it is worth stating exactly where the edge is.** Income grows by `MachineFlowGrowth` per round while a round's cost grows by `CostGrowth`, so the ramp is governed by the ratio between them and compounds either way — there is nothing in the design damping it. Swept over the full 5,184-policy grid, holding everything else fixed:
 
-| Capacity / Flow CostGrowth     | 1.30 / 1.70 | 1.32 / 1.73 | 1.38 / 1.82 | **1.40 / 1.85** | 1.42 / 1.88 | 1.44 / 1.92 |
-| ------------------------------ | ----------: | ----------: | ----------: | --------------: | ----------: | ----------: |
+| CostGrowth: machine Flow and store Capacity / store Flow | 1.30 / 1.70 | 1.32 / 1.73 | 1.38 / 1.82 | **1.40 / 1.85** | 1.42 / 1.88 | 1.44 / 1.92 |
+| ------------------------------------------------------- | ----------: | ----------: | ----------: | --------------: | ----------: | ----------: |
 | Best converging peak (MWh)     |        none |        none |        none |         **263** |         162 |          88 |
 | What the strongest policies do |    run away |    run away |    run away |        converge |    converge |    converge |
 
@@ -184,7 +184,7 @@ Only the 1.40 column has been re-swept since coal purchases became immediate; th
 
 **1.40 is the cheapest price at which the strongest policies stop running away**, and therefore the largest measurable game this economy has. Below it the top policies reach tens of thousands of MWh while their peaks swing by 100% to 200% with the simulation step: a number, but not a measurement. Above it the run simply gets smaller.
 
-Sitting on that edge is not a comfortable place for four constants to live, and it is the clearest symptom of what [The round](#the-round) describes. **Any change to the economy invalidates them** — a capacity, an efficiency, or a starting-ratio edit moves the whole curve, and the margin either side is two hundredths. Re-measure over the full grid; never estimate, and never trust a reduced grid, which will report a converging winner the full sweep does not have.
+Sitting on that edge is not a comfortable place for four constants to live, and it is the clearest symptom of what [The round](#the-round) describes. **Any change to the economy invalidates them** — a flow, an efficiency, or a starting-ratio edit moves the whole curve, and the margin either side is two hundredths. Re-measure over the full grid; never estimate, and never trust a reduced grid, which will report a converging winner the full sweep does not have.
 
 Which end of the round to open at is a real decision, and the two answers are not symmetric:
 
@@ -199,11 +199,11 @@ Each track raises one value and erodes another. Machines run a three-cycle; stor
 
 | Track            | Raises                          | Erodes         |
 | ---------------- | ------------------------------- | -------------- |
-| Capacity         | Capacity × CapacityGrowth       | SafeStress     |
+| Flow             | Flow × MachineFlowGrowth        | SafeStress     |
 | Tolerance        | SafeStress toward MaxTolerance  | Efficiency     |
-| Efficiency       | Efficiency toward MaxEfficiency | CapacityFactor |
-| Capacity (store) | Capacity × CapacityGrowth       | FlowFactor     |
-| Flow (store)     | Flow × FlowGrowth               | CapacityFactor |
+| Efficiency       | Efficiency toward MaxEfficiency | FlowFactor     |
+| Capacity (store) | Capacity × StoreCapacityGrowth  | FlowFactor     |
+| Flow (store)     | Flow × StoreFlowGrowth          | CapacityFactor |
 
 The fictions are the machine getting larger and therefore hotter, the machine being derated and armoured and therefore wasteful, and the machine being tuned lean and therefore unable to hold its peak. For a store it is one budget: a large vessel is slow to move material through, and a wide pipe has little room to hold any.
 
@@ -215,23 +215,24 @@ gap-closing Value += (Ceiling − Value) × Gain      raising
             Value -= (Value − Floor) × Share       eroding
 ```
 
-`Capacity` and `Flow` grow geometrically and are eroded through a `Factor` that starts at 1 and falls toward `FactorFloor`. `Efficiency` and `SafeStress` both rise and fall by closing a share of the gap to a bound. Every penalty is therefore **asymptotic**: no track can drive a stat to nothing, no track ever becomes unbuyable, and the machine can always still run. Over-investing in one track buys a lopsided machine, never a broken one.
+`Flow` and `Capacity` grow geometrically and are eroded through a `Factor` that starts at 1 and falls toward `FactorFloor`. `Efficiency` and `SafeStress` both rise and fall by closing a share of the gap to a bound. Every penalty is therefore **asymptotic**: no track can drive a stat to nothing, no track ever becomes unbuyable, and the machine can always still run. Over-investing in one track buys a lopsided machine, never a broken one.
 
-| Type     | Parameter         | Unit | Description                                                  | Value |
-| -------- | ----------------- | ---- | ------------------------------------------------------------ | ----: |
-| Constant | CapacityGrowth    | ×    | Capacity multiplier per capacity upgrade                     |  1.30 |
-| Constant | FlowGrowth        | ×    | Flow multiplier per flow upgrade                             |  1.30 |
-| Constant | UpgradeGain       | %    | Share of the remaining gap closed by an Efficiency upgrade   |  0.25 |
-| Constant | ToleranceGain     | %    | Share of the remaining gap closed by a Tolerance upgrade     |  0.25 |
-| Constant | MaxEfficiency     | %    | Highest Efficiency obtainable through upgrades               |  0.95 |
-| Constant | MinEfficiency     | %    | Floor Efficiency is eroded toward                            |  0.40 |
-| Constant | FactorFloor       | ×    | Floor both Capacity and Flow factors are eroded toward       |  0.55 |
-| Constant | CapacityPenalty   | %    | Share of the SafeStress gap a Capacity upgrade erodes        |  0.10 |
-| Constant | TolerancePenalty  | %    | Share of the Efficiency gap a Tolerance upgrade erodes       |  0.08 |
-| Constant | EfficiencyPenalty | %    | Share of the CapacityFactor gap an Efficiency upgrade erodes |  0.06 |
-| Constant | StorePenalty      | %    | Share of the opposite factor's gap a store upgrade erodes    |  0.10 |
+| Type     | Parameter           | Unit | Description                                                  | Value |
+| -------- | ------------------- | ---- | ------------------------------------------------------------ | ----: |
+| Constant | MachineFlowGrowth   | ×    | Flow multiplier per machine flow upgrade                     |  1.30 |
+| Constant | StoreCapacityGrowth | ×    | Capacity multiplier per store capacity upgrade               |  1.30 |
+| Constant | StoreFlowGrowth     | ×    | Flow multiplier per store flow upgrade                       |  1.30 |
+| Constant | UpgradeGain         | %    | Share of the remaining gap closed by an Efficiency upgrade   |  0.25 |
+| Constant | ToleranceGain       | %    | Share of the remaining gap closed by a Tolerance upgrade     |  0.25 |
+| Constant | MaxEfficiency       | %    | Highest Efficiency obtainable through upgrades               |  0.95 |
+| Constant | MinEfficiency       | %    | Floor Efficiency is eroded toward                            |  0.40 |
+| Constant | FactorFloor         | ×    | Floor every Flow and Capacity factor is eroded toward        |  0.55 |
+| Constant | FlowPenalty         | %    | Share of the SafeStress gap a machine Flow upgrade erodes    |  0.10 |
+| Constant | TolerancePenalty    | %    | Share of the Efficiency gap a Tolerance upgrade erodes       |  0.08 |
+| Constant | EfficiencyPenalty   | %    | Share of the FlowFactor gap an Efficiency upgrade erodes     |  0.06 |
+| Constant | StorePenalty        | %    | Share of the opposite factor's gap a store upgrade erodes    |  0.10 |
 
-`CapacityGrowth` is 1.30 rather than a larger step because a step is what the chain has to absorb. A ×1.5 upgrade throws one stage 50% out of step with its neighbours instantly, and with no throttle the store between them saturates before the rest of the round can be afforded. The step size is a tuning question about how much imbalance a run can survive, not a question about how fast a plant should grow — the pace comes from `CostGrowth`.
+`MachineFlowGrowth` is 1.30 rather than a larger step because a step is what the chain has to absorb. A ×1.5 upgrade throws one stage 50% out of step with its neighbours instantly, and with no throttle the store between them saturates before the rest of the round can be afforded. The step size is a tuning question about how much imbalance a run can survive, not a question about how fast a plant should grow — the pace comes from `CostGrowth`.
 
 `MaxEfficiency` is strictly below 1 — an Efficiency of 1 or greater would make the plant produce energy from nothing.
 
@@ -239,7 +240,7 @@ gap-closing Value += (Ceiling − Value) × Gain      raising
 
 Against a rising coal price the three machine tracks do different jobs, and the two store tracks do a third and fourth:
 
-- **Capacity buys speed.** It scales revenue and coal consumption by the same factor, so it cannot move MWh per tonne. It is what makes a run accelerate, and it is the only track that does.
+- **Flow buys speed.** It scales revenue and coal consumption by the same factor, so it cannot move MWh per tonne. It is what makes a run accelerate, and it is the only track that does.
 - **Efficiency buys survival.** It adds a fixed amount to `YieldPerTonne` regardless of the price, so its value holds as the price climbs — see [The coal market](#the-coal-market).
 - **Tolerance buys permission to be unbalanced.** It is the only answer to a wearing machine, because there is no throttle to back off with. What it costs is Efficiency, so a plant that survives every drift is a plant that earns less per tonne.
 
@@ -288,7 +289,7 @@ The price reaches 1.79 MWh/t by the end of a 600 s run. What that costs the play
 | Starting Efficiency of 0.70 |                          1.78 |                9:54 |
 | Efficiency at its 0.95 cap  |                          3.55 |     after the timer |
 
-Both figures are for a matched chain, which is not what a run opens at — see [The opening imbalance](#the-opening-imbalance). Neither depends on `Capacity` or on storage: a capacity upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys headroom or rate rather than yield. `Efficiency` is the only track that moves this number — which is also why `Tolerance`, whose price is paid in Efficiency, is a genuine cost and not a formality.
+Both figures are for a matched chain, which is not what a run opens at — see [The opening imbalance](#the-opening-imbalance). Neither depends on `Flow` or on storage: a flow upgrade scales revenue and coal consumption by the same factor, and a storage upgrade buys headroom or rate rather than yield. `Efficiency` is the only track that moves this number — which is also why `Tolerance`, whose price is paid in Efficiency, is a genuine cost and not a formality.
 
 That band is 1.99× wide, because `Efficiency` spans 0.70 to 0.95. A plant that never touches Efficiency reaches break-even moments before the timer expires, while one at `MaxEfficiency` is still earning half of what it earned at the opening price.
 
@@ -304,14 +305,14 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 
 | Type              | Parameter           | Unit  | Description / Formula                                                             | Value |
 | ----------------- | ------------------- | ----- | --------------------------------------------------------------------------------- | ----: |
-| Player controlled | Capacity            | kg/s  | Pulverized coal throughput                                                        |  4.00 |
+| Player controlled | Flow                | kg/s  | Pulverized coal throughput                                                        |  4.00 |
 | Player controlled | Efficiency          | %     | Electrical consumption performance                                                |  0.70 |
 | Player controlled | SafeTemperature     | °C    | Temperature below which no wear accrues; raised by Tolerance                      |    85 |
 | Constant          | BaseConsumption     | MJ/kg | Consumption required to move and crush coal                                       |   0.1 |
 | Constant          | PulverizedCoalYield | kg/kg | Pulverized coal produced per kg of raw coal                                       |  0.95 |
-| Constant          | NominalTemperature  | °C    | Temperature running clean, at any Capacity                                        |    70 |
+| Constant          | NominalTemperature  | °C    | Temperature running clean, at any Flow                                            |    70 |
 | Constant          | MaxTolerance        | °C    | Highest SafeTemperature obtainable through upgrades                               |   140 |
-| Constant          | MinTolerance        | °C    | Floor SafeTemperature is eroded toward by Capacity upgrades                       |    45 |
+| Constant          | MinTolerance        | °C    | Floor SafeTemperature is eroded toward by Flow upgrades                           |    45 |
 | Constant          | MaxTemperature      | °C    | Temperature at which wear accrues fastest                                         |   150 |
 | Constant          | WearGrowth          | 1/s   | Wear accrued per second at Excess = 1                                             | 0.100 |
 | Constant          | WearRecovery        | 1/s   | Wear shed per second while below SafeTemperature                                  | 0.008 |
@@ -320,9 +321,9 @@ The Pulverizer converts raw coal supplied by the Stockpile into pulverized coal 
 | Variable          | Temperature         | °C    | NominalTemperature × (1 + Strain)                                                 |    70 |
 | Variable          | ExcessTemperature   | %     | clamp((Temperature − SafeTemperature) / (MaxTemperature − SafeTemperature), 0, 1) |     0 |
 | Variable          | Wear                | %     | Damage from running strained; see [Stress and wear](#stress-and-wear)             |     0 |
-| Variable          | Output              | kg/s  | Capacity                                                                          |  4.00 |
+| Variable          | Output              | kg/s  | Flow                                                                              |  4.00 |
 | Variable          | RawCoalConsumption  | kg/s  | Output / PulverizedCoalYield                                                      |  4.21 |
-| Variable          | ElectricConsumption | MW    | (Capacity × BaseConsumption) / Efficiency                                         |  0.57 |
+| Variable          | ElectricConsumption | MW    | (Flow × BaseConsumption) / Efficiency                                             |  0.57 |
 
 The Pulverizer runs clean until the Silo passes **75.1%** full, and reads 157.5 °C with the Silo packed — past its own maximum, where the gauge pegs. It is the machine that punishes over-building fastest: `WearGrowth` of 0.100/s trips it in ten seconds at full strain.
 
@@ -338,9 +339,9 @@ The Silo stores pulverized coal produced by the Pulverizer and supplies it to th
 | Player controlled | Flow      | kg/s | Contended: what enters plus what leaves must fit inside |   7.5 |
 | Variable          | Contents  | t    | Pulverized coal currently stored                        |     0 |
 
-The Silo is the smallest store in the plant and the tightest, and both are deliberate. It carries 4.00 kg/s in against 3.00 kg/s out, so it **gains a kilogram a second**: it crosses `BacklogThreshold` seventy seconds into a run and is packed at a hundred, and from there the Pulverizer grinding into it cooks. Its `Flow` carries the opening 7.00 kg/s with 7% to spare, so the first Pulverizer capacity upgrade breaks that too.
+The Silo is the smallest store in the plant and the tightest, and both are deliberate. It carries 4.00 kg/s in against 3.00 kg/s out, so it **gains a kilogram a second**: it crosses `BacklogThreshold` seventy seconds into a run and is packed at a hundred, and from there the Pulverizer grinding into it cooks. Its `Flow` carries the opening 7.00 kg/s with 7% to spare, so the first Pulverizer flow upgrade breaks that too.
 
-That is the run's first decision, and it has three answers at different prices: Silo `Capacity` buys seconds, Silo `Flow` buys rate, and Boiler `Capacity` fixes the cause. Only the third stops coal being bought for powder nothing burns — see [The opening imbalance](#the-opening-imbalance).
+That is the run's first decision, and it has three answers at different prices: Silo `Capacity` buys seconds, Silo `Flow` buys rate, and Boiler `Flow` fixes the cause. Only the third stops coal being bought for powder nothing burns — see [The opening imbalance](#the-opening-imbalance).
 
 ### Boiler
 
@@ -348,14 +349,14 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 
 | Type              | Parameter           | Unit  | Description / Formula                                                      | Value |
 | ----------------- | ------------------- | ----- | -------------------------------------------------------------------------- | ----: |
-| Player controlled | Capacity            | kg/s  | Steam output                                                               | 21.00 |
+| Player controlled | Flow                | kg/s  | Steam output                                                               | 21.00 |
 | Player controlled | Efficiency          | %     | Fuel and electrical consumption performance                                |  0.70 |
 | Player controlled | SafePressure        | bar   | Pressure below which no wear accrues; raised by Tolerance                  |   120 |
 | Constant          | BaseConsumption     | MJ/kg | Electrical consumption per kg of steam                                     |   0.1 |
 | Constant          | SteamYield          | kg/kg | Base steam produced per kg of pulverized coal                              |    10 |
-| Constant          | NominalPressure     | bar   | Pressure running clean, at any Capacity                                    |   100 |
+| Constant          | NominalPressure     | bar   | Pressure running clean, at any Flow                                        |   100 |
 | Constant          | MaxTolerance        | bar   | Highest SafePressure obtainable through upgrades                           |   220 |
-| Constant          | MinTolerance        | bar   | Floor SafePressure is eroded toward by Capacity upgrades                   |    70 |
+| Constant          | MinTolerance        | bar   | Floor SafePressure is eroded toward by Flow upgrades                       |    70 |
 | Constant          | MaxPressure         | bar   | Pressure at which wear accrues fastest                                     |   236 |
 | Constant          | WearGrowth          | 1/s   | Wear accrued per second at Excess = 1                                      | 0.040 |
 | Constant          | WearRecovery        | 1/s   | Wear shed per second while below SafePressure                              | 0.004 |
@@ -364,9 +365,9 @@ The Boiler burns pulverized coal supplied by the Silo to produce high-pressure s
 | Variable          | Pressure            | bar   | NominalPressure × (1 + Strain)                                             |   100 |
 | Variable          | ExcessPressure      | %     | clamp((Pressure − SafePressure) / (MaxPressure − SafePressure), 0, 1)      |     0 |
 | Variable          | Wear                | %     | Damage from running strained; see [Stress and wear](#stress-and-wear)      |     0 |
-| Variable          | Output              | kg/s  | Capacity                                                                   | 21.00 |
+| Variable          | Output              | kg/s  | Flow                                                                       | 21.00 |
 | Variable          | FuelConsumption     | kg/s  | Output / (SteamYield × Efficiency)                                         |  3.00 |
-| Variable          | ElectricConsumption | MW    | (Capacity × BaseConsumption) / Efficiency                                  |  3.00 |
+| Variable          | ElectricConsumption | MW    | (Flow × BaseConsumption) / Efficiency                                      |  3.00 |
 
 The Boiler runs clean until the Tank passes **74.8%** full, and reads 225 bar with the Tank packed, just inside its 236 maximum. It opens matched to the Turbine and a third short of the Pulverizer, which makes it the stage the opening is asking to be bought. It is the long debt: `WearGrowth` of 0.040/s against a 40 s repair means it can be ignored for most of a run and costs a fifteenth of the clock when it cannot.
 
@@ -390,13 +391,13 @@ The Turbine converts high-pressure steam supplied by the Tank into electrical po
 
 | Type              | Parameter        | Unit    | Description / Formula                                                      | Value |
 | ----------------- | ---------------- | ------- | -------------------------------------------------------------------------- | ----: |
-| Player controlled | Capacity         | MW      | Output                                                                     |  23.7 |
+| Player controlled | Flow             | MW      | Output                                                                     |  23.7 |
 | Player controlled | Efficiency       | %       | Steam consumption performance                                              |  0.70 |
 | Player controlled | SafeVibration    | mm/s    | Vibration below which no wear accrues; raised by Tolerance                 |   6.5 |
 | Constant          | BaseConsumption  | kg/s/MW | Steam consumption per MW                                                   |  0.62 |
-| Constant          | NominalVibration | mm/s    | Vibration running clean, at any Capacity                                   |     5 |
+| Constant          | NominalVibration | mm/s    | Vibration running clean, at any Flow                                       |     5 |
 | Constant          | MaxTolerance     | mm/s    | Highest SafeVibration obtainable through upgrades                          |    12 |
-| Constant          | MinTolerance     | mm/s    | Floor SafeVibration is eroded toward by Capacity upgrades                  |   3.5 |
+| Constant          | MinTolerance     | mm/s    | Floor SafeVibration is eroded toward by Flow upgrades                      |   3.5 |
 | Constant          | MaxVibration     | mm/s    | Vibration at which wear accrues fastest                                    |    13 |
 | Constant          | WearGrowth       | 1/s     | Wear accrued per second at Excess = 1                                      | 0.067 |
 | Constant          | WearRecovery     | 1/s     | Wear shed per second while below SafeVibration                             | 0.020 |
@@ -405,8 +406,8 @@ The Turbine converts high-pressure steam supplied by the Tank into electrical po
 | Variable          | Vibration        | mm/s    | NominalVibration × (1 + Strain)                                            |     5 |
 | Variable          | ExcessVibration  | %       | clamp((Vibration − SafeVibration) / (MaxVibration − SafeVibration), 0, 1)  |     0 |
 | Variable          | Wear             | %       | Damage from running strained; see [Stress and wear](#stress-and-wear)      |     0 |
-| Variable          | Output           | MW      | Capacity                                                                   |  23.7 |
-| Variable          | SteamConsumption | kg/s    | (Capacity × BaseConsumption) / Efficiency                                  | 20.99 |
+| Variable          | Output           | MW      | Flow                                                                       |  23.7 |
+| Variable          | SteamConsumption | kg/s    | (Flow × BaseConsumption) / Efficiency                                      | 20.99 |
 
 The Turbine runs clean until the Tank falls below **22.8%**, and reads 11.25 mm/s with the Tank empty. It is the only machine whose strain inverts, and the only one whose trip stops the run's income outright.
 
@@ -493,7 +494,7 @@ Strain also propagates a trip into its neighbours. One machine going down pushes
 
 ### The opening imbalance
 
-Output is `Capacity` and every consumption rate is linear in it, so the ratios between machines are fixed by `Capacity` and `Efficiency` alone. A run therefore opens at whatever ratio the starting capacities set — and it is set **deliberately wrong**, in one place:
+Output is `Flow` and every consumption rate is linear in it, so the ratios between machines are fixed by `Flow` and `Efficiency` alone. A run therefore opens at whatever ratio the starting flows set — and it is set **deliberately wrong**, in one place:
 
 | Stage             |      Makes | The stage below draws |  Surplus |
 | ----------------- | ---------: | --------------------: | -------: |
@@ -508,13 +509,13 @@ That is what makes the first decision a real one rather than a tutorial. It has 
 
 - **Silo `Capacity`** buys seconds before the backlog bites, and nothing else. The coal is still wasted.
 - **Silo `Flow`** buys rate. The coal is still wasted, and at 1.07× headroom the store is already nearly at its limit.
-- **Boiler `Capacity`** consumes the surplus, which is the only one of the three that moves `MWh per tonne`. It also pushes the Boiler past the Turbine's draw, so the Tank starts filling and the problem moves one stage down the chain.
+- **Boiler `Flow`** consumes the surplus, which is the only one of the three that moves `MWh per tonne`. It also pushes the Boiler past the Turbine's draw, so the Tank starts filling and the problem moves one stage down the chain.
 
 The last of those is the round beginning — see [The round](#the-round). Buying it correctly means buying the Turbine after it, and the Silo and Tank `Flow` after that.
 
 ### Staying matched
 
-Once the opening imbalance is closed, every upgrade opens a new one. A capacity upgrade throws one stage 50% out of step with its neighbours. An Efficiency upgrade moves the ratio too, in the other direction — a more efficient Boiler needs less fuel for the same steam, so the Pulverizer is suddenly oversupplying it again. A `Tolerance` upgrade moves it a third way, because it erodes the Efficiency that set the ratio in the first place.
+Once the opening imbalance is closed, every upgrade opens a new one. A flow upgrade throws one stage 50% out of step with its neighbours. An Efficiency upgrade moves the ratio too, in the other direction — a more efficient Boiler needs less fuel for the same steam, so the Pulverizer is suddenly oversupplying it again. A `Tolerance` upgrade moves it a third way, because it erodes the Efficiency that set the ratio in the first place.
 
 So the matched ratio is not a state the player reaches and keeps. It is a state they pass through on the way to the next one, and the whole game is the sequence of those passes: **how far out of step to run, in which direction, and for how long.**
 
@@ -565,18 +566,18 @@ Every card carries the same shape: what the component is doing, then what can be
 ┌───────────────────────────────────────────┐
 │ Pulverizer / Boiler / Turbine             │
 ├───────────────────────────────────────────┤
-│ Capacity     {value}                      │
+│ Flow         █░░░░░░░░░ {moved} / {value} │
 ├───────────────────────────────────────────┤
 │ {Stress}     ░░░█░░                       │
 │ Wear         ███████░░░                   │
 ├───────────────────────────────────────────┤
-│ Capacity     [{cost} MWh]            ▼TOL │
-│ Efficiency   [{cost} MWh]            ▼CAP │
+│ Flow         [{cost} MWh]            ▼TOL │
+│ Efficiency   [{cost} MWh]           ▼FLOW │
 │ Tolerance    [{cost} MWh]            ▼EFF │
 └───────────────────────────────────────────┘
 ```
 
-Each machine card shows its stress against the safe and maximum thresholds and a `Wear` gauge. Together those answer the only question the card has to answer: how long can this hold. The card carries no `Output` row: with no operating control `Output` is `Capacity`, so the row printed the figure above it a second time. A tripped machine shows its repair countdown on the line beneath `Capacity`.
+Each machine card shows its stress against the safe and maximum thresholds and a `Wear` gauge. Together those answer the only question the card has to answer: how long can this hold. The card carries no `Output` row: with no operating control `Output` is `Flow`, so the row printed the figure above it a second time. What the `FLOW` row carries instead is what the machine actually moved last step against what it is rated for, written and drawn exactly as a store's `Flow` row is — the one thing a machine card cannot otherwise say, since a machine held back by the chain still reads its full rating everywhere else. A tripped machine shows its repair countdown in place of that bar.
 
 **Every upgrade row names what it costs.** The marker on the right — `▼TOL`, `▼CAP`, `▼EFF`, `▼FLOW` — is permanent, so the trade is never invisible and an unexplained stat drop never reads as a bug. Focusing an upgrade button reveals the exact before-and-after on both the row it raises and the row it erodes; the magnitudes are shown when the player is deciding, not at all times.
 

@@ -15,7 +15,7 @@
     <MachineCard
       :view="view.pulverizer"
       component="pulverizer"
-      @upgrade-capacity="emit('purchaseUpgrade', 'pulverizer_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'pulverizer_flow')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'pulverizer_efficiency')"
       @upgrade-tolerance="emit('purchaseUpgrade', 'pulverizer_tolerance')"
     />
@@ -30,7 +30,7 @@
     <MachineCard
       :view="view.boiler"
       component="boiler"
-      @upgrade-capacity="emit('purchaseUpgrade', 'boiler_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'boiler_flow')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'boiler_efficiency')"
       @upgrade-tolerance="emit('purchaseUpgrade', 'boiler_tolerance')"
     />
@@ -45,7 +45,7 @@
     <MachineCard
       :view="view.turbine"
       component="turbine"
-      @upgrade-capacity="emit('purchaseUpgrade', 'turbine_capacity')"
+      @upgrade-flow="emit('purchaseUpgrade', 'turbine_flow')"
       @upgrade-efficiency="emit('purchaseUpgrade', 'turbine_efficiency')"
       @upgrade-tolerance="emit('purchaseUpgrade', 'turbine_tolerance')"
     />

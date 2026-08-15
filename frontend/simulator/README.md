@@ -37,7 +37,7 @@ banks after `t_stop`.
 Since strain arrived it also holds each store inside its strain-free band (`band()` in
 `sim.py`) and throttles against the strained ceiling rather than the slack one, while
 judging upgrades against the slack ceiling — a store that is momentarily backed up is a
-balance problem, not a reason to buy capacity. A policy that ignored strain would be a
+balance problem, not a reason to buy more rate. A policy that ignored strain would be a
 weak player and would measure the wrong `TargetEnergy`.
 
 That makes every peak a **lower bound** on what a perfect player could reach, so a

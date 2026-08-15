@@ -140,11 +140,11 @@ function totalUpgradeLevels(engine: GameEngine): number {
     engine.silo.capacityUpgrade,
     engine.tank.capacityUpgrade,
     engine.battery.capacityUpgrade,
-    engine.pulverizer.capacityUpgrade,
+    engine.pulverizer.flowUpgrade,
     engine.pulverizer.efficiencyUpgrade,
-    engine.boiler.capacityUpgrade,
+    engine.boiler.flowUpgrade,
     engine.boiler.efficiencyUpgrade,
-    engine.turbine.capacityUpgrade,
+    engine.turbine.flowUpgrade,
     engine.turbine.efficiencyUpgrade,
   ]
 
@@ -214,7 +214,7 @@ function opening(name: string, got: number, expected: number): Check {
 
 /**
  * The opening rows of specs.md.
- * Every machine runs at its Capacity, and the Tank opens at StarveThreshold, so no
+ * Every machine runs at its Flow, and the Tank opens at StarveThreshold, so no
  * machine opens under any strain at all — the run starts matched and clean.
  * @returns The group
  */

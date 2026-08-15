@@ -43,12 +43,19 @@ const DEPLETED_THRESHOLD = 0.1 // Stockpile fill below which the chain is about 
 const STRESS_CAUTION_SHARE = 0.25
 
 /**
- * How near its cap a store's Flow comes before its bar cautions. Much tighter than
+ * How near its cap a store's Flow comes before its bar cautions, and how far a machine's
+ * delivery may fall short of its own Flow before the same thing happens. Much tighter than
  * CAUTION_MARGIN, because a store's Flow is deliberately close to what passes through it
  * from the first second of a run: the opening leaves the Silo 1.07× the throughput it
  * carries and the Tank 1.14× (verify_screen.vue), so a margin of 0.15 would open every
  * run with two cards already yellow and leave them there, which is the trap the machine
  * gauges avoid with STRESS_CAUTION_SHARE.
+ *
+ * The two uses are the same number on opposite sides of the cap, not the same reading
+ * twice: a store cautions on the approach to its Flow and reddens where the cap starts
+ * biting, while the machine it caps stays green until that costs it 5% of its rating.
+ * So the store says the cap is biting and the machine says what it is costing, which is
+ * the division of labour the alerts panel already draws between them (ui_ux.md §20).
  */
 const FLOW_CAUTION_MARGIN = 0.05
 
@@ -88,7 +95,7 @@ export interface UpgradeRowView {
 /** How one machine's throughput is written; everything else it reads from the engine. */
 interface MachineSpec {
   title: string
-  unit: string // Unit its Capacity and Output are quoted in
+  unit: string // Unit its Flow and Output are quoted in
   format: (value: number) => string // How a value in that unit is written
 }
 
@@ -143,8 +150,10 @@ export type BatteryView = StorageViewBase
 export interface MachineView {
   title: string
   status: ComponentStatus // What its drawing says at a glance
-  capacityText: string
-  repairText: string | null // Fills the reserved row under Capacity while tripped
+  flowText: string // What the machine delivered against its Flow, with its unit
+  flowFraction: number // What the flow bar draws; the FLOW row carries the exact figures
+  flowLevel: ReadingLevel // The colour that row and bar take, banded on being held back
+  repairText: string | null // Replaces the flow bar while tripped, on the same line
   stressLabel: string // TEMPERATURE | PRESSURE | VIBRATION
   stressText: string // Value with its unit; the gauge is drawn, so this names it
   stressFraction: number // Stress against MaxStress, 0 to 1
@@ -152,7 +161,7 @@ export interface MachineView {
   wearFraction: number
   wearPercentText: string // The wear bar is a drawing; this is the reading behind it
   wearLevel: ReadingLevel // The colour that bar takes, banded on how near a trip is
-  capacityUpgrade: UpgradeRowView
+  flowUpgrade: UpgradeRowView
   efficiencyUpgrade: UpgradeRowView
   toleranceUpgrade: UpgradeRowView
 }
@@ -453,6 +462,7 @@ function buildBatteryView(engine: GameEngine): BatteryView {
  * @param machine - The machine to read
  * @param strain - Strain from the store it is fighting, so the gauge is live
  * @param runRatio - Fraction of its requested rate it ran at last step
+ * @param stepped - Whether the run has taken a step, so a plant at rest is not read as held back
  * @param spendableEnergy - MWh available for upgrades
  * @returns One machine card
  */
@@ -461,11 +471,17 @@ function buildMachineView(
   machine: Machine,
   strain: Strain,
   runRatio: number,
+  stepped: boolean,
   spendableEnergy: number,
 ): MachineView {
-  const capacityCost = machine.capacityUpgrade.cost
+  const flowCost = machine.flowUpgrade.cost
   const efficiencyCost = machine.efficiencyUpgrade.cost
   const toleranceCost = machine.toleranceUpgrade.cost
+  // What the machine actually moved last step against what it is rated for. A machine has
+  // no operating control, so the only thing this can report is the chain holding it back —
+  // which is the one reading the card could not carry while it printed the rating alone
+  // (ui_ux.md §12). Written and drawn exactly as a store's FLOW row is.
+  const delivered = machine.flow * runRatio
   const stress = machine.stress(strain.value)
   // The gauge is drawn from NominalStress rather than from zero. A machine has no
   // operating control, so it reads its nominal stress whenever nothing is wrong and never
@@ -480,7 +496,15 @@ function buildMachineView(
   return {
     title: spec.title,
     status: machineStatus(machine, runRatio),
-    capacityText: `${spec.format(machine.capacity)} ${spec.unit}`,
+    flowText: `${spec.format(delivered)} / ${spec.format(machine.flow)} ${spec.unit}`,
+    flowFraction: clamp(runRatio, 0, 1),
+    // Caution once the chain is costing the machine more than FlowCautionMargin of its
+    // rating — a smaller shortfall is the store's news to carry, and its row is already
+    // red by then. Danger only where the machine delivers nothing, which is the point its
+    // drawing goes white (ui_ux.md §9), so the card says one thing twice rather than two
+    // things. Before the first step there is nothing to hold back, and a plant at rest is
+    // not a plant in trouble — the whole chain reads clean, as its two other bars do.
+    flowLevel: stepped ? bandFalling(runRatio, 1 - FLOW_CAUTION_MARGIN, 0) : 'safe',
     repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
     stressLabel: STRESS_LABELS[machine.stressKind],
     stressText: `${formatStress(stress)} ${stressUnit}`,
@@ -491,21 +515,21 @@ function buildMachineView(
     wearFraction: clamp(machine.wear, 0, 1),
     wearPercentText: formatPercent(machine.wear),
     wearLevel: bandRising(machine.wear, WEAR_CAUTION, WEAR_DANGER),
-    capacityUpgrade: {
-      label: 'CAPACITY',
-      costText: `${formatEnergy(capacityCost)} MWh`,
-      affordable: capacityCost <= spendableEnergy,
+    flowUpgrade: {
+      label: 'FLOW',
+      costText: `${formatEnergy(flowCost)} MWh`,
+      affordable: flowCost <= spendableEnergy,
       penaltyLabel: '▼TOL',
-      raisesText: transition(machine.capacity, machine.capacity + machine.capacityGain, spec.format, spec.unit),
-      erodesText: transition(machine.safeStress, machine.nextSafeStressAfterCapacity, formatStress, stressUnit),
+      raisesText: transition(machine.flow, machine.flow + machine.flowGain, spec.format, spec.unit),
+      erodesText: transition(machine.safeStress, machine.nextSafeStressAfterFlow, formatStress, stressUnit),
     },
     efficiencyUpgrade: {
       label: 'EFFICIENCY',
       costText: `${formatEnergy(efficiencyCost)} MWh`,
       affordable: efficiencyCost <= spendableEnergy,
-      penaltyLabel: '▼CAP',
+      penaltyLabel: '▼FLOW',
       raisesText: transition(machine.efficiency, machine.efficiency + machine.efficiencyGain, formatEfficiency, ''),
-      erodesText: transition(machine.capacity, machine.nextCapacityAfterEfficiency, spec.format, spec.unit),
+      erodesText: transition(machine.flow, machine.nextFlowAfterEfficiency, spec.format, spec.unit),
     },
     toleranceUpgrade: {
       label: 'TOLERANCE',
@@ -653,6 +677,11 @@ function buildAlerts(engine: GameEngine): AlertView[] {
 export function buildGameView(engine: GameEngine, purchaseKilograms: number, bestResult: number | null): GameView {
   const demand = engine.flowDemands
   const run = engine.runRatios
+  // A step, not the outcome: start() flips the run to running and the view is published
+  // before the first step lands, so an outcome test would report every machine as
+  // delivering nothing for the frames in between — on the very frame the overlay lifts.
+  // Only step() writes a RunRatio, and only step() advances the clock.
+  const stepped = engine.elapsedSeconds > 0
 
   return {
     outcome: engine.outcome,
@@ -672,11 +701,11 @@ export function buildGameView(engine: GameEngine, purchaseKilograms: number, bes
       run.boiler > 0 || run.turbine > 0, engine.spendableEnergy),
     battery: buildBatteryView(engine),
     pulverizer: buildMachineView(PULVERIZER_SPEC, engine.pulverizer, engine.pulverizerStrain,
-      run.pulverizer, engine.spendableEnergy),
+      run.pulverizer, stepped, engine.spendableEnergy),
     boiler: buildMachineView(BOILER_SPEC, engine.boiler, engine.boilerStrain,
-      run.boiler, engine.spendableEnergy),
+      run.boiler, stepped, engine.spendableEnergy),
     turbine: buildMachineView(TURBINE_SPEC, engine.turbine, engine.turbineStrain,
-      run.turbine, engine.spendableEnergy),
+      run.turbine, stepped, engine.spendableEnergy),
     power: buildPowerView(engine),
     alerts: buildAlerts(engine),
   }

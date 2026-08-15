@@ -6,7 +6,7 @@ re-measured whenever the economy is retuned. Strong play is approximated here by
 greedy reinvestment policy whose knobs are swept; the peak it reaches is a lower
 bound on true optimal play, so a target derived from it errs towards the generous.
 
-Machines have no throttle. Every machine runs at its Capacity, so a run is decided
+Machines have no throttle. Every machine runs at its Flow, so a run is decided
 entirely by what is bought and when: the only lever on stress is how far out of step
 the chain is, and the only answer to a wearing machine is a purchase.
 
@@ -18,28 +18,32 @@ import itertools
 
 TIME_LIMIT = 600.0
 
-# cap: base Capacity | nom: stress running clean | safe/safe_hi/safe_lo: the Tolerance
-# band | mx: MaxStress | cons: BaseConsumption | wg/wr: WearGrowth, WearRecovery
+# flow: base Flow (a machine holds nothing, so it has no Capacity at all) | nom: stress
+# running clean | safe/safe_hi/safe_lo: the Tolerance band | mx: MaxStress
+# | cons: BaseConsumption | wg/wr: WearGrowth, WearRecovery
 # | rep: RepairSeconds
-P = dict(cap=4.00,  nom=70.0,  safe=85.0,  safe_hi=140.0, safe_lo=45.0, mx=150.0,
+P = dict(flow=4.00,  nom=70.0,  safe=85.0,  safe_hi=140.0, safe_lo=45.0, mx=150.0,
          cons=0.1,  wg=0.100, wr=0.008, rep=8.0)
-B = dict(cap=21.00, nom=100.0, safe=120.0, safe_hi=220.0, safe_lo=70.0, mx=236.0,
+B = dict(flow=21.00, nom=100.0, safe=120.0, safe_hi=220.0, safe_lo=70.0, mx=236.0,
          cons=0.1,  wg=0.040, wr=0.004, rep=40.0)
-T = dict(cap=23.70, nom=5.0,   safe=6.5,   safe_hi=12.0,  safe_lo=3.5,  mx=13.0,
+T = dict(flow=23.70, nom=5.0,   safe=6.5,   safe_hi=12.0,  safe_lo=3.5,  mx=13.0,
          cons=0.62, wg=0.067, wr=0.020, rep=20.0)
 
 PULV_YIELD, STEAM_YIELD = 0.95, 10.0
 MAX_EFF, MIN_EFF, UPGRADE_GAIN, TOLERANCE_GAIN = 0.95, 0.40, 0.25, 0.25
-CAPACITY_GROWTH, FLOW_GROWTH = 1.5, 2.25
+# Three geometric tracks, three knobs. A machine's Flow and a store's Capacity carry
+# the same number today and are still separate: one is how far a stage jumps out of
+# step with its neighbours, the other is how much room the store beside it has.
+MACHINE_FLOW_GROWTH, STORE_CAP_GROWTH, STORE_FLOW_GROWTH = 1.5, 1.5, 2.25
 RESERVE_FRACTION, STARTUP_SECONDS, RESTART_MULTIPLE, STARTING_CHARGE = 0.10, 30.0, 2.0, 4.0
 START_PRICE, PRICE_GROWTH = 1.0, 1.06
 START_EFFICIENCY = 0.70
 
 # The penalty legs. Each purchase closes this share of the gap between the stat it
 # penalises and that stat's floor, so no track can ever drive a stat to nothing:
-#   machine   Capacity -> SafeStress -> Efficiency -> CapacityFactor -> ...
+#   machine   Flow -> SafeStress -> Efficiency -> FlowFactor -> ...
 #   storage   Capacity <-> FlowFactor
-CAP_ON_SAFE, TOL_ON_EFF, EFF_ON_CAP = 0.10, 0.08, 0.06
+FLOW_ON_SAFE, TOL_ON_EFF, EFF_ON_FLOW = 0.10, 0.08, 0.06
 STORE_CAP_ON_FLOW, STORE_FLOW_ON_CAP = 0.10, 0.10
 CAP_FACTOR_FLOOR, FLOW_FACTOR_FLOOR = 0.55, 0.55
 
@@ -57,7 +61,7 @@ STRAIN_GAIN, BACKLOG_THRESHOLD, STARVE_THRESHOLD = 1.25, 0.70, 0.30
 # The Silo is deliberately small and deliberately tight. The chain does not open matched:
 # the Pulverizer makes 4.00 kg/s of powder against a 3.00 kg/s draw, so the Silo gains a
 # kilogram a second and crosses BacklogThreshold about seventy seconds in. Its Flow carries
-# the opening rate with 7% to spare, so the first Pulverizer capacity upgrade breaks it.
+# the opening rate with 7% to spare, so the first Pulverizer flow upgrade breaks it.
 STORE = {
     'stock': dict(cap=500.0,  flow=12.0),
     'silo':  dict(cap=100.0,  flow=7.5),
@@ -98,9 +102,9 @@ def starve(contents, capacity):
 # chain's rate by one step now takes a level on each of seven stages rather than a single
 # purchase, so a growth rate that was a brake on one upgrade is a wall in front of a round
 # of them: at the old 1.70 the second round is already unaffordable and the plant sits at
-# its opening capacity, drifting out of balance, for the rest of the run.
+# its opening rates, drifting out of balance, for the rest of the run.
 COST = {
-    'capP': (0.02, 1.40), 'capB': (0.02, 1.40), 'capT': (0.02, 1.40),
+    'flowP': (0.02, 1.40), 'flowB': (0.02, 1.40), 'flowT': (0.02, 1.40),
     'effP': (0.05, 1.30), 'effB': (0.05, 1.30), 'effT': (0.05, 1.30),
     'tolP': (0.04, 1.35), 'tolB': (0.04, 1.35), 'tolT': (0.04, 1.35),
     'capStock': (0.02, 1.40), 'capSilo': (0.02, 1.40),
@@ -118,9 +122,9 @@ class State:
 
     def __init__(self):
         self.t = 0.0
-        # machines: geometric capacity times a factor the Efficiency track erodes
-        self.cap_lvl = {k: 0 for k in MACHINE_KEYS}
-        self.cap_factor = {k: 1.0 for k in MACHINE_KEYS}
+        # machines: geometric flow times a factor the Efficiency track erodes
+        self.flow_lvl = {k: 0 for k in MACHINE_KEYS}
+        self.flow_factor = {k: 1.0 for k in MACHINE_KEYS}
         self.eff = {k: START_EFFICIENCY for k in MACHINE_KEYS}
         self.safe = {'P': P['safe'], 'B': B['safe'], 'T': T['safe']}
         # storage: the same shape, one factor each way
@@ -144,16 +148,16 @@ class State:
 
     # --- derived component values -------------------------------------------
 
-    def cap(self, key):
-        base = {'P': P, 'B': B, 'T': T}[key]['cap']
-        return base * CAPACITY_GROWTH ** self.cap_lvl[key] * self.cap_factor[key]
+    def flow(self, key):
+        base = {'P': P, 'B': B, 'T': T}[key]['flow']
+        return base * MACHINE_FLOW_GROWTH ** self.flow_lvl[key] * self.flow_factor[key]
 
     def store_cap(self, key):
-        return (STORE[key]['cap'] * CAPACITY_GROWTH ** self.store_cap_lvl[key]
+        return (STORE[key]['cap'] * STORE_CAP_GROWTH ** self.store_cap_lvl[key]
                 * self.store_cap_factor[key])
 
     def store_flow(self, key):
-        return (STORE[key]['flow'] * FLOW_GROWTH ** self.store_flow_lvl[key]
+        return (STORE[key]['flow'] * STORE_FLOW_GROWTH ** self.store_flow_lvl[key]
                 * self.store_flow_factor[key])
 
     def fill(self, key):
@@ -164,11 +168,11 @@ class State:
 
     def rates(self):
         """Every rate the chain requests when nothing is throttling it."""
-        powder = self.cap('P')
+        powder = self.flow('P')
         raw = powder / PULV_YIELD
-        steam = self.cap('B')
+        steam = self.flow('B')
         fuel = steam / (STEAM_YIELD * self.eff['B'])
-        power = self.cap('T')
+        power = self.flow('T')
         tsteam = power * T['cons'] / self.eff['T']
         elec_p = powder * P['cons'] / self.eff['P']
         elec_b = steam * B['cons'] / self.eff['B']
@@ -204,13 +208,16 @@ class State:
         self.levels[track] += 1
         kind, who = track[:3], track[3:]
 
-        if kind == 'cap' and who in MACHINE_KEYS:
-            self.cap_lvl[who] += 1
-            limits = {'P': P, 'B': B, 'T': T}[who]
-            self.safe[who] = gap_down(self.safe[who], limits['safe_lo'], CAP_ON_SAFE)
+        # 'flowP' and 'flowStock' share the three characters `kind` is read from, so the
+        # machine leg is told apart by its key -- the way the store flow leg re-slices.
+        if kind == 'flo' and track[4:] in MACHINE_KEYS:
+            machine = track[4:]
+            self.flow_lvl[machine] += 1
+            limits = {'P': P, 'B': B, 'T': T}[machine]
+            self.safe[machine] = gap_down(self.safe[machine], limits['safe_lo'], FLOW_ON_SAFE)
         elif kind == 'eff':
             self.eff[who] = gap_up(self.eff[who], MAX_EFF, UPGRADE_GAIN)
-            self.cap_factor[who] = gap_down(self.cap_factor[who], CAP_FACTOR_FLOOR, EFF_ON_CAP)
+            self.flow_factor[who] = gap_down(self.flow_factor[who], FLOW_FACTOR_FLOOR, EFF_ON_FLOW)
         elif kind == 'tol':
             limits = {'P': P, 'B': B, 'T': T}[who]
             self.safe[who] = gap_up(self.safe[who], limits['safe_hi'], TOLERANCE_GAIN)
@@ -277,11 +284,11 @@ def ceilings(s):
     powder_to_mw = STEAM_YIELD * s.eff['B'] * to_mw     # kg/s of powder -> MW
     return [
         (s.store_flow('stock') * PULV_YIELD * powder_to_mw, 'flowStock'),
-        (s.cap('P') * powder_to_mw, 'capP'),
+        (s.flow('P') * powder_to_mw, 'flowP'),
         (s.store_flow('silo') / 2.0 * powder_to_mw, 'flowSilo'),
-        (s.cap('B') * to_mw, 'capB'),
+        (s.flow('B') * to_mw, 'flowB'),
         (s.store_flow('tank') / 2.0 * to_mw, 'flowTank'),
-        (s.cap('T'), 'capT'),
+        (s.flow('T'), 'flowT'),
         (s.store_flow('batt'), 'flowBatt'),
     ]
 
@@ -306,7 +313,7 @@ def income(s, price):
 
 def clone_with(s, track):
     c = copy.copy(s)
-    for name in ('cap_lvl', 'cap_factor', 'eff', 'safe', 'store_cap_lvl',
+    for name in ('flow_lvl', 'flow_factor', 'eff', 'safe', 'store_cap_lvl',
                  'store_flow_lvl', 'store_cap_factor', 'store_flow_factor', 'levels'):
         setattr(c, name, dict(getattr(s, name)))
     c.contents = dict(s.contents)
@@ -403,7 +410,7 @@ def purchase(s, pol):
 
     # The ladder: buy whichever stage of the chain has the lowest ceiling.
     step = binding(s)
-    if step == 'capT' and s.eff['T'] < MAX_EFF and s.cost_of('effT') <= s.cost_of('capT') * pol['eff_bias']:
+    if step == 'flowT' and s.eff['T'] < MAX_EFF and s.cost_of('effT') <= s.cost_of('flowT') * pol['eff_bias']:
         step = 'effT'
     if afford(step):
         s.apply(step)

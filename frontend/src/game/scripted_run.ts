@@ -13,12 +13,12 @@ const UPGRADE_INTERVAL_SECONDS = 12 // How often it attempts one upgrade
  * which a tidy round-robin never would.
  */
 const UPGRADE_TRACKS: UpgradeTrackId[] = [
-  'pulverizer_capacity',
-  'pulverizer_capacity',
+  'pulverizer_flow',
+  'pulverizer_flow',
   'silo_flow',
-  'boiler_capacity',
+  'boiler_flow',
   'tank_flow',
-  'turbine_capacity',
+  'turbine_flow',
   'battery_flow',
   'stockpile_capacity',
   'stockpile_flow',

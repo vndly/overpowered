@@ -22,24 +22,29 @@ export const STRAIN_GAIN = 1.25 // Largest fractional increase strain adds to st
 export const BACKLOG_THRESHOLD = 0.7 // Output-store fill above which a producer strains
 export const STARVE_THRESHOLD = 0.3 // Input-store fill below which a consumer strains
 
-// Upgrades — specs.md §Upgrade costs. Capacity and Flow grow geometrically and are eroded
+// Upgrades — specs.md §Upgrade costs. Flow and Capacity grow geometrically and are eroded
 // through a factor; Efficiency and SafeStress both rise and fall by closing a share of the
 // gap to a bound. Every penalty is asymptotic, so no track can ever brick a machine.
-// A Flow level is a bigger step than a Capacity level on purpose. Raising what the plant
-// delivers means raising all seven stages, and the four flow tracks are the bulk of that
-// bill; a step that covers more than one capacity round is what keeps a round affordable
-// without pricing capacity so cheaply that the economy runs away — specs.md §The round.
-export const CAPACITY_GROWTH = 1.5 // Capacity multiplier per capacity upgrade
-export const FLOW_GROWTH = 2.25 // Flow multiplier per flow upgrade
+// There are three geometric tracks, not two, and each is its own knob: a machine's Flow,
+// a store's Capacity, and a store's Flow. The first two carry the same number today and
+// are still separate constants — one is how far a stage jumps out of step with its
+// neighbours, the other is how much room the store beside it has to absorb that.
+// A store's Flow level is the bigger step on purpose. Raising what the plant delivers
+// means raising all seven stages, and the four store flow tracks are the bulk of that
+// bill; a step that covers more than one round is what keeps a round affordable without
+// pricing rate so cheaply that the economy runs away — specs.md §The round.
+export const MACHINE_FLOW_GROWTH = 1.5 // Flow multiplier per machine flow upgrade
+export const STORAGE_CAPACITY_GROWTH = 1.5 // Capacity multiplier per store capacity upgrade
+export const STORAGE_FLOW_GROWTH = 2.25 // Flow multiplier per store flow upgrade
 export const UPGRADE_GAIN = 0.25 // Share of the remaining Efficiency gap an upgrade closes
 export const TOLERANCE_GAIN = 0.25 // Share of the remaining SafeStress gap an upgrade closes
 export const MAX_EFFICIENCY = 0.95 // Highest Efficiency obtainable through upgrades
 export const MIN_EFFICIENCY = 0.4 // Floor Efficiency is eroded toward
-export const FACTOR_FLOOR = 0.55 // Floor both Capacity and Flow factors are eroded toward
+export const FACTOR_FLOOR = 0.55 // Floor every Flow and Capacity factor is eroded toward
 
-export const CAPACITY_PENALTY = 0.1 // Share of the SafeStress gap a Capacity upgrade takes
+export const FLOW_PENALTY = 0.1 // Share of the SafeStress gap a machine Flow upgrade takes
 export const TOLERANCE_PENALTY = 0.08 // Share of the Efficiency gap a Tolerance upgrade takes
-export const EFFICIENCY_PENALTY = 0.06 // Share of the CapacityFactor gap Efficiency takes
+export const EFFICIENCY_PENALTY = 0.06 // Share of the FlowFactor gap Efficiency takes
 export const STORE_PENALTY = 0.1 // Share of the opposite factor's gap a store upgrade takes
 
 // Raising what the plant delivers takes a level on each of seven stages rather than one
@@ -48,7 +53,7 @@ export const STORE_PENALTY = 0.1 // Share of the opposite factor's gap a store u
 // never guessed: 1.40 is the cheapest price at which the strongest policies stop running
 // away, and anything below it produces peaks that swing 100%+ with the simulation step —
 // a number, but not a measurement. Re-measure after any change to the economy.
-export const MACHINE_CAPACITY_UPGRADE = {
+export const MACHINE_FLOW_UPGRADE = {
   baseCost: 0.02, // MWh
   costGrowth: 1.4,
 } as const
@@ -122,7 +127,7 @@ export const TANK_STARTING_FILL = 0.5
 
 // Pulverizer — specs.md §Pulverizer
 export const PULVERIZER = {
-  capacity: 4, // Pulverized coal throughput, kg/s
+  flow: 4, // Pulverized coal throughput, kg/s
   efficiency: 0.7, // Starting Efficiency
   baseConsumption: 0.1, // Electricity to move and crush coal, MJ/kg
   pulverizedCoalYield: 0.95, // Pulverized coal per kg of raw coal, kg/kg
@@ -138,7 +143,7 @@ export const PULVERIZER = {
 
 // Boiler — specs.md §Boiler
 export const BOILER = {
-  capacity: 21, // Steam output, kg/s
+  flow: 21, // Steam output, kg/s
   efficiency: 0.7, // Starting Efficiency
   baseConsumption: 0.1, // Electricity per kg of steam, MJ/kg
   steamYield: 10, // Base steam per kg of pulverized coal, kg/kg
@@ -154,7 +159,7 @@ export const BOILER = {
 
 // Turbine — specs.md §Turbine
 export const TURBINE = {
-  capacity: 23.7, // Output, MW
+  flow: 23.7, // Output, MW
   efficiency: 0.7, // Starting Efficiency
   baseConsumption: 0.62, // Steam per MW, kg/s/MW
   nominalStress: 5, // NominalVibration, mm/s

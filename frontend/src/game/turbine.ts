@@ -11,7 +11,7 @@ import type {StressKind} from '@/game/types'
 export class Turbine extends Machine {
   readonly stressKind: StressKind = 'vibration'
   readonly baseConsumption = TURBINE.baseConsumption
-  readonly baseCapacity = TURBINE.capacity
+  readonly baseFlow = TURBINE.flow
   readonly nominalStress = TURBINE.nominalStress
   readonly maxTolerance = TURBINE.maxTolerance
   readonly minTolerance = TURBINE.minTolerance
@@ -36,6 +36,6 @@ export class Turbine extends Machine {
 
   /** Steam drawn from the Tank, kg/s. */
   get steamConsumption(): number {
-    return (this.capacity * this.baseConsumption) / this.efficiency
+    return (this.flow * this.baseConsumption) / this.efficiency
   }
 }

@@ -9,7 +9,7 @@ import type {StressKind} from '@/game/types'
 export class Pulverizer extends Machine {
   readonly stressKind: StressKind = 'temperature'
   readonly baseConsumption = PULVERIZER.baseConsumption
-  readonly baseCapacity = PULVERIZER.capacity
+  readonly baseFlow = PULVERIZER.flow
   readonly nominalStress = PULVERIZER.nominalStress
   readonly maxTolerance = PULVERIZER.maxTolerance
   readonly minTolerance = PULVERIZER.minTolerance

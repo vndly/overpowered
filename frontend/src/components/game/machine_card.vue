@@ -1,10 +1,14 @@
-<!-- One machine of the chain (ui_ux.md §12): what it is rated for, and what being out of
-     step with the chain is costing it in stress and wear. One component for all three —
-     the differences are text the view model supplies.
+<!-- One machine of the chain (ui_ux.md §12): what it is rated for, what it is actually
+     delivering, and what being out of step with the chain is costing it in stress and
+     wear. One component for all three — the differences are text the view model supplies.
 
-     There is no operating control. A machine always runs at its Capacity (specs.md
+     There is no operating control. A machine always runs at its Flow (specs.md
      §Production flow), so the card poses one question and it is a buying question: which
-     of the three tracks to spend on, knowing each of them takes something back. -->
+     of the three tracks to spend on, knowing each of them takes something back.
+
+     FLOW is written and drawn as a store's is — what passed against what could pass, and
+     a bar of that fraction — because a machine is a rate in the chain exactly as a store
+     is. What the machine holds is nothing, which is why it has no Capacity at all. -->
 <template>
   <TerminalPanel
     :title="view.title"
@@ -13,12 +17,13 @@
   >
     <EquipmentIcon :component="component" :status="view.status" />
     <SectionDivider spaced />
-    <ValueRow label="CAPACITY" :value="view.capacityText" />
-    <!-- The row under it once read OUTPUT, which with no operating control printed the
-         Capacity above it a second time. The row is kept and left blank rather than
-         dropped: it is where a trip prints its countdown, and reserving it means the trip
-         fills a line instead of adding one (ui_ux.md §25) -->
-    <p class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
+    <ValueRow label="FLOW" :value="view.flowText" :level="view.flowLevel" />
+    <!-- One line, two states. The line was reserved for the trip countdown while the row
+         above it printed the rating alone; the bar now holds it, and a tripped machine
+         delivers nothing, so REPAIR takes the place of a bar that would be empty anyway.
+         Reserving it either way is what keeps a trip from adding a line (ui_ux.md §25) -->
+    <p v-if="view.repairText !== null" class="machine-card__repair">{{ view.repairText }}</p>
+    <FillBar v-else :fraction="view.flowFraction" :level="view.flowLevel" :cells="BAR_CELLS" />
     <SectionDivider />
     <StressGauge
       :label="view.stressLabel"
@@ -31,7 +36,7 @@
          nothing, and role="img" puts the figure back (ui_ux.md §28) -->
     <div class="machine-card__wear machine-card__reading" role="img" :aria-label="`WEAR ${view.wearPercentText}%`">
       <p>WEAR</p>
-      <FillBar :fraction="view.wearFraction" :level="view.wearLevel" :cells="WEAR_BAR_CELLS" />
+      <FillBar :fraction="view.wearFraction" :level="view.wearLevel" :cells="BAR_CELLS" />
     </div>
     <UpgradeBlock :rows="rows" @press="onPress" />
   </TerminalPanel>
@@ -50,7 +55,7 @@ import type {MachineId} from '@/game/types'
 import type {MachineView} from '@/view/view_model'
 
 const CARD_CELLS = 28 // Card width, the same for all seven (docs/plan.md)
-const WEAR_BAR_CELLS = CARD_CELLS // A line of its own, so the bar takes the whole of it
+const BAR_CELLS = CARD_CELLS // Every bar spans the card, as it does on the storage cards
 
 const props = defineProps<{
   view: MachineView
@@ -58,15 +63,15 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  upgradeCapacity: []
+  upgradeFlow: []
   upgradeEfficiency: []
   upgradeTolerance: []
 }>()
 
-// Chain order in the cycle they form: Capacity takes from Tolerance, Tolerance from
-// Efficiency, Efficiency from Capacity (specs.md §Every upgrade has a downside)
+// Chain order in the cycle they form: Flow takes from Tolerance, Tolerance from
+// Efficiency, Efficiency from Flow (specs.md §Every upgrade has a downside)
 const rows = computed(() => [
-  props.view.capacityUpgrade,
+  props.view.flowUpgrade,
   props.view.efficiencyUpgrade,
   props.view.toleranceUpgrade,
 ])
@@ -77,7 +82,7 @@ const rows = computed(() => [
  */
 function onPress(index: number): void {
   if (index === 0) {
-    emit('upgradeCapacity')
+    emit('upgradeFlow')
   } else if (index === 1) {
     emit('upgradeEfficiency')
   } else {
@@ -105,14 +110,14 @@ function onPress(index: number): void {
 
 /* A trip is the loudest thing that happens to a machine, so it is the one place a
    card inverts. State never rests on brightness alone (ui_ux.md §28): the frame
-   fills in, and the row standing empty under CAPACITY names the repair. */
+   fills in, and the line the flow bar would take names the repair instead. */
 .machine-card--tripped {
     box-shadow: inset 0 0 0 var(--space-1) var(--fg);
 }
 
-/* Held at one cell whether or not it is carrying anything. The seven cards stretch to
-   the tallest of them (production_chain.vue), so a row that existed only during a
-   repair would grow the whole chain the moment one machine tripped. */
+/* One cell, the height of the bar it replaces. The seven cards stretch to the tallest of
+   them (production_chain.vue), so a row that existed only during a repair would grow the
+   whole chain the moment one machine tripped. */
 .machine-card__repair {
     flex: none;
     height: var(--cell-height);

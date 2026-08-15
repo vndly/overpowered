@@ -28,7 +28,7 @@ What the mockup gets right and should be followed:
 Known places where it diverges and should **not** be copied:
 
 - Silo and Tank fill bars carry no strain marks. They were required, and then dropped — the mockup's plain bars are what shipped, see [Strain markers](#strain-markers).
-- Machine cards show a third parameter row (`COOLING`, `REGULATION`, `STABILITY`). No such parameter exists; machines have `Capacity` and `Efficiency` only.
+- Machine cards show a third parameter row (`COOLING`, `REGULATION`, `STABILITY`). No such parameter exists; machines have `Flow` and `Efficiency` only.
 - `CLEAN TO` is missing and the penalty is folded into the stress row. Follow [Machine Cards](#12-machine-cards).
 - There is no wear gauge or trip countdown. Follow `docs/specs.md`.
 - The `RESERVES` panel offers a reserve stepper and a manual/auto mode. `MinimumReserve` is derived, not player-set.
@@ -779,6 +779,35 @@ WEAR
 - **Every key names what it costs.** `▼TOL`, `▼CAP`, `▼EFF` are permanent and drawn in `--caution`, not `--alert`: this is the price of a purchase the player is choosing, not a fault. Every track erodes another ([`specs.md` §Every upgrade has a downside](specs.md#every-upgrade-has-a-downside)), and a stat that dropped with nothing on screen explaining it would read as a bug.
 - **The magnitudes appear only while deciding.** Two lines under the keys show the focused track's before-and-after: `▲` for what it buys, `▼` for what it takes. The lines are always reserved, so nothing moves when they fill in and the seven cards keep their keys on one line across the chain ([§25](#25-spacing-and-density)). Printing six figures at rest would make the densest thing in the interface out of the part of it that is idle most of the time.
 - **The arrows carry what the colours carry.** `▲` and `▼` say gain and cost without green and yellow, because state is never signalled by colour alone ([§28](#28-accessibility)). The key's own `aria-label` reads the whole trade, so the two lines are `aria-hidden` rather than read twice.
+
+## What shipped, third pass
+
+`CAPACITY` is `FLOW`, and the row is written and drawn the way a store's is.
+
+```text
+FLOW           3.20 / 4.00 kg/s
+████████████████████░░░░░░░░
+────────────────────────────
+TEMPERATURE
+████████████░░░░░░░░░░░░░░░░
+
+WEAR
+████░░░░░░░░░░░░░░░░░░░░░░░░
+────────────────────────────
+         UPGRADES
+[FLOW       0.02 MWh    ▼TOL]
+[EFFICIENCY 0.05 MWh   ▼FLOW]
+[TOLERANCE  0.04 MWh    ▼EFF]
+```
+
+- **The word was carrying two jobs in one row of cards.** `CAPACITY` read `0.1 t` on the Silo and `4.00 kg/s` on the Boiler — an amount held on four cards and a rate on three, in the same column of the same chain. Renaming the machine track leaves one rule: `FLOW` is a rate wherever it appears, `CAPACITY` an amount held, and only a store has one. It is also what `specs.md` says the two do — flow buys speed, store capacity buys time.
+- **The row gained the reading the card could not carry.** It reads what the machine actually moved last step against what it is rated for, which is the one thing the second pass admits this card cannot say: `Output` was dropped because it printed the rating a second time, and the rating is what a starved machine goes on printing while it delivers nothing. The figures are `Flow × RunRatio` and `Flow`, and the bar is that fraction.
+- **The bar takes the line the trip was already reserving.** No card grows: the line under the row was held empty for `REPAIR {n}S`, and a `FillBar` is exactly one cell. A tripped machine delivers nothing, so the countdown now takes the place of a bar that would be drawn empty, and the reservation still means a trip never adds a line to seven cards that share a height ([§25](#25-spacing-and-density)).
+- **Banded on being held back.** Yellow below `1 − FlowCautionMargin`, red only at `RunRatio = 0`, the point the drawing goes white ([§9](#9-equipment-graphics)) — so the card never invents a state the alerts panel is not also naming.
+
+  **The pair is not the same reading twice, and it is worth being exact about how they differ**, because both rows are called `FLOW` and both take the same 5%. A store's row measures demand against its cap and reddens where the cap starts biting; the machine's measures delivery against its rating and stays green until that costs it 5%. The two are the same margin on opposite sides of the cap, so they do not change colour together: from the moment a store's `Flow` is exceeded it reads red while the machine it caps still reads green, until the shortfall reaches 5%. That gap is the design and not a rounding artifact — a store's `Flow` sits within a few percent of its through-rate all run ([§10](#10-storage-cards)), so a machine that yellowed on every shortfall would sit yellow from the first Silo `CAPACITY` purchase onward. **The store says the cap is biting; the machine says what it is costing.**
+- **A plant at rest is not a plant in trouble.** Before the first step, nothing has been asked of any machine and every `RunRatio` is zero, which would open the game on three red bars and a dim chain. The band is held at green until a step has run — not until the run is marked started, which happens a frame earlier, on the very frame the overlay lifts. From the first step onward the rule above applies unchanged, including a plant that dies with a full clock.
+- **The two `FLOW` bars run opposite ways, and say so.** A store's fills toward its cap and reddens there; a machine's empties as the chain starves it. Each row prints its own two figures, and the Battery already sets this precedent — a full `STORED` is the run won while a full `CHARGE` is generation thrown away ([§10](#10-storage-cards)).
 
 ---
 

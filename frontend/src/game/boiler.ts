@@ -9,7 +9,7 @@ import type {StressKind} from '@/game/types'
 export class Boiler extends Machine {
   readonly stressKind: StressKind = 'pressure'
   readonly baseConsumption = BOILER.baseConsumption
-  readonly baseCapacity = BOILER.capacity
+  readonly baseFlow = BOILER.flow
   readonly nominalStress = BOILER.nominalStress
   readonly maxTolerance = BOILER.maxTolerance
   readonly minTolerance = BOILER.minTolerance

@@ -1,23 +1,25 @@
-import {CAPACITY_GROWTH, CAPACITY_PENALTY, EFFICIENCY_PENALTY, FACTOR_FLOOR, MACHINE_CAPACITY_UPGRADE, MACHINE_EFFICIENCY_UPGRADE, MACHINE_TOLERANCE_UPGRADE, MAX_EFFICIENCY, MIN_EFFICIENCY, TOLERANCE_GAIN, TOLERANCE_PENALTY, UPGRADE_GAIN} from '@/game/constants'
+import {EFFICIENCY_PENALTY, FACTOR_FLOOR, FLOW_PENALTY, MACHINE_EFFICIENCY_UPGRADE, MACHINE_FLOW_GROWTH, MACHINE_FLOW_UPGRADE, MACHINE_TOLERANCE_UPGRADE, MAX_EFFICIENCY, MIN_EFFICIENCY, TOLERANCE_GAIN, TOLERANCE_PENALTY, UPGRADE_GAIN} from '@/game/constants'
 import type {StressKind} from '@/game/types'
 import {gapDown, gapUp, UpgradeTrack} from '@/game/upgrade_track'
 
 /**
  * A machine in the production chain.
- * There is no operating control: a machine always runs and its Output is its Capacity.
+ * There is no operating control: a machine always runs and its Output is its Flow — the
+ * rate it is rated for, in its own unit per second. A machine holds nothing, which is why
+ * the word is Flow here and Capacity is left to the stores, where it means an amount held.
  * The only thing that can raise its stress is Strain — being out of step with the chain
  * around it — so wear is the readout of an unbalanced plant, not of a throttle the player
  * pushed. See specs.md §Stress and wear.
  *
  * Its three upgrade tracks form a cycle, each raising one value and eroding the next:
- * Capacity → SafeStress → Efficiency → Capacity. Every penalty is asymptotic, so a
- * lopsided machine is reachable and a broken one is not.
+ * Flow → SafeStress → Efficiency → Flow. Every penalty is asymptotic, so a lopsided
+ * machine is reachable and a broken one is not.
  */
 export abstract class Machine {
   abstract readonly stressKind: StressKind // Which stress its Strain turns into
   abstract readonly baseConsumption: number // Consumption per unit of output
-  abstract readonly baseCapacity: number // Capacity before any upgrade
-  abstract readonly nominalStress: number // Stress running clean, at any Capacity
+  abstract readonly baseFlow: number // Flow before any upgrade
+  abstract readonly nominalStress: number // Stress running clean, at any Flow
   abstract readonly maxTolerance: number // Highest SafeStress upgrades reach
   abstract readonly minTolerance: number // Floor SafeStress is eroded toward
   abstract readonly maxStress: number // Stress at which wear accrues fastest
@@ -25,30 +27,30 @@ export abstract class Machine {
   abstract readonly wearRecovery: number // Wear shed per second while clean, 1/s
   abstract readonly repairSeconds: number // Time offline after a trip
 
-  capacityLevel: number // Capacity upgrades bought
-  capacityFactor: number // Eroded by every Efficiency upgrade, toward FactorFloor
+  flowLevel: number // Flow upgrades bought
+  flowFactor: number // Eroded by every Efficiency upgrade, toward FactorFloor
   efficiency: number // Consumption performance, between MinEfficiency and MaxEfficiency
   safeStress: number // Stress below which no wear accrues; raised by Tolerance
   wear: number // Damage from running strained, 0 to 1
   wearRate: number // Wear per second over the last step, negative while shedding
   repairRemaining: number // Seconds left of the current repair, 0 while running
   tripCount: number // Trips so far this run
-  readonly capacityUpgrade: UpgradeTrack
+  readonly flowUpgrade: UpgradeTrack
   readonly efficiencyUpgrade: UpgradeTrack
   readonly toleranceUpgrade: UpgradeTrack
 
   protected constructor(efficiency: number, safeStress: number) {
-    this.capacityLevel = 0
-    this.capacityFactor = 1
+    this.flowLevel = 0
+    this.flowFactor = 1
     this.efficiency = efficiency
     this.safeStress = safeStress
     this.wear = 0
     this.wearRate = 0
     this.repairRemaining = 0
     this.tripCount = 0
-    this.capacityUpgrade = new UpgradeTrack(
-      MACHINE_CAPACITY_UPGRADE.baseCost,
-      MACHINE_CAPACITY_UPGRADE.costGrowth,
+    this.flowUpgrade = new UpgradeTrack(
+      MACHINE_FLOW_UPGRADE.baseCost,
+      MACHINE_FLOW_UPGRADE.costGrowth,
     )
     this.efficiencyUpgrade = new UpgradeTrack(
       MACHINE_EFFICIENCY_UPGRADE.baseCost,
@@ -60,9 +62,9 @@ export abstract class Machine {
     )
   }
 
-  /** Rated throughput, which is also what the machine actually delivers. */
-  get capacity(): number {
-    return this.baseCapacity * CAPACITY_GROWTH ** this.capacityLevel * this.capacityFactor
+  /** Rated throughput, which is also what the machine delivers when nothing holds it back. */
+  get flow(): number {
+    return this.baseFlow * MACHINE_FLOW_GROWTH ** this.flowLevel * this.flowFactor
   }
 
   /** Whether wear has taken the machine offline for repair. */
@@ -70,14 +72,14 @@ export abstract class Machine {
     return this.repairRemaining > 0
   }
 
-  /** Output, in the machine's own unit. A machine always runs at its Capacity. */
+  /** Output, in the machine's own unit. A machine always runs at its Flow. */
   get output(): number {
-    return this.capacity
+    return this.flow
   }
 
   /** Electricity drawn while running, MW. The Turbine draws none. */
   get electricConsumption(): number {
-    return (this.capacity * this.baseConsumption) / this.efficiency
+    return (this.flow * this.baseConsumption) / this.efficiency
   }
 
   /**
@@ -125,9 +127,9 @@ export abstract class Machine {
     }
   }
 
-  /** Capacity the next capacity upgrade would add; it grows with every level bought. */
-  get capacityGain(): number {
-    return this.capacity * (CAPACITY_GROWTH - 1)
+  /** Flow the next flow upgrade would add; it grows with every level bought. */
+  get flowGain(): number {
+    return this.flow * (MACHINE_FLOW_GROWTH - 1)
   }
 
   /** Efficiency the next efficiency upgrade would add; it shrinks as the gap closes. */
@@ -140,9 +142,9 @@ export abstract class Machine {
     return (this.maxTolerance - this.safeStress) * TOLERANCE_GAIN
   }
 
-  /** Capacity after the next capacity upgrade, which erodes SafeStress to pay for it. */
-  get nextSafeStressAfterCapacity(): number {
-    return gapDown(this.safeStress, this.minTolerance, CAPACITY_PENALTY)
+  /** SafeStress after the next flow upgrade, which erodes it to pay for the rate. */
+  get nextSafeStressAfterFlow(): number {
+    return gapDown(this.safeStress, this.minTolerance, FLOW_PENALTY)
   }
 
   /** Efficiency after the next tolerance upgrade, which erodes it to pay for itself. */
@@ -150,30 +152,30 @@ export abstract class Machine {
     return gapDown(this.efficiency, MIN_EFFICIENCY, TOLERANCE_PENALTY)
   }
 
-  /** Capacity after the next efficiency upgrade, which erodes it to pay for itself. */
-  get nextCapacityAfterEfficiency(): number {
-    return this.baseCapacity * CAPACITY_GROWTH ** this.capacityLevel
-      * gapDown(this.capacityFactor, FACTOR_FLOOR, EFFICIENCY_PENALTY)
+  /** Flow after the next efficiency upgrade, which erodes it to pay for itself. */
+  get nextFlowAfterEfficiency(): number {
+    return this.baseFlow * MACHINE_FLOW_GROWTH ** this.flowLevel
+      * gapDown(this.flowFactor, FACTOR_FLOOR, EFFICIENCY_PENALTY)
   }
 
   /**
-   * Buys one capacity level. A larger machine runs closer to its limits, so it is paid
-   * for in SafeStress — specs.md §Every upgrade has a downside.
+   * Buys one flow level. A faster machine runs closer to its limits, so it is paid for in
+   * SafeStress — specs.md §Every upgrade has a downside.
    */
-  upgradeCapacity(): void {
-    this.capacityUpgrade.purchase()
-    this.capacityLevel += 1
-    this.safeStress = gapDown(this.safeStress, this.minTolerance, CAPACITY_PENALTY)
+  upgradeFlow(): void {
+    this.flowUpgrade.purchase()
+    this.flowLevel += 1
+    this.safeStress = gapDown(this.safeStress, this.minTolerance, FLOW_PENALTY)
   }
 
   /**
    * Buys one efficiency level, closing UpgradeGain of the gap to MaxEfficiency.
-   * A lean tune cannot hold its peak, so it is paid for in Capacity.
+   * A lean tune cannot hold its peak, so it is paid for in Flow.
    */
   upgradeEfficiency(): void {
     this.efficiencyUpgrade.purchase()
     this.efficiency = gapUp(this.efficiency, MAX_EFFICIENCY, UPGRADE_GAIN)
-    this.capacityFactor = gapDown(this.capacityFactor, FACTOR_FLOOR, EFFICIENCY_PENALTY)
+    this.flowFactor = gapDown(this.flowFactor, FACTOR_FLOOR, EFFICIENCY_PENALTY)
   }
 
   /**
