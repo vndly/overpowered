@@ -133,8 +133,7 @@ export interface MachineView {
   title: string
   status: ComponentStatus // What its drawing says at a glance
   capacityText: string
-  outputText: string
-  repairText: string | null // Replaces the output row while tripped
+  repairText: string | null // Fills the reserved row under Capacity while tripped
   stressLabel: string // TEMPERATURE | PRESSURE | VIBRATION
   stressText: string // Value with its unit; the gauge is drawn, so this names it
   stressFraction: number // Stress against MaxStress, 0 to 1
@@ -464,7 +463,6 @@ function buildMachineView(
     title: spec.title,
     status: machineStatus(machine, runRatio),
     capacityText: `${spec.format(machine.capacity)} ${spec.unit}`,
-    outputText: `${spec.format(machine.output)} ${spec.unit}`,
     repairText: machine.isTripped ? `REPAIR ${formatSeconds(machine.repairRemaining)}S` : null,
     stressLabel: STRESS_LABELS[machine.stressKind],
     stressText: `${formatStress(stress)} ${stressUnit}`,

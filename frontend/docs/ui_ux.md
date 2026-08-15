@@ -726,7 +726,7 @@ What changed from the layout above it, and nothing else moves:
 - The note beneath the bar is dropped with it. It read `TRIPS IN {n}S` while wear was growing, `CLEARS IN {n}S` while it was shedding, `CLEAN` at zero and `HOLDING` at neither: a countdown that changed its wording four ways under a bar that was already moving. What it answered — how long can this Setting be held — is what the bar and its rate of travel show.
 - Both bars are banded ([§4](#4-color-system)). The wear bar is the one bar with no threshold to sit a margin off — it runs from clean to tripped and every point on it is worse than the last — so it is split in equal thirds instead: green below 1/3, yellow to 2/3, red above. Red still arrives well before the trip, which matters because wear is shed far slower than it is taken on: the Pulverizer sheds at 0.008/s what it can take on at 0.1/s, so a bar that only reddened at the trip would be reporting the decision rather than warning of it.
 
-A tripped machine replaces its `OUTPUT` row with `REPAIR {n}S`, inverted, inside a card whose border fills in to a solid green frame. State is never signalled by brightness alone (§28), and a trip is the loudest thing that happens to a machine, so it is the one place a card inverts.
+A tripped machine fills the row beneath `CAPACITY` with `REPAIR {n}S`, inverted, inside a card whose border fills in to a solid green frame. State is never signalled by brightness alone (§28), and a trip is the loudest thing that happens to a machine, so it is the one place a card inverts.
 
 `CLEAN TO` is the highest `SETTING` that accrues no wear right now. It is not a constant — it falls as the store beside the machine moves toward its strain threshold, so it can come down to meet a `SETTING` the player never touched. Render it as a live value and let it move.
 
@@ -744,12 +744,12 @@ TURBINE    → VIBRATION
 
 ## What shipped, second pass
 
-The `SETTING` row is gone, and a third upgrade took its place.
+The `SETTING` row is gone, a third upgrade took its place, and `OUTPUT` went with it.
 
 ```text
 CAPACITY            4.00 kg/s
 
-OUTPUT              4.00 kg/s
+
 ────────────────────────────
 TEMPERATURE
 ████████████░░░░░░░░░░░░░░░░
@@ -767,6 +767,8 @@ WEAR
 ```
 
 - **There is no operating control at all.** `docs/specs.md` gives machines no `Setting`: `Output` is `Capacity`, and the only thing that can raise a machine's stress is being out of step with the chain around it. What the card poses is therefore a buying question, and the stress gauge is the readout of an unbalanced plant rather than of a throttle the player pushed. [§13](#13-machine-setting-control) is void.
+- **`OUTPUT` goes with the `SETTING` that gave it a value.** The row read `Capacity × Setting`; with no `Setting` it printed the figure above it a second time, same digits, same unit, permanently — the plainest case of the duplication that already took the `STRESS` row and the wear percentage off this card. `CAPACITY` is the row that stays, because it is the word on the upgrade key below it and the one the focus preview quotes a before-and-after for. Its line is kept blank rather than closed up: it is where a trip prints, and reserving it means a trip fills a line instead of adding one to seven cards that share a height ([§25](#25-spacing-and-density)).
+- **A machine held back is still reported, just not here.** Dropping `OUTPUT` costs nothing, because it never showed the throttled rate anyway — `RunRatio` never reached it, so a starved Pulverizer read its full rating. What does report it says which store is at fault, which this card could not: the drawing goes white at `RunRatio = 0` ([§9](#9-equipment-graphics)), the store capping it turns its `FLOW` row yellow ([§10](#10-storage-cards)), and the alerts panel names it in words ([§20](#20-alerts-panel)).
 - **`TOLERANCE` is the third track.** It raises `SafeStress` — the point the gauge turns red — and it is the only purchase that answers a wearing machine directly, because there is no throttle to back off with.
 - **An upgrade is one key, not a row plus a button.** The label, the price and the penalty marker sit on one line because they are one decision; a label row above a separate button made a machine's three tracks read as six things and cost six lines.
 - **Every key names what it costs.** `▼TOL`, `▼CAP`, `▼EFF` are permanent and drawn in `--caution`, not `--alert`: this is the price of a purchase the player is choosing, not a fault. Every track erodes another ([`specs.md` §Every upgrade has a downside](specs.md#every-upgrade-has-a-downside)), and a stat that dropped with nothing on screen explaining it would read as a bug.

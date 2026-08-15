@@ -566,7 +566,6 @@ Every card carries the same shape: what the component is doing, then what can be
 │ Pulverizer / Boiler / Turbine             │
 ├───────────────────────────────────────────┤
 │ Capacity     {value}                      │
-│ Output       {value}                      │
 ├───────────────────────────────────────────┤
 │ {Stress}     ░░░█░░                       │
 │ Wear         ███████░░░                   │
@@ -577,7 +576,7 @@ Every card carries the same shape: what the component is doing, then what can be
 └───────────────────────────────────────────┘
 ```
 
-Each machine card shows its stress against the safe and maximum thresholds and a `Wear` gauge. Together those answer the only question the card has to answer: how long can this hold. A tripped machine shows its repair countdown in place of its output.
+Each machine card shows its stress against the safe and maximum thresholds and a `Wear` gauge. Together those answer the only question the card has to answer: how long can this hold. The card carries no `Output` row: with no operating control `Output` is `Capacity`, so the row printed the figure above it a second time. A tripped machine shows its repair countdown on the line beneath `Capacity`.
 
 **Every upgrade row names what it costs.** The marker on the right — `▼TOL`, `▼CAP`, `▼EFF`, `▼FLOW` — is permanent, so the trade is never invisible and an unexplained stat drop never reads as a bug. Focusing an upgrade button reveals the exact before-and-after on both the row it raises and the row it erodes; the magnitudes are shown when the player is deciding, not at all times.
 

@@ -1,6 +1,6 @@
-<!-- One machine of the chain (ui_ux.md §12): what it is rated for, what it is producing,
-     and what being out of step with the chain is costing it in stress and wear. One
-     component for all three — the differences are text the view model supplies.
+<!-- One machine of the chain (ui_ux.md §12): what it is rated for, and what being out of
+     step with the chain is costing it in stress and wear. One component for all three —
+     the differences are text the view model supplies.
 
      There is no operating control. A machine always runs at its Capacity (specs.md
      §Production flow), so the card poses one question and it is a buying question: which
@@ -14,10 +14,11 @@
     <EquipmentIcon :component="component" :status="view.status" />
     <SectionDivider spaced />
     <ValueRow label="CAPACITY" :value="view.capacityText" />
-    <!-- What the machine is doing right now sits under what it is rated for, so the two
-         are read as a pair; a tripped machine puts its repair in the same place -->
-    <ValueRow v-if="view.repairText === null" class="machine-card__reading" label="OUTPUT" :value="view.outputText" />
-    <p v-else class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
+    <!-- The row under it once read OUTPUT, which with no operating control printed the
+         Capacity above it a second time. The row is kept and left blank rather than
+         dropped: it is where a trip prints its countdown, and reserving it means the trip
+         fills a line instead of adding one (ui_ux.md §25) -->
+    <p class="machine-card__repair machine-card__reading">{{ view.repairText }}</p>
     <SectionDivider />
     <StressGauge
       :label="view.stressLabel"
@@ -104,17 +105,23 @@ function onPress(index: number): void {
 
 /* A trip is the loudest thing that happens to a machine, so it is the one place a
    card inverts. State never rests on brightness alone (ui_ux.md §28): the frame
-   fills in, and the row that named the output names the repair instead. */
+   fills in, and the row standing empty under CAPACITY names the repair. */
 .machine-card--tripped {
     box-shadow: inset 0 0 0 var(--space-1) var(--fg);
 }
 
+/* Held at one cell whether or not it is carrying anything. The seven cards stretch to
+   the tallest of them (production_chain.vue), so a row that existed only during a
+   repair would grow the whole chain the moment one machine tripped. */
 .machine-card__repair {
     flex: none;
     height: var(--cell-height);
-    background: var(--fg);
-    color: var(--bg);
     line-height: var(--cell-height);
     text-align: center;
+}
+
+.machine-card--tripped .machine-card__repair {
+    background: var(--fg);
+    color: var(--bg);
 }
 </style>
